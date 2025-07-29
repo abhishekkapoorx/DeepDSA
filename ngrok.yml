@@ -1,0 +1,17 @@
+version: "2"
+
+tunnels:
+  # backend:
+    # addr: backend:5373
+    # proto: http
+    # inspect: true
+
+  frontend:
+    addr: frontend:3000
+    proto: http
+    inspect: true
+    url: werewolf-refined-urgently.ngrok-free.app
+
+  mongo:
+    addr: mongo:27017
+    proto: http 

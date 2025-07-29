@@ -46,9 +46,6 @@ services:
       - "3000:3000"
     env_file:
       - ./main-fb/.env
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:5373
     depends_on:
       # - backend
       - mongo
@@ -81,6 +78,31 @@ services:
           path: ./main-fb/postcss.config.mjs
           target: /app/postcss.config.mjs
     command: npm run dev
+
+  # Ngrok for all tunnels (single agent session)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: deepdsa-ngrok
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-}
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    command: start --all --config=/etc/ngrok.yml --authtoken=${NGROK_AUTHTOKEN}
+    depends_on:
+      - frontend
+      - mongo
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    profiles:
+      - tunnel
+    develop:
+      watch:
+        - action: rebuild
+          path: ./ngrok.yml
+          # target: /etc/ngrok.yml
 
   # MongoDB service
   mongo:
