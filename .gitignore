@@ -1,0 +1,64 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Logs
+logs/
+*.log
+
+# Dependency directories
+**/node_modules/
+
+# Build output
+dist/
+build/
+.next/
+out/
+coverage/
+.next/cache/
+.next/static/chunks/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Docker
+*.pid
+*.seed
+docker-compose.override.yml
+docker-compose.dev.override.yml
+
+# VSCode
+.vscode/
+.history/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Mongo/Redis data
+mongo_data_dev/
+redis_data_dev/
+next_cache/
+
+# Misc
+*.swp
+*.swo
+
+# Ignore local development files
+backend/.env.local
+main-fb/.env.local
+
+# Ignore ngrok files
+.ngrok2/
+.ngrok.log
+
+# Ignore generated files
+*.tgz
+*.tar.gz
+*.zip

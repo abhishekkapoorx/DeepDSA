@@ -68,6 +68,27 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
 
+  # Ngrok for all tunnels (single agent session)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: deepdsa-ngrok
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-}
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    command: start --all --config=/etc/ngrok.yml --authtoken=${NGROK_AUTHTOKEN}
+    depends_on:
+      - frontend
+      - backend
+      - mongo
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    profiles:
+      - tunnel
+
   # MongoDB Express (optional - for database management)
   mongo-express:
     image: mongo-express:latest
