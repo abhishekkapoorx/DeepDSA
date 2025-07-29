@@ -22,6 +22,15 @@ docker-compose -f docker-compose.dev.yml up --build
 docker-compose -f docker-compose.dev.yml up -d --build
 ```
 
+### With Ngrok Tunneling
+```bash
+# Start development with ngrok tunnels
+docker-compose -f docker-compose.dev.yml --profile tunnel up --build
+
+# Start production with ngrok tunnels
+docker-compose --profile tunnel up --build
+```
+
 ## 📁 Project Structure
 
 ```
@@ -48,6 +57,7 @@ DeepDSA/
 | MongoDB | 27017 | Database |
 | Redis | 6379 | Cache & sessions |
 | Mongo Express | 8081 | Database management UI |
+| Ngrok | 4040 | All tunnels web interface |
 
 ## 🔧 Environment Variables
 
@@ -62,6 +72,12 @@ FRONTEND_URL=http://localhost:3000
 ### Frontend (.env.local)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5373
+```
+
+### Ngrok Configuration
+```env
+# Get your auth token from https://dashboard.ngrok.com/get-started/your-authtoken
+NGROK_AUTHTOKEN=your_ngrok_auth_token_here
 ```
 
 ## 🛠️ Development
@@ -183,9 +199,53 @@ docker system df
 - Persistent volumes for data
 - Health checks for all services
 
+## 🌐 Ngrok Tunneling
+
+### Setup
+1. **Get Ngrok Auth Token**:
+   - Sign up at [ngrok.com](https://ngrok.com)
+   - Get your auth token from [dashboard.ngrok.com](https://dashboard.ngrok.com/get-started/your-authtoken)
+
+2. **Set Environment Variable**:
+   ```bash
+   export NGROK_AUTHTOKEN=your_ngrok_auth_token_here
+   ```
+
+3. **Start with Tunnels**:
+   ```bash
+   # Development with tunnels
+   docker-compose -f docker-compose.dev.yml --profile tunnel up --build
+   
+   # Production with tunnels
+   docker-compose --profile tunnel up --build
+   ```
+
+### Accessing Tunnels
+- **All Tunnels**: Visit `http://localhost:4040` for all tunnel status
+- **Public URLs**: The ngrok web interface will show all your public URLs
+
+### Tunnel URLs
+Once running, you'll get public URLs like:
+- Backend: `https://abc123.ngrok.io` → Your API
+- Frontend: `https://xyz789.ngrok.io` → Your Next.js app
+- MongoDB: `tcp://def456.ngrok.io:12345` → Your database (TCP tunnel)
+
+### Features
+- **Automatic HTTPS**: All tunnels are HTTPS by default
+- **Custom Domains**: Available with paid ngrok plans
+- **Request Inspection**: View all requests in the ngrok web interface
+- **Webhook Testing**: Perfect for testing webhooks and integrations
+
+### Security Notes
+- **Public Access**: Anyone with the ngrok URL can access your app
+- **Development Only**: Use tunnels only for development/testing
+- **Auth Token**: Keep your ngrok auth token secure
+- **Rate Limits**: Free ngrok accounts have rate limits
+
 ## 📝 Notes
 
 - Development volumes preserve `node_modules` for faster builds
 - MongoDB data persists in `mongo_data` volume
 - Redis data persists in `redis_data` volume
-- Frontend uses Next.js standalone output for production 
+- Frontend uses Next.js standalone output for production
+- Ngrok tunnels provide public HTTPS URLs for local development 
