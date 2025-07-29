@@ -46,11 +46,6 @@ services:
       - "3000:3000"
     env_file:
       - ./main-fb/.env
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:5373
-    env_file:
-      - ./main-fb/.env
     depends_on:
       # - backend
       - mongo
