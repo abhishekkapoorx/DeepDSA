@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Backend API service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: deepdsa-backend
+    ports:
+      - "5373:5373"
+    environment:
+      - NODE_ENV=production
+      - PORT=5373
+      - MONGO_URI=mongodb://mongo:27017/deepdsa
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    volumes:
+      - ./backend/logs:/app/logs
+
+  # Frontend Next.js service
+  frontend:
+    build:
+      context: ./main-fb
+      dockerfile: Dockerfile
+    container_name: deepdsa-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+    depends_on:
+      - backend
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+
+  # MongoDB service
+  mongo:
+    image: mongo:7.0
+    container_name: deepdsa-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=deepdsa
+    volumes:
+      - mongo_data:/data/db
+      - ./backend/mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+
+  # Redis service for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: deepdsa-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # MongoDB Express (optional - for database management)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: deepdsa-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
+    depends_on:
+      - mongo
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  deepdsa-network:
+    driver: bridge 
