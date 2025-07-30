@@ -16,7 +16,7 @@
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.7.0",
     "clsx": "^2.1.1",
-    "dockview-react": "^4.5.0",
+    "flexlayout-react": "^0.8.17",
     "lucide-react": "^0.533.0",
     "mongoose": "^8.16.5",
     "next": "15.4.4",

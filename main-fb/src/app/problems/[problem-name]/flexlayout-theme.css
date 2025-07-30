@@ -1,0 +1,64 @@
+/* Minimal FlexLayout Theme - LeetCode Style */
+@import 'flexlayout-react/style/light.css';
+
+/* Override only essential FlexLayout styles */
+.flexlayout__layout {
+  /* font-family: inherit; */
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.flexlayout__tabset {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.flexlayout__tabset_header {
+  border-radius: 8px 8px 0 0;
+}
+
+.flexlayout__tabset_content {
+  border-radius: 0 0 8px 8px;
+}
+
+.flexlayout__tab {
+  border-radius: 6px;
+  margin: 4px 2px;
+  transition: all 0.2s ease;
+}
+
+.flexlayout__splitter {
+  transition: background-color 0.2s ease;
+}
+
+.flexlayout__splitter:hover {
+  background: hsl(var(--primary));
+}
+
+/* FlexLayout tab styling overrides */
+.flexlayout__tab {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border: none !important;
+}
+
+.flexlayout__tab:hover {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.flexlayout__tab--selected {
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.flexlayout__tabset_header {
+  background: hsl(var(--background)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.flexlayout__tabset_content {
+  background: hsl(var(--background)) !important;
+}

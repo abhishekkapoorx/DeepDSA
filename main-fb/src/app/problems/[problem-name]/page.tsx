@@ -1,93 +1,131 @@
 "use client";
-import React, { useRef, useEffect } from "react";
-import { DockviewReact, DockviewReadyEvent } from "dockview-react";
-import MonacoEditor from "@monaco-editor/react";
-import "dockview-core/dist/styles/dockview.css";
-
-const ProblemDescription = ({ problem }: { problem: any }) => (
-  <div style={{ padding: 16, overflowY: "auto", height: "100%" }}>
-    <h2>{problem.title}</h2>
-    <p>{problem.description}</p>
-    {/* Add more fields as needed */}
-  </div>
-);
-
-const CodeEditor = ({ starterCode }: { starterCode: string }) => (
-  <MonacoEditor
-    height="100%"
-    defaultLanguage="java"
-    defaultValue={starterCode}
-    theme="vs-dark"
-    options={{ fontSize: 16 }}
-  />
-);
-
-const TestcasePanel = ({ testcases }: { testcases: any[] }) => (
-  <div style={{ padding: 16, height: "100%", background: "#181818", color: "#fff" }}>
-    <h4>Testcase</h4>
-    {testcases.map((tc, i) => (
-      <div key={i} style={{ marginBottom: 8 }}>
-        <div>Input: {tc.input}</div>
-        <div>Output: {tc.output}</div>
-      </div>
-    ))}
-  </div>
-);
+import React from "react";
+import * as FlexLayout from "flexlayout-react";
+import "./flexlayout-theme.css";
+import { ProblemDescription, CodeEditor, TestcasePanel, type Problem } from "@/components/problems";
 
 // Dummy data for now; replace with real data fetching
-const dummyProblem = {
+const dummyProblem: Problem = {
   title: "4. Median of Two Sorted Arrays",
-  description: "Given two sorted arrays ...",
-  starterCode: `class Solution {\n    public double findMedianSortedArrays(int[] a, int[] b) {\n        // ...\n    }\n}`,
+  description: "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays. The overall run time complexity should be O(log (m+n)).",
+  starterCode: `class Solution {
+    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+        // Write your solution here
+        
+    }
+}`,
   testcases: [
     { input: "nums1 = [1,3], nums2 = [2]", output: "2.00000" },
     { input: "nums1 = [1,2], nums2 = [3,4]", output: "2.50000" },
   ],
 };
 
+// FlexLayout configuration
+const layoutConfig = {
+  global: {
+    tabEnableClose: false,
+    tabEnableFloat: true,
+    tabEnableDrag: true,
+    tabEnableRename: false,
+  },
+  borders: [],
+  layout: {
+    type: "row",
+    weight: 100,
+    children: [
+      {
+        type: "tabset",
+        weight: 50,
+        children: [
+          {
+            type: "tab",
+            name: "Description",
+            component: "description",
+            id: "description",
+          },
+        ],
+      },
+      {
+        type: "col",
+        weight: 50,
+        children: [
+          {
+            type: "tabset",
+            weight: 50,
+            children: [
+              {
+                type: "tab",
+                name: "Code",
+                component: "editor",
+                id: "editor",
+              },
+            ],
+          },
+          {
+            type: "tabset",
+            weight: 50,
+            children: [
+              {
+                type: "tab",
+                name: "Testcase",
+                component: "testcase",
+                id: "testcase",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+};
+
 export default function ProblemDetailPage() {
-  const handleReady = (event: DockviewReadyEvent) => {
-    const api = event.api;
+  const factory = (node: FlexLayout.TabNode) => {
+    const component = node.getComponent();
     
-    // Add the description panel
-    const descriptionPanel = api.addPanel({
-      id: "description",
-      component: "description",
-      title: "Problem Description",
-    });
+    switch (component) {
+      case "description":
+        return <ProblemDescription problem={dummyProblem} />;
+      case "editor":
+        return <CodeEditor starterCode={dummyProblem.starterCode} />;
+      case "testcase":
+        return <TestcasePanel testcases={dummyProblem.testcases} />;
+      default:
+        return <div>Component not found</div>;
+    }
+  };
 
-    // Add the editor panel to the right of description
-    const editorPanel = api.addPanel({
-      id: "editor", 
-      component: "editor",
-      title: "Code Editor",
-      position: { direction: "right", referencePanel: descriptionPanel },
-    });
-
-    // Add the testcase panel below the editor
-    api.addPanel({
-      id: "testcase",
-      component: "testcase", 
-      title: "Test Cases",
-      position: { direction: "below", referencePanel: editorPanel },
-    });
-
-    // Set initial sizes
-    descriptionPanel.api.setSize({ width: 400 });
-    editorPanel.api.setSize({ height: 400 });
+  const onRenderTabSet = (node: FlexLayout.TabSetNode | FlexLayout.BorderNode, renderValues: FlexLayout.ITabSetRenderValues) => {
+    // Add language selector to Code tab header
+    if (node instanceof FlexLayout.TabSetNode && node.getChildren().some((child: any) => child.getComponent() === "editor")) {
+      renderValues.stickyButtons.push(
+        <div key="language-selector" className="language-selector flex items-center mr-2">
+          <select 
+            defaultValue="java"
+            className="px-2 py-1 text-xs font-medium bg-muted text-foreground border border-border rounded hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer min-w-[80px]"
+          >
+            <option value="java">Java</option>
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="cpp">C++</option>
+          </select>
+        </div>
+      );
+    }
   };
 
   return (
-    <div style={{ height: "100vh", width: "100vw" }}>
-      <DockviewReact
-        className="dockview-theme-light"
-        components={{
-          description: () => <ProblemDescription problem={dummyProblem} />,
-          editor: () => <CodeEditor starterCode={dummyProblem.starterCode} />,
-          testcase: () => <TestcasePanel testcases={dummyProblem.testcases} />,
-        }}
-        onReady={handleReady}
-      />
+    <div className="flex flex-col h-screen w-full bg-background text-foreground">
+      {/* Main layout container - accounts for navbar height with proper spacing */}
+      <div className="flex-1 p-2" style={{ height: "calc(100vh - 64px)" }}>
+        <div className="h-full w-full rounded-lg overflow-hidden border border-border/50">
+          <FlexLayout.Layout
+            model={FlexLayout.Model.fromJson(layoutConfig)}
+            factory={factory}
+            onRenderTabSet={onRenderTabSet}
+          />
+        </div>
+      </div>
     </div>
   );
 }
