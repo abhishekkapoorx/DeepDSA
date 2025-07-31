@@ -121,9 +121,9 @@ export default function ProblemDetailPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-background text-foreground">
-      {/* Main layout container - accounts for navbar height with proper spacing */}
-      <div className="flex-1 p-2" style={{ height: "calc(100vh - 64px)" }}>
+    <div className="h-full w-full bg-background text-foreground">
+      {/* Main layout container - full height available (navbar handled by layout) */}
+      <div className="h-full p-2">
         <div className="h-full w-full rounded-lg overflow-hidden border border-border/50">
           <FlexLayout.Layout
             model={FlexLayout.Model.fromJson(layoutConfig)}
