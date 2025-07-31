@@ -3,6 +3,12 @@ import React, { useMemo } from "react";
 import * as FlexLayout from "flexlayout-react";
 import "./flexlayout-theme.css";
 import { ProblemDescription, CodeEditor, TestcasePanel, type Problem } from "@/components/problems";
+import { Editorial } from "@/components/editorial";
+import { Solutions } from "@/components/solutions";
+import { Submissions } from "@/components/submissions";
+import { AIInterview } from "@/components/problems/AIInterview";
+import { CodeVisualization } from "@/components/problems/CodeVisualization";
+import { TestResults } from "@/components/problems/TestResults";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { desktopLayoutConfig, mobileLayoutConfig } from "@/config/layoutConfigs";
 
@@ -42,17 +48,17 @@ export default function ProblemDetailPage() {
       case "testcase":
         return <TestcasePanel testcases={dummyProblem.testcases} />;
       case "editorial":
-        return <div className="p-4">Editorial content coming soon.</div>;
+        return <Editorial problemTitle={dummyProblem.title} />;
       case "solutions":
-        return <div className="p-4">Solutions will be shown here.</div>;
+        return <Solutions />;
       case "submissions":
-        return <div className="p-4">Your submissions will appear here.</div>;
+        return <Submissions />;
       case "ai-interview":
-        return <div className="p-4">AI Interview feature coming soon.</div>;
+        return <AIInterview />;
       case "code-visualization":
-        return <div className="p-4">Code Visualization coming soon.</div>;
+        return <CodeVisualization />;
       case "test-results":
-        return <div className="p-4">Your test results will appear here.</div>;
+        return <TestResults />;
       default:
         return <div>Component not found</div>;
     }
