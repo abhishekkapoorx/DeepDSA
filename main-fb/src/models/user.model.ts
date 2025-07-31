@@ -1,5 +1,11 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
+export enum Role {
+  SUPER_ADMIN = "super_admin",
+  ADMIN = "admin",
+  USER = "user",
+}
+
 export interface IUser extends Document {
   clerkId: string;      
   email: string;        
@@ -8,7 +14,8 @@ export interface IUser extends Document {
   username?: string;    
   imageUrl?: string;    
   createdAt: Date;      
-  updatedAt: Date;      
+  updatedAt: Date;   
+  role: Role;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -25,6 +32,11 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
+    },
+    role: {
+      type: String,
+      enum: Role,
+      default: Role.USER,
     },
     firstName: { type: String, default: "" },
     lastName:  { type: String, default: "" },

@@ -1,8 +1,7 @@
 // src/app/api/clerk/webhook/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
-import { connectToDB } from "@/lib/mongoose";
-import User from "@/models/user.model";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -17,7 +16,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
 
-  await connectToDB();
   const { type, data } = evt;
   if (type === "user.created" || type === "user.updated") {
     const primaryEmail = data.email_addresses.find(
@@ -25,29 +23,29 @@ export async function POST(req: NextRequest) {
     )?.email_address || "";
 
     try {
-      await User.findOneAndUpdate(
-        { clerkId: data.id },
-        {
-          // Only insert clerkId on the first upsert
-          $setOnInsert: { clerkId: data.id },
-          // Always update these fields
-          $set: {
-            email:     primaryEmail,
-            firstName: data.first_name  || "",
-            lastName:  data.last_name   || "",
-            username:  data.username    || "",
-            imageUrl:  data.image_url   || "",
-          },
+      await prisma.user.upsert({
+        where: { clerkId: data.id },
+        update: {
+          email:     primaryEmail,
+          firstName: data.first_name  || "",
+          lastName:  data.last_name   || "",
+          username:  data.username    || "",
+          imageUrl:  data.image_url   || "",
+          role:      "USER",
         },
-        {
-          upsert: true,
-          new:    true,
-        }
-      );
+        create: {
+          clerkId:   data.id,
+          email:     primaryEmail,
+          firstName: data.first_name  || "",
+          lastName:  data.last_name   || "",
+          username:  data.username    || "",
+          imageUrl:  data.image_url   || "",
+          role:      "USER",
+        },
+      });
     } catch (err: any) {
-      // If there *is* still a duplicate error, log but don’t crash
-      if (err.code === 11000) {
-        console.warn("⚠️ Duplicate key conflict on upsert:", err.keyValue);
+      if (err.code === "P2002") {
+        console.warn("⚠️ Duplicate key conflict on upsert:", err.meta?.target);
       } else {
         throw err;
       }
