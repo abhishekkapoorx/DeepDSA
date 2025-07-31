@@ -4,6 +4,8 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+
+
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -25,6 +27,10 @@ model User {
   role       Role     @default(USER)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  
+  // Relations
+  submissions Submission[]
+  progress    UserProgress?
 }
 
 enum Role {
@@ -47,7 +53,12 @@ model Problem {
   testCases      TestCase[]
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  
+  // Relations
+  submissions    Submission[]
 }
+
+
 
 enum Difficulty {
   EASY
@@ -62,4 +73,74 @@ model TestCase {
   isHidden   Boolean  @default(false)
   problem    Problem  @relation(fields: [problemId], references: [id])
   problemId  String   @db.ObjectId
+  
+  // Relations
+  results    TestResult[]
+}
+
+
+enum SubmissionStatus {
+  PENDING
+  RUNNING
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  RUNTIME_ERROR
+  COMPILATION_ERROR
+}
+
+
+model Submission {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String        @db.ObjectId
+  problemId   String        @db.ObjectId
+  code        String        // User's submitted code
+  language    String        // Programming language (javascript, python, java, etc.)
+  languageId  Int?          // Judge0 language ID
+  status      SubmissionStatus
+  judge0Token String?       // Judge0 submission token
+  runtime     Int?          // Execution time in milliseconds
+  memory      Int?          // Memory usage in KB
+  testsPassed Int           @default(0)
+  totalTests  Int           @default(0)
+  errorMessage String?      // Compilation or runtime errors
+  stdout      String?       // Standard output from Judge0
+  stderr      String?       // Standard error from Judge0
+  createdAt   DateTime      @default(now())
+  
+  user        User          @relation(fields: [userId], references: [id])
+  problem     Problem       @relation(fields: [problemId], references: [id])
+  results     TestResult[]
+}
+
+
+model TestResult {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  submissionId String     @db.ObjectId
+  testCaseId   String     @db.ObjectId
+  passed       Boolean
+  actualOutput String?
+  runtime      Int?       // Time for this specific test
+  memory       Int?       // Memory for this specific test
+  
+  submission   Submission @relation(fields: [submissionId], references: [id])
+  testCase     TestCase   @relation(fields: [testCaseId], references: [id])
+}
+
+model UserProgress {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String   @db.ObjectId @unique
+  totalSolved       Int      @default(0)
+  easySolved        Int      @default(0)
+  mediumSolved      Int      @default(0)
+  hardSolved        Int      @default(0)
+  totalSubmissions  Int      @default(0)
+  acceptanceRate    Float    @default(0.0)
+  currentStreak     Int      @default(0)
+  maxStreak         Int      @default(0)
+  lastSolvedAt      DateTime?
+  ranking           Int?
+  
+  user              User     @relation(fields: [userId], references: [id])
 }
