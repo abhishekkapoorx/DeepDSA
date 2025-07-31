@@ -29,10 +29,10 @@ const layoutConfig = {
     tabEnableRename: false,
 
     "splitterEnableHandle": true,
-		"tabEnablePopout": false,
-		"tabSetEnableActiveIcon": true,
-		"borderMinSize": 500,
-		"borderEnableTabScrollbar": true
+    "tabEnablePopout": false,
+    "tabSetEnableActiveIcon": true,
+    "borderMinSize": 500,
+    "borderEnableTabScrollbar": true
   },
   borders: [],
   layout: {
@@ -48,6 +48,24 @@ const layoutConfig = {
             name: "Description",
             component: "description",
             id: "description",
+          },
+          {
+            type: "tab",
+            name: "Editorial",
+            component: "editorial",
+            id: "editorial",
+          },
+          {
+            type: "tab",
+            name: "Solutions",
+            component: "solutions",
+            id: "solutions",
+          },
+          {
+            type: "tab",
+            name: "Submissions",
+            component: "submissions",
+            id: "submissions",
           },
         ],
       },
@@ -65,6 +83,18 @@ const layoutConfig = {
                 component: "editor",
                 id: "editor",
               },
+              {
+                type: "tab",
+                name: "AI Interview",
+                component: "ai-interview",
+                id: "ai-interview",
+              },
+              {
+                type: "tab",
+                name: "Code Visualization",
+                component: "code-visualization",
+                id: "code-visualization",
+              },
             ],
           },
           {
@@ -77,6 +107,12 @@ const layoutConfig = {
                 component: "testcase",
                 id: "testcase",
               },
+              {
+                type: "tab",
+                name: "Test Results",
+                component: "test-results",
+                id: "test-results",
+              },
             ],
           },
         ],
@@ -88,7 +124,7 @@ const layoutConfig = {
 export default function ProblemDetailPage() {
   const factory = (node: FlexLayout.TabNode) => {
     const component = node.getComponent();
-    
+
     switch (component) {
       case "description":
         return <ProblemDescription problem={dummyProblem} />;
@@ -96,6 +132,18 @@ export default function ProblemDetailPage() {
         return <CodeEditor starterCode={dummyProblem.starterCode} />;
       case "testcase":
         return <TestcasePanel testcases={dummyProblem.testcases} />;
+      case "editorial":
+        return <div className="p-4">Editorial content coming soon.</div>;
+      case "solutions":
+        return <div className="p-4">Solutions will be shown here.</div>;
+      case "submissions":
+        return <div className="p-4">Your submissions will appear here.</div>;
+      case "ai-interview":
+        return <div className="p-4">AI Interview feature coming soon.</div>;
+      case "code-visualization":
+        return <div className="p-4">Code Visualization coming soon.</div>;
+      case "test-results":
+        return <div className="p-4">Your test results will appear here.</div>;
       default:
         return <div>Component not found</div>;
     }
@@ -106,7 +154,7 @@ export default function ProblemDetailPage() {
     if (node instanceof FlexLayout.TabSetNode && node.getChildren().some((child: any) => child.getComponent() === "editor")) {
       renderValues.stickyButtons.push(
         <div key="language-selector" className="language-selector flex items-center mr-2">
-          <select 
+          <select
             defaultValue="java"
             className="px-2 py-1 text-xs font-medium bg-muted text-foreground border border-border rounded hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer min-w-[80px]"
           >

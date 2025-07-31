@@ -40,6 +40,16 @@
   
 }
 
+.flexlayout__tab_button--unselected {
+  background-color: var(--muted) !important;
+  color: var(--foreground) !important;
+  border-radius: 0.5rem;
+}
+
+.flexlayout__tabset_tabbar_inner_tab_container_top{
+  gap: 0.5rem !important;
+}
+
 .flexlayout__tabset_content {
   border-radius: 0.5rem;
 }
