@@ -77,8 +77,8 @@ class APIError extends Error {
   // Async error handler
   const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void> | void) => 
     (req: Request, res: Response, next: NextFunction) => {
-      Promise.resolve(fn(req, res, next)).catch(next);
-    };
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
   
   // Global error handler
   const globalErrorhandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -92,7 +92,7 @@ class APIError extends Error {
       });
     }
   
-        // Handling Mongoose ValidationError
+    // Handling Mongoose ValidationError
     else if (err.name === "ValidationError") {
       const validationErr = err as ValidationError;
       return res.status(400).json({
@@ -101,7 +101,7 @@ class APIError extends Error {
         details: validationErr.errors, // Optionally send detailed validation errors
       });
     }
-
+  
     // Handling MongoDB errors like duplicate keys
     else if ((err as MongoError).code === 11000) {
       return res.status(409).json({
@@ -109,7 +109,7 @@ class APIError extends Error {
         message: "Duplicate field value entered",
       });
     }
-
+  
     // Handling CastError (invalid ObjectId in MongoDB)
     else if (err.name === "CastError") {
       const castErr = err as CastError;

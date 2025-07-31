@@ -98,11 +98,7 @@ services:
     restart: unless-stopped
     profiles:
       - tunnel
-    develop:
-      watch:
-        - action: rebuild
-          path: ./ngrok.yml
-          # target: /etc/ngrok.yml
+    
 
   # MongoDB service
   mongo:
