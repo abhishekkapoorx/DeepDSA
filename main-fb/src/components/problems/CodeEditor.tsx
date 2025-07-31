@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MonacoEditor from '@monaco-editor/react';
+import { useTheme } from '@/components/theme';
 
 interface CodeEditorProps {
   starterCode: string;
@@ -7,29 +8,8 @@ interface CodeEditorProps {
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
   // Detect theme from document class or system preference
-  const [theme, setTheme] = useState('vs-dark');
-  
-  useEffect(() => {
-    const updateTheme = () => {
-      const isDark = document.documentElement.classList.contains('dark') || 
-                    window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(isDark ? 'vs-dark' : 'vs');
-    };
-    
-    updateTheme();
-    
-    // Listen for theme changes
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addListener(updateTheme);
-    
-    return () => {
-      observer.disconnect();
-      mediaQuery.removeListener(updateTheme);
-    };
-  }, []);
+  const { theme } = useTheme();
+  const editorTheme = theme === 'dark' ? 'vs-dark' : 'vs';
 
   return (
     <div className="w-full h-full bg-background">
@@ -38,12 +18,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
         width="100%"
         defaultLanguage="java"
         defaultValue={starterCode}
-        theme={theme}
+        theme={editorTheme}
         options={{ 
           fontSize: 14,
           fontFamily: 'JetBrains Mono, Fira Code, Consolas, monospace',
           lineNumbers: 'on',
-          minimap: { enabled: false },
+          minimap: { enabled: true },
           scrollBeyondLastLine: false,
           automaticLayout: true,
           tabSize: 4,
@@ -53,12 +33,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
           padding: { top: 8, bottom: 8 },
           bracketPairColorization: { enabled: true },
           guides: {
-            bracketPairs: true,
+            bracketPairs: false,
             indentation: true
           },
           suggest: {
             showKeywords: true,
-            showSnippets: true
+            showSnippets: true,
+            showReferences: true,
           }
         }}
       />

@@ -24,9 +24,15 @@ const dummyProblem: Problem = {
 const layoutConfig = {
   global: {
     tabEnableClose: false,
-    tabEnableFloat: true,
+    tabEnableFloat: false,
     tabEnableDrag: true,
     tabEnableRename: false,
+
+    "splitterEnableHandle": true,
+		"tabEnablePopout": false,
+		"tabSetEnableActiveIcon": true,
+		"borderMinSize": 500,
+		"borderEnableTabScrollbar": true
   },
   borders: [],
   layout: {

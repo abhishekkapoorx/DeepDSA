@@ -1,30 +1,51 @@
 /* Minimal FlexLayout Theme - LeetCode Style */
-@import 'flexlayout-react/style/light.css';
+@import 'flexlayout-react/style/rounded.css';
 
 /* Override only essential FlexLayout styles */
 .flexlayout__layout {
-  /* font-family: inherit; */
+  font-family: var(--font-sans) !important;
   position: relative;
   height: 100%;
   width: 100%;
+  background-color: var(--background) !important;
 }
 
 .flexlayout__tabset {
-  border-radius: 8px;
+  border-radius: 0.5rem !important;
   overflow: hidden;
+  background-color: var(--muted) !important;
+}
+
+.flexlayout__tabset_container {
+  background-color: var(--muted) !important;
+  border-radius: 0.5rem !important;
 }
 
 .flexlayout__tabset_header {
-  border-radius: 8px 8px 0 0;
+  border-radius: 0.5rem !important;
+}
+
+.flexlayout__tabset_tabbar_outer_top {
+  background-color: var(--muted) !important;
+}
+
+.flexlayout__splitter {
+  background-color: var(--background) !important;
+}
+
+.flexlayout__tab_button--selected {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  border-radius: 0.5rem;
+  
 }
 
 .flexlayout__tabset_content {
-  border-radius: 0 0 8px 8px;
+  border-radius: 0.5rem;
 }
 
 .flexlayout__tab {
-  border-radius: 6px;
-  margin: 4px 2px;
+  border-radius: 0.5rem;
   transition: all 0.2s ease;
 }
 
@@ -33,32 +54,52 @@
 }
 
 .flexlayout__splitter:hover {
-  background: hsl(var(--primary));
+  background: var(--primary);
 }
 
 /* FlexLayout tab styling overrides */
 .flexlayout__tab {
-  background: hsl(var(--muted)) !important;
-  color: hsl(var(--muted-foreground)) !important;
+  background: var(--muted) !important;
+  color: var(--muted-foreground) !important;
   border: none !important;
 }
 
 .flexlayout__tab:hover {
-  background: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+  background: var(--accent) !important;
+  color: var(--accent-foreground) !important;
 }
 
 .flexlayout__tab--selected {
-  background: hsl(var(--background)) !important;
-  color: hsl(var(--foreground)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  /* border: 1px solid var(--border) !important; */
 }
 
 .flexlayout__tabset_header {
-  background: hsl(var(--background)) !important;
-  border-bottom: 1px solid hsl(var(--border)) !important;
+  background: var(--background) !important;
+  /* border-bottom: 1px solid var(--border) !important; */
 }
 
 .flexlayout__tabset_content {
-  background: hsl(var(--background)) !important;
+  background: var(--muted) !important;
+  padding: 0.5rem !important;
 }
+
+.flexlayout__tab_button_content { 
+  font-family: var(--font-sans) !important;
+  font-weight: var(--font-weight-medium) !important;
+  font-size: var(--text-sm) !important;
+  color: var(--muted-foreground) !important;
+}
+
+.flexlayout__tabset_tab_divider {
+  background-color: var(--muted-foreground) !important;
+  height: 1rem !important;
+  border-radius: 0.5rem !important;
+  margin: auto !important;
+  width: 1px !important;
+}
+
+/* .flexlayout__tabset_tab_divider_inner {
+  background-color: var(--border) !important;
+} */
