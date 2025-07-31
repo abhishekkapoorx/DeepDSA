@@ -20,6 +20,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DeepDSA",
   description: "DeepDSA - A platform for DSA enthusiasts",
+  icons: {
+    icon: [
+      {
+        url: '/SVG/LOGO_TRANS_DARK.svg',
+        media: '(prefers-color-scheme: dark)',
+      },
+      {
+        url: '/SVG/LOGO_TRANS_LIGHT.svg',
+        media: '(prefers-color-scheme: light)',
+      },
+    ],
+    shortcut: '/SVG/LOGO_TRANS_LIGHT.svg',
+    apple: '/SVG/LOGO_TRANS_LIGHT.svg',
+  },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

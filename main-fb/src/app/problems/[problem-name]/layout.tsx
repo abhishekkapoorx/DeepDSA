@@ -4,13 +4,14 @@ import { ProblemNavbar } from '@/components/problems/ProblemNavbar';
 
 interface ProblemLayoutPageProps {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     'problem-name': string;
-  };
+  }>;
 }
 
 export default function ProblemLayoutPage({ children, params }: ProblemLayoutPageProps) {
-  const problemName = params['problem-name'];
+  const resolvedParams = React.use(params);
+  const problemName = resolvedParams['problem-name'];
   
   const handleSubmit = () => {
     console.log('Submit solution');

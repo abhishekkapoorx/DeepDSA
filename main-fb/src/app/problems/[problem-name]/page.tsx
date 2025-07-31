@@ -1,8 +1,10 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import * as FlexLayout from "flexlayout-react";
 import "./flexlayout-theme.css";
 import { ProblemDescription, CodeEditor, TestcasePanel, type Problem } from "@/components/problems";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { desktopLayoutConfig, mobileLayoutConfig } from "@/config/layoutConfigs";
 
 // Dummy data for now; replace with real data fetching
 const dummyProblem: Problem = {
@@ -20,109 +22,15 @@ const dummyProblem: Problem = {
   ],
 };
 
-// FlexLayout configuration
-const layoutConfig = {
-  global: {
-    tabEnableClose: false,
-    tabEnableFloat: false,
-    tabEnableDrag: true,
-    tabEnableRename: false,
-
-    "splitterEnableHandle": true,
-    "tabEnablePopout": false,
-    "tabSetEnableActiveIcon": true,
-    "borderMinSize": 500,
-    "borderEnableTabScrollbar": true,
-    "relativeTabSize": true,
-  },
-  borders: [],
-  layout: {
-    type: "row",
-    weight: 100,
-    children: [
-      {
-        type: "tabset",
-        weight: 50,
-        children: [
-          {
-            type: "tab",
-            name: "Description",
-            component: "description",
-            id: "description",
-          },
-          {
-            type: "tab",
-            name: "Editorial",
-            component: "editorial",
-            id: "editorial",
-          },
-          {
-            type: "tab",
-            name: "Solutions",
-            component: "solutions",
-            id: "solutions",
-          },
-          {
-            type: "tab",
-            name: "Submissions",
-            component: "submissions",
-            id: "submissions",
-          },
-        ],
-      },
-      {
-        type: "col",
-        weight: 50,
-        children: [
-          {
-            type: "tabset",
-            weight: 50,
-            children: [
-              {
-                type: "tab",
-                name: "Code",
-                component: "editor",
-                id: "editor",
-              },
-              {
-                type: "tab",
-                name: "AI Interview",
-                component: "ai-interview",
-                id: "ai-interview",
-              },
-              {
-                type: "tab",
-                name: "Code Visualization",
-                component: "code-visualization",
-                id: "code-visualization",
-              },
-            ],
-          },
-          {
-            type: "tabset",
-            weight: 50,
-            children: [
-              {
-                type: "tab",
-                name: "Testcase",
-                component: "testcase",
-                id: "testcase",
-              },
-              {
-                type: "tab",
-                name: "Test Results",
-                component: "test-results",
-                id: "test-results",
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-};
-
 export default function ProblemDetailPage() {
+  const isMobile = useIsMobile();
+  
+  // Create the layout model with useMemo to ensure it updates when isMobile changes
+  const layoutModel = useMemo(() => {
+    const config = isMobile ? mobileLayoutConfig : desktopLayoutConfig;
+    return FlexLayout.Model.fromJson(config);
+  }, [isMobile]);
+
   const factory = (node: FlexLayout.TabNode) => {
     const component = node.getComponent();
 
@@ -151,8 +59,8 @@ export default function ProblemDetailPage() {
   };
 
   const onRenderTabSet = (node: FlexLayout.TabSetNode | FlexLayout.BorderNode, renderValues: FlexLayout.ITabSetRenderValues) => {
-    // Add language selector to Code tab header
-    if (node instanceof FlexLayout.TabSetNode && node.getChildren().some((child: any) => child.getComponent() === "editor")) {
+    // Add language selector to Code tab header (only on desktop)
+    if (!isMobile && node instanceof FlexLayout.TabSetNode && node.getChildren().some((child: any) => child.getComponent() === "editor")) {
       renderValues.stickyButtons.push(
         <div key="language-selector" className="language-selector flex items-center mr-2">
           <select
@@ -175,10 +83,11 @@ export default function ProblemDetailPage() {
       <div className="h-full p-2">
         <div className="h-full w-full rounded-lg overflow-hidden border border-border/50">
           <FlexLayout.Layout
-            model={FlexLayout.Model.fromJson(layoutConfig)}
+            model={layoutModel}
             factory={factory}
             onRenderTabSet={onRenderTabSet}
             realtimeResize
+            key={isMobile ? 'mobile' : 'desktop'} // Force re-render when layout changes
           />
         </div>
       </div>
