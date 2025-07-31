@@ -60,7 +60,7 @@
 }
 
 .flexlayout__splitter {
-  transition: background-color 0.2s ease;
+  transition: background-color 0.3s ease;
 }
 
 .flexlayout__splitter:hover {
@@ -100,6 +100,11 @@
   font-weight: var(--font-weight-medium) !important;
   font-size: var(--text-sm) !important;
   color: var(--muted-foreground) !important;
+}
+
+.flexlayout__splitter_drag {
+  background-color: var(--color-blue-500) !important;
+  /* width: 0.1rem !important; */
 }
 
 .flexlayout__tabset_tab_divider {

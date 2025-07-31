@@ -32,7 +32,8 @@ const layoutConfig = {
     "tabEnablePopout": false,
     "tabSetEnableActiveIcon": true,
     "borderMinSize": 500,
-    "borderEnableTabScrollbar": true
+    "borderEnableTabScrollbar": true,
+    "relativeTabSize": true,
   },
   borders: [],
   layout: {
@@ -177,6 +178,7 @@ export default function ProblemDetailPage() {
             model={FlexLayout.Model.fromJson(layoutConfig)}
             factory={factory}
             onRenderTabSet={onRenderTabSet}
+            realtimeResize
           />
         </div>
       </div>
