@@ -44,8 +44,8 @@ services:
     container_name: deepdsa-frontend-dev
     ports:
       - "3000:3000"
-    # environment:
-    #   - DATABASE_URL=mongodb://mongo:27017/deepdsa
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017/deepdsa
     env_file:
       - ./main-fb/.env
     depends_on:
