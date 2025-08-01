@@ -84,8 +84,8 @@ export default function ProblemDetailPage() {
   };
 
   return (
-    <div className="h-full w-full bg-background text-foreground">
-      {/* Main layout container - full height available (navbar handled by layout) */}
+    <div className="h-screen w-full bg-background text-foreground">
+      {/* Main layout container - full screen height since navbar is hidden */}
       <div className="h-full p-2">
         <div className="h-full w-full rounded-lg overflow-hidden border border-border/50">
           <FlexLayout.Layout
