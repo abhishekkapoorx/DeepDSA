@@ -143,13 +143,16 @@ services:
     image: judge0/judge0:1.13.1
     container_name: deepdsa-judge0-server-dev
     volumes:
-      - ./judge/judge0.conf:/judge0.conf:ro
+      - ./judge0.conf:/judge0.conf:ro
     ports:
       - "2358:2358"
     privileged: true
     networks:
       - deepdsa-network
     restart: unless-stopped
+    depends_on:
+      - db
+      - redis
     logging:
       driver: json-file
       options:
@@ -158,22 +161,26 @@ services:
   judge0-workers:
     image: judge0/judge0:1.13.1
     container_name: deepdsa-judge0-workers-dev
-    command: ["./scripts/workers"]
+    command: ["bash", "-c", "sleep 10 && ./scripts/workers"]
     volumes:
-      - ./judge/judge0.conf:/judge0.conf:ro
+      - ./judge0.conf:/judge0.conf:ro
     privileged: true
     networks:
       - deepdsa-network
     restart: unless-stopped
+    depends_on:
+      # - db
+      # - redis
+      - judge0-server
     logging:
       driver: json-file
       options:
         max-size: 100M
 
-  judge0-db:
+  db:
     image: postgres:16.2
     container_name: deepdsa-judge0-db-dev
-    env_file: ./judge/judge0.conf
+    env_file: judge0.conf
     volumes:
       - judge0_data_dev:/var/lib/postgresql/data/
     networks:
@@ -184,17 +191,19 @@ services:
       options:
         max-size: 100M
 
-  judge0-redis:
+  redis:
     image: redis:7.2.4
-    container_name: deepdsa-judge0-redis-dev
+    container_name: deepdsa-redis-dev
     command: [
       "bash", "-c",
-      'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD"'
+      'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD" && sleep 10',
     ]
-    env_file: ./judge/judge0.conf
+    env_file: judge0.conf
     networks:
       - deepdsa-network
     restart: unless-stopped
+    volumes:
+      - redis_data_dev:/data
     logging:
       driver: json-file
       options:
@@ -212,4 +221,4 @@ volumes:
 
 networks:
   deepdsa-network:
-    driver: bridge 
+    driver: bridge

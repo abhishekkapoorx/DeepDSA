@@ -126,6 +126,16 @@ services:
     networks:
       - deepdsa-network
     restart: unless-stopped
+    depends_on:
+      judge0-db:
+        condition: service_healthy
+      judge0-redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=judge0-redis
+      - REDIS_PASSWORD=68zzFzRSDNw3ZpaNucnzKVPFWJcqBMMs
+      - POSTGRES_HOST=judge0-db
+      - POSTGRES_PASSWORD=judge0_password
     logging:
       driver: json-file
       options:
@@ -141,6 +151,18 @@ services:
     networks:
       - deepdsa-network
     restart: unless-stopped
+    depends_on:
+      judge0-db:
+        condition: service_healthy
+      judge0-redis:
+        condition: service_healthy
+      judge0-server:
+        condition: service_started
+    environment:
+      - REDIS_HOST=judge0-redis
+      - REDIS_PASSWORD=68zzFzRSDNw3ZpaNucnzKVPFWJcqBMMs
+      - POSTGRES_HOST=judge0-db
+      - POSTGRES_PASSWORD=judge0_password
     logging:
       driver: json-file
       options:
@@ -155,6 +177,11 @@ services:
     networks:
       - deepdsa-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     logging:
       driver: json-file
       options:
@@ -168,9 +195,16 @@ services:
       'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD"'
     ]
     env_file: ./judge/judge0.conf
+    environment:
+      - REDIS_PASSWORD=68zzFzRSDNw3ZpaNucnzKVPFWJcqBMMs
     networks:
       - deepdsa-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "68zzFzRSDNw3ZpaNucnzKVPFWJcqBMMs", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     logging:
       driver: json-file
       options:
