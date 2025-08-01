@@ -10,7 +10,7 @@ tunnels:
     addr: frontend:3000
     proto: http
     inspect: true
-    url: martin-precious-possum.ngrok-free.app 
+    url: werewolf-refined-urgently.ngrok-free.app
 
   mongo:
     addr: mongo:27017

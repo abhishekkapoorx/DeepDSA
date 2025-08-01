@@ -117,18 +117,7 @@ services:
       - deepdsa-network
     restart: unless-stopped
 
-  # Redis service for caching and sessions
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: deepdsa-redis-dev
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis_data_dev:/data
-  #   networks:
-  #     - deepdsa-network
-  #   restart: unless-stopped
-  #   command: redis-server --appendonly yes
+
 
   # MongoDB Express (for development)
   mongo-express:
@@ -149,12 +138,76 @@ services:
       - deepdsa-network
     restart: unless-stopped
 
+  # Judge0 Code Execution Service
+  judge0-server:
+    image: judge0/judge0:1.13.1
+    container_name: deepdsa-judge0-server-dev
+    volumes:
+      - ./judge/judge0.conf:/judge0.conf:ro
+    ports:
+      - "2358:2358"
+    privileged: true
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+
+  judge0-workers:
+    image: judge0/judge0:1.13.1
+    container_name: deepdsa-judge0-workers-dev
+    command: ["./scripts/workers"]
+    volumes:
+      - ./judge/judge0.conf:/judge0.conf:ro
+    privileged: true
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+
+  judge0-db:
+    image: postgres:16.2
+    container_name: deepdsa-judge0-db-dev
+    env_file: ./judge/judge0.conf
+    volumes:
+      - judge0_data_dev:/var/lib/postgresql/data/
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+
+  judge0-redis:
+    image: redis:7.2.4
+    container_name: deepdsa-judge0-redis-dev
+    command: [
+      "bash", "-c",
+      'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD"'
+    ]
+    env_file: ./judge/judge0.conf
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+
 volumes:
   mongo_data_dev:
     driver: local
   redis_data_dev:
     driver: local
   next_cache:
+    driver: local
+  judge0_data_dev:
     driver: local
 
 networks:
