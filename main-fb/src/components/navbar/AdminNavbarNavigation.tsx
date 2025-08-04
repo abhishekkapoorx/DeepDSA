@@ -1,0 +1,35 @@
+"use client"
+import React from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { adminNavigation } from '@/config/adminNavigation'
+
+export const AdminNavbarNavigation: React.FC = () => {
+  const pathname = usePathname()
+
+  const navigationItems = adminNavigation.map(item => ({
+    href: item.href,
+    label: item.name
+  }))
+
+  return (
+    <div className="hidden md:flex items-center space-x-8">
+      {navigationItems.map((item) => {
+        const isActive = pathname === item.href
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`text-sm font-medium transition-colors hover:text-primary ${
+              isActive 
+                ? 'text-primary border-b-2 border-primary' 
+                : 'text-muted-foreground'
+            }`}
+          >
+            {item.label}
+          </Link>
+        )
+      })}
+    </div>
+  )
+} 

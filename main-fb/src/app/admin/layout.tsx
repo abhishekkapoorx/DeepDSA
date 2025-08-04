@@ -1,21 +1,14 @@
 import React from 'react'
-import { AdminHeader, AdminMobileNav, AdminFooter } from '@/components/admin'
-import { adminNavigation } from '@/config/adminNavigation'
+import { AdminNavbar } from '@/components/navbar'
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-background">
-      {/* Admin Header */}
-      <AdminHeader navigation={adminNavigation} />
-
-      {/* Mobile Navigation */}
-      <AdminMobileNav navigation={adminNavigation} />
+      {/* Admin Navbar */}
+      <AdminNavbar />
 
       {/* Main Content */}
-      <main>{children}</main>
-
-      {/* Footer */}
-      <AdminFooter />
+      <main className="pt-16">{children}</main>
     </div>
   )
 }
