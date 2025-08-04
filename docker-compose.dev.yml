@@ -110,6 +110,7 @@ services:
       - "27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=deepdsa
+    command: ["--replSet", "rs0"]
     volumes:
       - mongo_data_dev:/data/db
       - ./backend/mongo-init:/docker-entrypoint-initdb.d
