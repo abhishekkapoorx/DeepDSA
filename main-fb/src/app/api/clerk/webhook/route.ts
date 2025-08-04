@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { type, data } = evt;
+  
   if (type === "user.created" || type === "user.updated") {
     const primaryEmail = data.email_addresses.find(
       (e: any) => e.id === data.primary_email_address_id
@@ -43,10 +44,26 @@ export async function POST(req: NextRequest) {
           role:      "USER",
         },
       });
+      console.log(`✅ User ${type}: ${data.id}`);
     } catch (err: any) {
       if (err.code === "P2002") {
         console.warn("⚠️ Duplicate key conflict on upsert:", err.meta?.target);
       } else {
+        console.error(`❌ Error in user ${type}:`, err);
+        throw err;
+      }
+    }
+  } else if (type === "user.deleted") {
+    try {
+      await prisma.user.delete({
+        where: { clerkId: data.id },
+      });
+      console.log(`✅ User deleted: ${data.id}`);
+    } catch (err: any) {
+      if (err.code === "P2025") {
+        console.warn("⚠️ User not found for deletion:", data.id);
+      } else {
+        console.error(`❌ Error deleting user:`, err);
         throw err;
       }
     }

@@ -6,13 +6,18 @@ export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth()
     
+    console.log('🔍 Auth userId:', userId)
+    
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user has admin privileges
     const user = await prisma.user.findUnique({ where: { clerkId: userId } })
+    console.log('🔍 Found user:', user)
+    
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+      console.log('❌ Access denied - User role:', user?.role)
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
@@ -60,6 +65,8 @@ export async function GET(req: NextRequest) {
       }),
       prisma.user.count({ where })
     ])
+
+    console.log('📊 Query results:', { users: users.length, total, where })
 
     return NextResponse.json({
       users,
