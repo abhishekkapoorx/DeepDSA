@@ -47,8 +47,8 @@ model Problem {
   tags           String[]
   starterCode    String
   functionName   String
-  inputVariables String
-  outputVariable String
+  inputVariables InputVariable[]
+  outputVariable OutputVariable?
   hints          String[]
   testCases      TestCase[]
   createdAt      DateTime    @default(now())
@@ -56,6 +56,23 @@ model Problem {
   
   // Relations
   submissions    Submission[]
+}
+
+model InputVariable {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  type        String   // e.g., "number[]", "string", "number"
+  description String?
+  problem     Problem  @relation(fields: [problemId], references: [id])
+  problemId   String   @db.ObjectId
+}
+
+model OutputVariable {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  type        String   // e.g., "number[]", "string", "number"
+  description String?
+  problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problemId   String   @unique @db.ObjectId
 }
 
 
@@ -67,15 +84,18 @@ enum Difficulty {
 }
 
 model TestCase {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  input      String
-  output     String
-  isHidden   Boolean  @default(false)
-  problem    Problem  @relation(fields: [problemId], references: [id])
-  problemId  String   @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @default("Test Case")
+  description String?
+  input       String   // JSON string of input parameters
+  output      String   // Expected output (can be JSON or primitive)
+  isHidden    Boolean  @default(false)
+  isExample   Boolean  @default(false) // Whether this is an example test case
+  problem     Problem  @relation(fields: [problemId], references: [id])
+  problemId   String   @db.ObjectId
   
   // Relations
-  results    TestResult[]
+  results     TestResult[]
 }
 
 

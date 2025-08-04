@@ -35,8 +35,65 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Validate input variables
+    if (!Array.isArray(inputVariables) || inputVariables.length === 0) {
+      return NextResponse.json({ error: 'At least one input variable is required' }, { status: 400 })
+    }
+
+    for (const inputVar of inputVariables) {
+      if (!inputVar.name || !inputVar.type) {
+        return NextResponse.json({ error: 'Input variables must have name and type' }, { status: 400 })
+      }
+    }
+
+    // Validate output variable
+    if (!outputVariable.type) {
+      return NextResponse.json({ error: 'Output variable type is required' }, { status: 400 })
+    }
+
+    // Validate test cases
+    if (!Array.isArray(testCases) || testCases.length === 0) {
+      return NextResponse.json({ error: 'At least one test case is required' }, { status: 400 })
+    }
+
+    for (const testCase of testCases) {
+      if (!testCase.input || !testCase.output) {
+        return NextResponse.json({ error: 'Test cases must have both input and output' }, { status: 400 })
+      }
+      
+      // Validate that input is not empty and is a string
+      if (typeof testCase.input !== 'string' || testCase.input.trim() === '') {
+        return NextResponse.json({ error: `Invalid input format in test case: ${testCase.name || 'unnamed'}` }, { status: 400 })
+      }
+      
+      // Validate that output is not empty and is a string
+      if (typeof testCase.output !== 'string' || testCase.output.trim() === '') {
+        return NextResponse.json({ error: `Invalid output format in test case: ${testCase.name || 'unnamed'}` }, { status: 400 })
+      }
+    }
+
     // Process tags
     const tagsArray = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
+
+        // Convert inputVariables and outputVariable to JSON strings
+    const inputVariablesString = Array.isArray(inputVariables) 
+      ? JSON.stringify(inputVariables.map((inputVar: any) => ({
+          name: inputVar.name,
+          type: inputVar.type,
+          description: inputVar.description || null
+        })))
+      : typeof inputVariables === 'string' 
+        ? inputVariables 
+        : JSON.stringify(inputVariables);
+
+    const outputVariableString = typeof outputVariable === 'object' && outputVariable !== null
+      ? JSON.stringify({
+          type: outputVariable.type,
+          description: outputVariable.description || null
+        })
+      : typeof outputVariable === 'string'
+        ? outputVariable
+        : JSON.stringify(outputVariable);
 
     // Create problem with test cases
     const problem = await prisma.problem.create({
@@ -47,9 +104,9 @@ export async function POST(req: NextRequest) {
         tags: tagsArray,
         starterCode,
         functionName,
-        inputVariables,
-        outputVariable,
         hints: hints || [],
+        inputVariables: inputVariablesString,
+        outputVariable: outputVariableString,
         testCases: {
           create: testCases?.map((testCase: any) => ({
             input: testCase.input,
