@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Sidebar, ProblemList, RightSidebar, FeaturedCourses, TopicFilters } from './index';
+import { Button } from '../ui/button';
 
 export default function ProblemsPage() {
   const [selectedTopic, setSelectedTopic] = useState('All Topics');
@@ -29,21 +30,23 @@ export default function ProblemsPage() {
   return (
     <div className="min-h-screen bg-background flex pt-16">
       {/* Mobile Menu Button */}
-      <button
-        className="lg:hidden fixed top-20 left-4 z-50 p-2 bg-card border border-border rounded-md"
+      <Button
+        variant='ghost'
+        className="lg:hidden fixed top-20 left-4 z-50 p-2 "
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
         {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
+      </Button>
 
       {/* Desktop Sidebar Toggle Button */}
-      <button
-        className={`hidden lg:flex fixed top-20 z-50 p-2 bg-card border border-border rounded-md hover:bg-accent transition-all duration-300 ease-in-out ${isSidebarOpen ? 'left-4' : 'left-4'}`}
+      <Button
+        variant='ghost'
+        className={`hidden lg:flex fixed top-20 z-50 p-2  transition-all duration-300 ease-in-out ${isSidebarOpen ? 'left-4' : 'left-4'}`}
         onClick={toggleSidebar}
         title={`${isSidebarOpen ? 'Hide' : 'Show'} Sidebar (Ctrl+B)`}
       >
         {isSidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
-      </button>
+      </Button>
 
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (

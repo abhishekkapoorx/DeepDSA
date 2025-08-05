@@ -1,4 +1,5 @@
 import { CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 
 interface Problem {
   id: number;
@@ -110,51 +111,68 @@ export default function ProblemList({ selectedTopic, searchQuery }: ProblemListP
     return matchesTopic && matchesSearch;
   });
 
+  // Helper function to convert problem title to URL slug
+  const createProblemSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .trim();
+  };
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-6">
         <div className="space-y-2">
-          {filteredProblems.map((problem) => (
-            <div
-              key={problem.id}
-              className="flex items-center p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors"
-            >
-              {/* Problem Number and Title */}
-              <div className="flex-1 flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  {problem.isSolved && (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  )}
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {problem.id}.
-                  </span>
+          {filteredProblems.map((problem) => {
+            const problemSlug = createProblemSlug(problem.title);
+            
+            return (
+              <Link
+                key={problem.id}
+                href={`/problems/${problemSlug}`}
+                className="block"
+              >
+                <div className="flex items-center p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
+                  {/* Problem Number and Title */}
+                  <div className="flex-1 flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      {problem.isSolved && (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {problem.id}.
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">
+                      {problem.title}
+                    </span>
+                  </div>
+
+                  {/* Success Rate */}
+                  <div className="text-xs text-muted-foreground w-16 text-right">
+                    {problem.successRate}%
+                  </div>
+
+                  {/* Difficulty */}
+                  <div className={`text-xs font-medium w-12 text-right ${getDifficultyColor(problem.difficulty)}`}>
+                    {problem.difficulty}
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-20 ml-4">
+                    <div className="w-full bg-muted rounded-full h-1">
+                      <div
+                        className="bg-primary h-1 rounded-full transition-all duration-300"
+                        style={{ width: `${problem.progress}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-foreground">
-                  {problem.title}
-                </span>
-              </div>
-
-              {/* Success Rate */}
-              <div className="text-xs text-muted-foreground w-16 text-right">
-                {problem.successRate}%
-              </div>
-
-              {/* Difficulty */}
-              <div className={`text-xs font-medium w-12 text-right ${getDifficultyColor(problem.difficulty)}`}>
-                {problem.difficulty}
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-20 ml-4">
-                <div className="w-full bg-muted rounded-full h-1">
-                  <div
-                    className="bg-primary h-1 rounded-full transition-all duration-300"
-                    style={{ width: `${problem.progress}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
