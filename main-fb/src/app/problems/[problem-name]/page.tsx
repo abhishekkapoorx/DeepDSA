@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import * as FlexLayout from "flexlayout-react";
 import "./flexlayout-theme.css";
 import { ProblemDescription, CodeEditor, TestcasePanel, type Problem } from "@/components/problems";
@@ -11,26 +11,48 @@ import { CodeVisualization } from "@/components/problems/CodeVisualization";
 import { TestResults } from "@/components/problems/TestResults";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { desktopLayoutConfig, mobileLayoutConfig } from "@/config/layoutConfigs";
-
-// Dummy data for now; replace with real data fetching
-const dummyProblem: Problem = {
-  title: "4. Median of Two Sorted Arrays",
-  description: "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays. The overall run time complexity should be O(log (m+n)).",
-  starterCode: `class Solution {
-    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
-        // Write your solution here
-        
-    }
-}`,
-  testcases: [
-    { input: "nums1 = [1,3], nums2 = [2]", output: "2.00000" },
-    { input: "nums1 = [1,2], nums2 = [3,4]", output: "2.50000" },
-  ],
-};
+import { useParams } from "next/navigation";
 
 export default function ProblemDetailPage() {
   const isMobile = useIsMobile();
+  const params = useParams();
+  const slug = params['problem-name'] as string;
   
+  const [problem, setProblem] = useState<Problem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch problem data by slug
+  useEffect(() => {
+    const fetchProblem = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/problems/${slug}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError('Problem not found');
+          } else {
+            setError('Failed to load problem');
+          }
+          return;
+        }
+
+        const data = await response.json();
+        setProblem(data);
+      } catch (err) {
+        console.error('Error fetching problem:', err);
+        setError('Failed to load problem');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slug) {
+      fetchProblem();
+    }
+  }, [slug]);
+
   // Create the layout model with useMemo to ensure it updates when isMobile changes
   const layoutModel = useMemo(() => {
     const config = isMobile ? mobileLayoutConfig : desktopLayoutConfig;
@@ -40,15 +62,23 @@ export default function ProblemDetailPage() {
   const factory = (node: FlexLayout.TabNode) => {
     const component = node.getComponent();
 
+    if (loading) {
+      return <div className="flex items-center justify-center h-full">Loading...</div>;
+    }
+
+    if (error || !problem) {
+      return <div className="flex items-center justify-center h-full text-red-500">{error || 'Problem not found'}</div>;
+    }
+
     switch (component) {
       case "description":
-        return <ProblemDescription problem={dummyProblem} />;
+        return <ProblemDescription problem={problem} />;
       case "editor":
-        return <CodeEditor starterCode={dummyProblem.starterCode} />;
+        return <CodeEditor starterCode={problem.starterCode} />;
       case "testcase":
-        return <TestcasePanel testcases={dummyProblem.testcases} />;
+        return <TestcasePanel testcases={problem.testcases || []} />;
       case "editorial":
-        return <Editorial problemTitle={dummyProblem.title} />;
+        return <Editorial problemTitle={problem.title} />;
       case "solutions":
         return <Solutions />;
       case "submissions":
@@ -82,6 +112,22 @@ export default function ProblemDetailPage() {
       );
     }
   };
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full bg-background text-foreground flex items-center justify-center">
+        <div className="text-lg">Loading problem...</div>
+      </div>
+    );
+  }
+
+  if (error || !problem) {
+    return (
+      <div className="h-screen w-full bg-background text-foreground flex items-center justify-center">
+        <div className="text-lg text-red-500">{error || 'Problem not found'}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-full bg-background text-foreground">

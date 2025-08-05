@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { ArrowLeft, Plus, Search, Edit, Trash2, Eye } from 'lucide-react'
 
 interface Problem {
-  id: string
+  _id: string
+  slug: string
   title: string
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   tags: string[]
@@ -53,19 +54,19 @@ const ProblemsPage = () => {
     fetchProblems()
   }, [currentPage, difficultyFilter, searchTerm])
 
-  const handleDelete = async (problemId: string) => {
+  const handleDelete = async (problemSlug: string) => {
     if (!confirm('Are you sure you want to delete this problem?')) return
 
     try {
-      const response = await fetch(`/api/admin/problems/${problemId}`, {
+      const response = await fetch(`/api/admin/problems/${problemSlug}`, {
         method: 'DELETE'
       })
 
       if (response.ok) {
-        setProblems(problems.filter(p => p.id !== problemId))
+        setProblems(problems.filter(p => p.slug !== problemSlug))
         setSelectedProblems(prev => {
           const newSet = new Set(prev)
-          newSet.delete(problemId)
+          newSet.delete(problemSlug)
           return newSet
         })
       } else {
@@ -78,18 +79,18 @@ const ProblemsPage = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedProblems(new Set(problems.map(p => p.id)))
+      setSelectedProblems(new Set(problems.map(p => p.slug)))
     } else {
       setSelectedProblems(new Set())
     }
   }
 
-  const handleSelectProblem = (problemId: string, checked: boolean) => {
+  const handleSelectProblem = (problemSlug: string, checked: boolean) => {
     const newSelected = new Set(selectedProblems)
     if (checked) {
-      newSelected.add(problemId)
+      newSelected.add(problemSlug)
     } else {
-      newSelected.delete(problemId)
+      newSelected.delete(problemSlug)
     }
     setSelectedProblems(newSelected)
   }
@@ -107,7 +108,7 @@ const ProblemsPage = () => {
       
       await Promise.all(deletePromises)
       
-      setProblems(problems.filter(p => !selectedProblems.has(p.id)))
+      setProblems(problems.filter(p => !selectedProblems.has(p.slug)))
       setSelectedProblems(new Set())
       alert(`Successfully deleted ${selectedProblems.size} problem(s)`)
     } catch (error) {
@@ -125,11 +126,11 @@ const ProblemsPage = () => {
 
     setBulkActionLoading(true)
     try {
-      const updatePromises = Array.from(selectedProblems).map(async (id) => {
-        const problem = problems.find(p => p.id === id)
+      const updatePromises = Array.from(selectedProblems).map(async (slug) => {
+        const problem = problems.find(p => p.slug === slug)
         if (!problem) return
         
-        return fetch(`/api/admin/problems/${id}`, {
+        return fetch(`/api/admin/problems/${slug}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -310,12 +311,12 @@ const ProblemsPage = () => {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {problems.map((problem) => (
-                    <tr key={problem.id} className="hover:bg-muted/50">
+                    <tr key={problem.slug} className="hover:bg-muted/50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
-                          checked={selectedProblems.has(problem.id)}
-                          onChange={(e) => handleSelectProblem(problem.id, e.target.checked)}
+                          checked={selectedProblems.has(problem.slug)}
+                          onChange={(e) => handleSelectProblem(problem.slug, e.target.checked)}
                           className="rounded border-border"
                         />
                       </td>
@@ -352,18 +353,18 @@ const ProblemsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/problems/${problem.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                          <Link href={`/problems/${problem.slug}`}>
                             <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded">
                               <Eye className="h-4 w-4" />
                             </button>
                           </Link>
-                          <Link href={`/admin/problems/${problem.id}/edit`}>
+                          <Link href={`/admin/problems/${problem.slug}/edit`}>
                             <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded">
                               <Edit className="h-4 w-4" />
                             </button>
                           </Link>
                           <button
-                            onClick={() => handleDelete(problem.id)}
+                            onClick={() => handleDelete(problem.slug)}
                             className="p-2 text-destructive hover:bg-destructive/10 rounded"
                           >
                             <Trash2 className="h-4 w-4" />

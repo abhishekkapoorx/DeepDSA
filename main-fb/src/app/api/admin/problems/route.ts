@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongoose'
-import { Problem, TestCase, User } from '@/models'
+import { Problem, TestCase, User, generateSlug } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function POST(req: NextRequest) {
+  console.log("==============================================")
+  console.log("==============================================")
+  console.log("==============================================")
+  console.log("In create problem route")
+  console.log("==============================================")
+  console.log("==============================================")
+  console.log("==============================================")
   try {
     const { userId } = await auth()
     
@@ -36,6 +43,17 @@ export async function POST(req: NextRequest) {
     // Validate required fields
     if (!title || !description || !difficulty || !starterCode || !functionName || !inputVariables || !outputVariable) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Generate slug from title
+    let slug = generateSlug(title)
+    
+    // Check if slug already exists and append number if needed
+    let counter = 1
+    let originalSlug = slug
+    while (await Problem.findOne({ slug })) {
+      slug = `${originalSlug}-${counter}`
+      counter++
     }
 
     // Validate input variables
@@ -78,29 +96,10 @@ export async function POST(req: NextRequest) {
     // Process tags
     const tagsArray = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
 
-        // Convert inputVariables and outputVariable to JSON strings
-    const inputVariablesString = Array.isArray(inputVariables) 
-      ? JSON.stringify(inputVariables.map((inputVar: any) => ({
-          name: inputVar.name,
-          type: inputVar.type,
-          description: inputVar.description || null
-        })))
-      : typeof inputVariables === 'string' 
-        ? inputVariables 
-        : JSON.stringify(inputVariables);
-
-    const outputVariableString = typeof outputVariable === 'object' && outputVariable !== null
-      ? JSON.stringify({
-          type: outputVariable.type,
-          description: outputVariable.description || null
-        })
-      : typeof outputVariable === 'string'
-        ? outputVariable
-        : JSON.stringify(outputVariable);
-
     // Create problem
     const problem = new Problem({
       title,
+      slug,
       description,
       difficulty,
       tags: tagsArray,

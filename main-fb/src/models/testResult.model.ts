@@ -7,8 +7,6 @@ export interface ITestResult extends Document {
   actualOutput?: string;
   runtime?: number;
   memory?: number;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const TestResultSchema = new Schema<ITestResult>(
@@ -36,9 +34,6 @@ const TestResultSchema = new Schema<ITestResult>(
     memory: {
       type: Number,
     },
-  },
-  {
-    timestamps: true,
   }
 );
 
