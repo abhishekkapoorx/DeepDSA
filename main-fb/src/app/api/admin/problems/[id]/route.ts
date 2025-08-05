@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import dbConnect from '@/lib/mongoose'
+import { Problem, TestCase, User } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function GET(
@@ -7,18 +8,19 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const problem = await prisma.problem.findUnique({
-      where: { id: params.id },
-      include: {
-        testCases: true
-      }
-    })
+    await dbConnect()
 
+    const problem = await Problem.findById(params.id)
     if (!problem) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
     }
 
-    return NextResponse.json(problem)
+    const testCases = await TestCase.find({ problemId: params.id })
+
+    return NextResponse.json({
+      ...problem.toObject(),
+      testCases
+    })
   } catch (error) {
     console.error('Error fetching problem:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -36,8 +38,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await dbConnect()
+
     // Check if user has admin privileges
-    const user = await prisma.user.findUnique({ where: { clerkId: userId } })
+    const user = await User.findOne({ clerkId: userId })
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
@@ -59,14 +63,13 @@ export async function PUT(
     // Process tags
     const tagsArray = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : tags
 
-    // Delete existing test cases and create new ones
-    await prisma.testCase.deleteMany({
-      where: { problemId: params.id }
-    })
+    // Delete existing test cases
+    await TestCase.deleteMany({ problemId: params.id })
 
-    const problem = await prisma.problem.update({
-      where: { id: params.id },
-      data: {
+    // Update the problem
+    const updatedProblem = await Problem.findByIdAndUpdate(
+      params.id,
+      {
         title,
         description,
         difficulty,
@@ -76,20 +79,33 @@ export async function PUT(
         inputVariables,
         outputVariable,
         hints: hints || [],
-        testCases: {
-          create: testCases?.map((testCase: any) => ({
-            input: testCase.input,
-            output: testCase.output,
-            isHidden: testCase.isHidden || false
-          })) || []
-        }
       },
-      include: {
-        testCases: true
-      }
-    })
+      { new: true }
+    )
 
-    return NextResponse.json(problem)
+    if (!updatedProblem) {
+      return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
+    }
+
+    // Create new test cases if provided
+    if (testCases && testCases.length > 0) {
+      const testCaseDocs = testCases.map((testCase: any) => ({
+        input: testCase.input,
+        output: testCase.output,
+        isHidden: testCase.isHidden || false,
+        problemId: params.id
+      }))
+      
+      await TestCase.insertMany(testCaseDocs)
+    }
+
+    // Fetch updated problem with test cases
+    const finalTestCases = await TestCase.find({ problemId: params.id })
+
+    return NextResponse.json({
+      ...updatedProblem.toObject(),
+      testCases: finalTestCases
+    })
   } catch (error) {
     console.error('Error updating problem:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -107,21 +123,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await dbConnect()
+
     // Check if user has admin privileges
-    const user = await prisma.user.findUnique({ where: { clerkId: userId } })
+    const user = await User.findOne({ clerkId: userId })
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
-    // Delete test cases first (due to foreign key constraint)
-    await prisma.testCase.deleteMany({
-      where: { problemId: params.id }
-    })
+    // Delete test cases first
+    await TestCase.deleteMany({ problemId: params.id })
 
     // Delete the problem
-    await prisma.problem.delete({
-      where: { id: params.id }
-    })
+    const deletedProblem = await Problem.findByIdAndDelete(params.id)
+    
+    if (!deletedProblem) {
+      return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
+    }
 
     return NextResponse.json({ message: 'Problem deleted successfully' })
   } catch (error) {
