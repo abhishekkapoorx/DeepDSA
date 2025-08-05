@@ -27,7 +27,6 @@ export interface ISubmission extends Document {
   stdout?: string;
   stderr?: string;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 const SubmissionSchema = new Schema<ISubmission>(
@@ -86,7 +85,7 @@ const SubmissionSchema = new Schema<ISubmission>(
     },
   },
   {
-    timestamps: true,
+    timestamps: { createdAt: true, updatedAt: false },
   }
 );
 

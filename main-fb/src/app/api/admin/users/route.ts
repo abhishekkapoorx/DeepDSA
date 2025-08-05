@@ -7,6 +7,8 @@ export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth()
     
+    console.log('🔍 Auth userId:', userId)
+    
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -16,6 +18,7 @@ export async function GET(req: NextRequest) {
     // Check if user has admin privileges
     const user = await User.findOne({ clerkId: userId })
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+      console.log('❌ Access denied - User role:', user?.role)
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 

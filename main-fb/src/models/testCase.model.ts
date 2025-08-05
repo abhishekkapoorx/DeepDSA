@@ -1,9 +1,12 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
 export interface ITestCase extends Document {
+  name: string;
+  description?: string;
   input: string;
   output: string;
   isHidden: boolean;
+  isExample: boolean;
   problemId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -11,6 +14,13 @@ export interface ITestCase extends Document {
 
 const TestCaseSchema = new Schema<ITestCase>(
   {
+    name: {
+      type: String,
+      default: "Test Case",
+    },
+    description: {
+      type: String,
+    },
     input: {
       type: String,
       required: true,
@@ -20,6 +30,10 @@ const TestCaseSchema = new Schema<ITestCase>(
       required: true,
     },
     isHidden: {
+      type: Boolean,
+      default: false,
+    },
+    isExample: {
       type: Boolean,
       default: false,
     },
@@ -36,6 +50,7 @@ const TestCaseSchema = new Schema<ITestCase>(
 
 // Index for better query performance
 TestCaseSchema.index({ problemId: 1, isHidden: 1 });
+TestCaseSchema.index({ problemId: 1, isExample: 1 });
 
 const TestCase: Model<ITestCase> =
   mongoose.models.TestCase || mongoose.model<ITestCase>("TestCase", TestCaseSchema);

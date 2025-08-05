@@ -12,8 +12,6 @@ export interface IUserProgress extends Document {
   maxStreak: number;
   lastSolvedAt?: Date;
   ranking?: number;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const UserProgressSchema = new Schema<IUserProgress>(
@@ -62,9 +60,6 @@ const UserProgressSchema = new Schema<IUserProgress>(
     ranking: {
       type: Number,
     },
-  },
-  {
-    timestamps: true,
   }
 );
 

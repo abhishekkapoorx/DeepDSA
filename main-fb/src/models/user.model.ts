@@ -1,9 +1,9 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
 export enum Role {
-  SUPER_ADMIN = "super_admin",
-  ADMIN = "admin",
-  USER = "user",
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  USER = "USER",
 }
 
 export interface IUser extends Document {
@@ -13,9 +13,9 @@ export interface IUser extends Document {
   lastName?: string;    
   username?: string;    
   imageUrl?: string;    
+  role: Role;
   createdAt: Date;      
   updatedAt: Date;   
-  role: Role;
 }
 
 const UserSchema = new Schema<IUser>(

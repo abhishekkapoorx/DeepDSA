@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongoose'
-import { Problem, TestCase, User } from '@/models'
+import { Problem, TestCase, User, generateSlug } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function POST(req: NextRequest) {
+  console.log("==============================================")
+  console.log("==============================================")
+  console.log("==============================================")
+  console.log("In create problem route")
+  console.log("==============================================")
+  console.log("==============================================")
+  console.log("==============================================")
   try {
     const { userId } = await auth()
     
@@ -38,12 +45,61 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Generate slug from title
+    let slug = generateSlug(title)
+    
+    // Check if slug already exists and append number if needed
+    let counter = 1
+    let originalSlug = slug
+    while (await Problem.findOne({ slug })) {
+      slug = `${originalSlug}-${counter}`
+      counter++
+    }
+
+    // Validate input variables
+    if (!Array.isArray(inputVariables) || inputVariables.length === 0) {
+      return NextResponse.json({ error: 'At least one input variable is required' }, { status: 400 })
+    }
+
+    for (const inputVar of inputVariables) {
+      if (!inputVar.name || !inputVar.type) {
+        return NextResponse.json({ error: 'Input variables must have name and type' }, { status: 400 })
+      }
+    }
+
+    // Validate output variable
+    if (!outputVariable.type) {
+      return NextResponse.json({ error: 'Output variable type is required' }, { status: 400 })
+    }
+
+    // Validate test cases
+    if (!Array.isArray(testCases) || testCases.length === 0) {
+      return NextResponse.json({ error: 'At least one test case is required' }, { status: 400 })
+    }
+
+    for (const testCase of testCases) {
+      if (!testCase.input || !testCase.output) {
+        return NextResponse.json({ error: 'Test cases must have both input and output' }, { status: 400 })
+      }
+      
+      // Validate that input is not empty and is a string
+      if (typeof testCase.input !== 'string' || testCase.input.trim() === '') {
+        return NextResponse.json({ error: `Invalid input format in test case: ${testCase.name || 'unnamed'}` }, { status: 400 })
+      }
+      
+      // Validate that output is not empty and is a string
+      if (typeof testCase.output !== 'string' || testCase.output.trim() === '') {
+        return NextResponse.json({ error: `Invalid output format in test case: ${testCase.name || 'unnamed'}` }, { status: 400 })
+      }
+    }
+
     // Process tags
     const tagsArray = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
 
     // Create problem
     const problem = new Problem({
       title,
+      slug,
       description,
       difficulty,
       tags: tagsArray,

@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { type, data } = evt;
+  
   if (type === "user.created" || type === "user.updated") {
     const primaryEmail = data.email_addresses.find(
       (e: any) => e.id === data.primary_email_address_id
