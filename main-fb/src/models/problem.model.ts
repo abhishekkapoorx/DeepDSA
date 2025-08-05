@@ -121,7 +121,6 @@ ProblemSchema.pre('save', function(next) {
 // Index for better query performance
 ProblemSchema.index({ difficulty: 1, tags: 1 });
 ProblemSchema.index({ title: "text", description: "text" });
-ProblemSchema.index({ slug: 1 }, { unique: true });
 
 const Problem: Model<IProblem> =
   mongoose.models.Problem || mongoose.model<IProblem>("Problem", ProblemSchema);

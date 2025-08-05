@@ -156,9 +156,12 @@ class Solution {
                         return `<strong>${line.slice(2, -2)}</strong>`;
                       }
                       if (line.startsWith('#')) {
-                        const level = line.match(/^#+/)[0].length;
-                        const text = line.replace(/^#+\s*/, '');
-                        return `<h${level}>${text}</h${level}>`;
+                        const match = line.match(/^#+/);
+                        if (match) {
+                          const level = match[0].length;
+                          const text = line.replace(/^#+\s*/, '');
+                          return `<h${level}>${text}</h${level}>`;
+                        }
                       }
                       if (line.trim() === '') {
                         return '<br>';

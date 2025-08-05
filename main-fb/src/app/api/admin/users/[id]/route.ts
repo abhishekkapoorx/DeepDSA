@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -22,6 +22,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
+    const { id } = await params
     const body = await req.json()
     const { role } = body
 
@@ -36,13 +37,13 @@ export async function PUT(
     }
 
     // Prevent users from changing their own role
-    const targetUser = await User.findById(params.id)
+    const targetUser = await User.findById(id)
     if (targetUser?.clerkId === userId) {
       return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 })
     }
 
     const updatedUser = await User.findByIdAndUpdate(
-      params.id,
+      id,
       { role },
       { new: true, select: 'email firstName lastName role' }
     )
@@ -60,7 +61,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -77,8 +78,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
+    const { id } = await params
+
     // Prevent users from deleting themselves
-    const targetUser = await User.findById(params.id)
+    const targetUser = await User.findById(id)
     if (targetUser?.clerkId === userId) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
     }
@@ -88,7 +91,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Only super admins can delete admin accounts' }, { status: 403 })
     }
 
-    const deletedUser = await User.findByIdAndDelete(params.id)
+    const deletedUser = await User.findByIdAndDelete(id)
     
     if (!deletedUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

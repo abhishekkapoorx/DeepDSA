@@ -5,12 +5,14 @@ import { auth } from '@clerk/nextjs/server'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await dbConnect()
 
-    const problem = await Problem.findOne({ slug: params.slug })
+    const { slug } = await params
+
+    const problem = await Problem.findOne({ slug })
     if (!problem) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
     }
@@ -29,7 +31,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -46,6 +48,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
+    const { slug } = await params
     const body = await req.json()
     const {
       title,
@@ -61,13 +64,13 @@ export async function PUT(
     } = body
 
     // Find the problem first
-    const existingProblem = await Problem.findOne({ slug: params.slug })
+    const existingProblem = await Problem.findOne({ slug })
     if (!existingProblem) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
     }
 
     // Generate new slug if title changed
-    let newSlug = params.slug
+    let newSlug = slug
     if (title && title !== existingProblem.title) {
       newSlug = generateSlug(title)
       
@@ -135,7 +138,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -152,8 +155,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
+    const { slug } = await params
+
     // Find the problem first
-    const problem = await Problem.findOne({ slug: params.slug })
+    const problem = await Problem.findOne({ slug })
     if (!problem) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
     }
