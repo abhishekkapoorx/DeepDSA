@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import dbConnect from '@/lib/mongoose'
+import { User } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function PUT(
@@ -13,8 +14,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await dbConnect()
+
     // Check if user has admin privileges
-    const adminUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+    const adminUser = await User.findOne({ clerkId: userId })
     if (!adminUser || !['ADMIN', 'SUPER_ADMIN'].includes(adminUser.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
@@ -33,22 +36,20 @@ export async function PUT(
     }
 
     // Prevent users from changing their own role
-    const targetUser = await prisma.user.findUnique({ where: { id: params.id } })
+    const targetUser = await User.findById(params.id)
     if (targetUser?.clerkId === userId) {
       return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 })
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: params.id },
-      data: { role },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-      }
-    })
+    const updatedUser = await User.findByIdAndUpdate(
+      params.id,
+      { role },
+      { new: true, select: 'email firstName lastName role' }
+    )
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     return NextResponse.json(updatedUser)
   } catch (error) {
@@ -68,14 +69,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await dbConnect()
+
     // Check if user has admin privileges
-    const adminUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+    const adminUser = await User.findOne({ clerkId: userId })
     if (!adminUser || !['ADMIN', 'SUPER_ADMIN'].includes(adminUser.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
     // Prevent users from deleting themselves
-    const targetUser = await prisma.user.findUnique({ where: { id: params.id } })
+    const targetUser = await User.findById(params.id)
     if (targetUser?.clerkId === userId) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
     }
@@ -85,9 +88,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Only super admins can delete admin accounts' }, { status: 403 })
     }
 
-    await prisma.user.delete({
-      where: { id: params.id }
-    })
+    const deletedUser = await User.findByIdAndDelete(params.id)
+    
+    if (!deletedUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     return NextResponse.json({ message: 'User deleted successfully' })
   } catch (error) {

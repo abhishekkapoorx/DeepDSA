@@ -12,3 +12,5 @@ export async function connectToDB() {
   isConnected = true;
   console.log("✅ MongoDB connected");
 }
+
+export default connectToDB;

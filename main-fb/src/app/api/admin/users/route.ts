@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import dbConnect from '@/lib/mongoose'
+import { User, Role } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function GET(req: NextRequest) {
@@ -10,8 +11,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await dbConnect()
+
     // Check if user has admin privileges
-    const user = await prisma.user.findUnique({ where: { clerkId: userId } })
+    const user = await User.findOne({ clerkId: userId })
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
@@ -24,41 +27,30 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // Build where clause
-    const where: any = {}
+    // Build query filter
+    const filter: any = {}
     
     if (role && role !== 'ALL') {
-      where.role = role
+      filter.role = role
     }
     
     if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { username: { contains: search, mode: 'insensitive' } }
+      filter.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: 'i' } }
       ]
     }
 
     const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          clerkId: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
-          role: true,
-          createdAt: true,
-        }
-      }),
-      prisma.user.count({ where })
+      User.find(filter)
+        .select('clerkId email firstName lastName username imageUrl role createdAt')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments(filter)
     ])
 
     return NextResponse.json({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import dbConnect from '@/lib/mongoose'
+import { Problem, User, TestCase } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function GET(req: NextRequest) {
@@ -10,8 +11,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await dbConnect()
+
     // Check if user has admin privileges
-    const user = await prisma.user.findUnique({ where: { clerkId: userId } })
+    const user = await User.findOne({ clerkId: userId })
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
@@ -35,51 +38,40 @@ export async function GET(req: NextRequest) {
       problemsCreatedThisMonth
     ] = await Promise.all([
       // Total counts
-      prisma.problem.count(),
-      prisma.user.count(),
-      prisma.testCase.count(),
+      Problem.countDocuments(),
+      User.countDocuments(),
+      TestCase.countDocuments(),
       
       // Problems by difficulty
-      prisma.problem.groupBy({
-        by: ['difficulty'],
-        _count: { difficulty: true }
-      }),
+      Problem.aggregate([
+        {
+          $group: {
+            _id: '$difficulty',
+            count: { $sum: 1 }
+          }
+        }
+      ]),
       
       // Recent activity
-      prisma.problem.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          title: true,
-          difficulty: true,
-          createdAt: true
-        }
-      }),
+      Problem.find()
+        .select('title difficulty createdAt')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
       
-      prisma.user.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          createdAt: true
-        }
-      }),
+      User.find()
+        .select('firstName lastName email createdAt')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
       
       // Time-based analytics
-      prisma.problem.count({
-        where: {
-          createdAt: { gte: startOfWeek }
-        }
+      Problem.countDocuments({
+        createdAt: { $gte: startOfWeek }
       }),
       
-      prisma.problem.count({
-        where: {
-          createdAt: { gte: startOfMonth }
-        }
+      Problem.countDocuments({
+        createdAt: { $gte: startOfMonth }
       })
     ])
 
@@ -89,7 +81,7 @@ export async function GET(req: NextRequest) {
 
     // Format difficulty stats
     const difficultyStats = problemsByDifficulty.reduce((acc: Record<string, number>, item: any) => {
-      acc[item.difficulty] = item._count.difficulty
+      acc[item._id] = item.count
       return acc
     }, {} as Record<string, number>)
 

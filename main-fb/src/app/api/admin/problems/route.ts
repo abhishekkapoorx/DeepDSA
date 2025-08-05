@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import dbConnect from '@/lib/mongoose'
+import { Problem, TestCase, User } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function POST(req: NextRequest) {
@@ -10,8 +11,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await dbConnect()
+
     // Check if user has admin privileges
-    const user = await prisma.user.findUnique({ where: { clerkId: userId } })
+    const user = await User.findOne({ clerkId: userId })
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
@@ -38,32 +41,45 @@ export async function POST(req: NextRequest) {
     // Process tags
     const tagsArray = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
 
-    // Create problem with test cases
-    const problem = await prisma.problem.create({
-      data: {
-        title,
-        description,
-        difficulty,
-        tags: tagsArray,
-        starterCode,
-        functionName,
-        inputVariables,
-        outputVariable,
-        hints: hints || [],
-        testCases: {
-          create: testCases?.map((testCase: any) => ({
-            input: testCase.input,
-            output: testCase.output,
-            isHidden: testCase.isHidden || false
-          })) || []
-        }
-      },
-      include: {
-        testCases: true
-      }
+    // Create problem
+    const problem = new Problem({
+      title,
+      description,
+      difficulty,
+      tags: tagsArray,
+      starterCode,
+      functionName,
+      inputVariables,
+      outputVariable,
+      hints: hints || [],
     })
+    
+    await problem.save()
 
-    return NextResponse.json(problem, { status: 201 })
+    // Create test cases if provided
+    if (testCases && testCases.length > 0) {
+      const testCaseDocs = testCases.map((testCase: any) => ({
+        input: testCase.input,
+        output: testCase.output,
+        isHidden: testCase.isHidden || false,
+        problemId: problem._id
+      }))
+      
+      await TestCase.insertMany(testCaseDocs)
+    }
+
+    // Fetch the created problem with test cases
+    const createdProblem = await Problem.findById(problem._id)
+    const problemTestCases = await TestCase.find({ problemId: problem._id })
+
+    if (!createdProblem) {
+      return NextResponse.json({ error: 'Failed to create problem' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      ...createdProblem.toObject(),
+      testCases: problemTestCases
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating problem:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -72,6 +88,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    await dbConnect()
+
     const { searchParams } = new URL(req.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
@@ -80,40 +98,42 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // Build where clause
-    const where: any = {}
+    // Build query filter
+    const filter: any = {}
     
     if (difficulty && difficulty !== 'ALL') {
-      where.difficulty = difficulty
+      filter.difficulty = difficulty
     }
     
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { tags: { has: search } }
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { tags: { $in: [search] } }
       ]
     }
 
     const [problems, total] = await Promise.all([
-      prisma.problem.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          testCases: {
-            select: {
-              id: true,
-              isHidden: true
-            }
-          }
-        }
-      }),
-      prisma.problem.count({ where })
+      Problem.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Problem.countDocuments(filter)
     ])
 
+    // Get test case counts for each problem
+    const problemsWithTestCases = await Promise.all(
+      problems.map(async (problem) => {
+        const testCases = await TestCase.find({ problemId: problem._id })
+        return {
+          ...problem,
+          testCases: testCases.map(tc => ({ id: tc._id, isHidden: tc.isHidden }))
+        }
+      })
+    )
+
     return NextResponse.json({
-      problems,
+      problems: problemsWithTestCases,
       pagination: {
         page,
         limit,
