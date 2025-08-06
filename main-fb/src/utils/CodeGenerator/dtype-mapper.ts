@@ -33,7 +33,14 @@ export type JavaStyleType =
   | 'ArrayList<Double>'
   | 'ArrayList<Character>'
   | 'ArrayList<Boolean>'
-  | 'ArrayList<String>';
+  | 'ArrayList<String>'
+  // JavaScript-style types (for database compatibility)
+  | 'number'
+  | 'string'
+  | 'boolean'
+  | 'number[]'
+  | 'string[]'
+  | 'boolean[]';
 
 // Mapped input variable interface
 export interface IMappedInputVariable {
@@ -227,6 +234,32 @@ const TYPE_MAPPINGS: Record<JavaStyleType, TypeMapping> = {
     java: 'ArrayList<String>',
     python: 'List[str]',
     javascript: 'string[]'
+  },
+  
+  // JavaScript-style types (for database compatibility)
+  'number': {
+    cpp: 'int',
+    java: 'int',
+    python: 'int',
+    javascript: 'number'
+  },
+  'string': {
+    cpp: 'string',
+    java: 'String',
+    python: 'str',
+    javascript: 'string'
+  },
+  'number[]': {
+    cpp: 'vector<int>',
+    java: 'int[]',
+    python: 'List[int]',
+    javascript: 'number[]'
+  },
+  'string[]': {
+    cpp: 'vector<string>',
+    java: 'String[]',
+    python: 'List[str]',
+    javascript: 'string[]'
   }
 };
 
@@ -237,6 +270,38 @@ const TYPE_MAPPINGS: Record<JavaStyleType, TypeMapping> = {
  * @returns The corresponding datatype in the target language
  */
 export function mapDataType(javaType: JavaStyleType, targetLanguage: Language): string {
+  // Handle case where javaType might be a number or other type
+  if (typeof javaType !== 'string') {
+    // Try to convert number to string type
+    if (typeof javaType === 'number') {
+      const typeMap: Record<number, string> = {
+        1: 'int',
+        2: 'long',
+        3: 'float',
+        4: 'double',
+        5: 'char',
+        6: 'boolean',
+        7: 'String',
+        8: 'int[]',
+        9: 'long[]',
+        10: 'float[]',
+        11: 'double[]',
+        12: 'char[]',
+        13: 'boolean[]',
+        14: 'String[]'
+      };
+      
+      const convertedType = typeMap[javaType];
+      if (convertedType) {
+        javaType = convertedType as JavaStyleType;
+      } else {
+        throw new Error(`Invalid Java-style type: ${javaType} (expected string, got ${typeof javaType})`);
+      }
+    } else {
+      throw new Error(`Invalid Java-style type: ${javaType} (expected string, got ${typeof javaType})`);
+    }
+  }
+  
   const mapping = TYPE_MAPPINGS[javaType];
   if (!mapping) {
     throw new Error(`Unsupported Java-style type: ${javaType}`);
@@ -299,6 +364,38 @@ export function getCompleteTypeMapping(javaType: JavaStyleType): TypeMapping {
  * @returns The mapped input variable with the appropriate type for the target language
  */
 export function mapInputVariable(inputVariable: IInputVariable, targetLanguage: Language): IMappedInputVariable {
+  // Ensure type is a string
+  if (typeof inputVariable.type !== 'string') {
+    // Try to convert number to string type
+    if (typeof inputVariable.type === 'number') {
+      const typeMap: Record<number, string> = {
+        1: 'int',
+        2: 'long',
+        3: 'float',
+        4: 'double',
+        5: 'char',
+        6: 'boolean',
+        7: 'String',
+        8: 'int[]',
+        9: 'long[]',
+        10: 'float[]',
+        11: 'double[]',
+        12: 'char[]',
+        13: 'boolean[]',
+        14: 'String[]'
+      };
+      
+      const convertedType = typeMap[inputVariable.type];
+      if (convertedType) {
+        inputVariable.type = convertedType;
+      } else {
+        throw new Error(`Invalid input variable type: ${inputVariable.type} (expected string, got ${typeof inputVariable.type})`);
+      }
+    } else {
+      throw new Error(`Invalid input variable type: ${inputVariable.type} (expected string, got ${typeof inputVariable.type})`);
+    }
+  }
+  
   const mappedType = mapDataType(inputVariable.type as JavaStyleType, targetLanguage);
   
   return {

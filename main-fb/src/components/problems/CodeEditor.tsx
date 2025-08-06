@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { useTheme } from '@/components/theme';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useParams } from 'next/navigation';
 
 interface CodeEditorProps {
@@ -41,13 +42,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
       setIsLoading(true);
       setError(null);
       try {
-        // Try the main API first, fallback to test API if it fails
-        let response = await fetch(`/api/problems/${problemSlug}/boilerplate?language=${currentLanguage}`);
-        
-        if (!response.ok) {
-          console.log('Main API failed, trying test API...');
-          response = await fetch(`/api/test-boilerplate?language=${currentLanguage}`);
-        }
+        const response = await fetch(`/api/problems/${problemSlug}/boilerplate?language=${currentLanguage}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -72,8 +67,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
     fetchBoilerplate();
   }, [currentLanguage, problemSlug, starterCode]);
 
-  const handleLanguageChange = (language: Language) => {
-    setCurrentLanguage(language);
+  const handleLanguageChange = (language: string) => {
+    setCurrentLanguage(language as Language);
   };
 
   const handleCodeChange = (value: string | undefined) => {
@@ -120,27 +115,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
     <div className="w-full h-full bg-background flex flex-col">
       {/* Language Selector and Submit Button */}
       <div className="flex items-center justify-between p-2 border-b border-border">
-        <div className="flex items-center space-x-2">
-          {Object.entries(LANGUAGE_CONFIGS).map(([key, config]) => (
-            <Button
-              key={key}
-              variant={currentLanguage === key ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleLanguageChange(key as Language)}
-              disabled={isLoading}
-            >
-              {config.name}
-            </Button>
-          ))}
+        <div className="flex items-center space-x-4">
+          <Select value={currentLanguage} onValueChange={handleLanguageChange} disabled={isLoading}>
+            <SelectTrigger className="w-32" size="sm">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(LANGUAGE_CONFIGS).map(([key, config]) => (
+                <SelectItem key={key} value={key}>
+                  {config.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || isLoading}
+            size="sm"
+            
+          >
+            {isSubmitting ? 'Running...' : 'Run Code'}
+          </Button>
         </div>
-        
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting || isLoading}
-          className="ml-2"
-        >
-          {isSubmitting ? 'Running...' : 'Run Code'}
-        </Button>
       </div>
 
       {/* Error Display */}
