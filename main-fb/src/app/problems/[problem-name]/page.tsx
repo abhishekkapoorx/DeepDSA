@@ -95,22 +95,7 @@ export default function ProblemDetailPage() {
   };
 
   const onRenderTabSet = (node: FlexLayout.TabSetNode | FlexLayout.BorderNode, renderValues: FlexLayout.ITabSetRenderValues) => {
-    // Add language selector to Code tab header (only on desktop)
-    if (!isMobile && node instanceof FlexLayout.TabSetNode && node.getChildren().some((child: any) => child.getComponent() === "editor")) {
-      renderValues.stickyButtons.push(
-        <div key="language-selector" className="language-selector flex items-center mr-2">
-          <select
-            defaultValue="java"
-            className="px-2 py-1 text-xs font-medium bg-muted text-foreground border border-border rounded hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer min-w-[80px]"
-          >
-            <option value="java">Java</option>
-            <option value="python">Python</option>
-            <option value="javascript">JavaScript</option>
-            <option value="cpp">C++</option>
-          </select>
-        </div>
-      );
-    }
+    // Language selector is now integrated into CodeEditor component
   };
 
   if (loading) {
