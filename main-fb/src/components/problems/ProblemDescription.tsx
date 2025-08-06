@@ -1,4 +1,10 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import type { Components } from 'react-markdown';
+
 
 export interface Problem {
   title: string;
@@ -14,85 +20,159 @@ export interface TestCase {
 
 interface ProblemDescriptionProps {
   problem: Pick<Problem, 'title' | 'description'>;
+  markdownContent?: string; // Optional custom markdown content
 }
 
-export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ problem }) => {
-  const markdownContent = `
+export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ 
+  problem, 
+  markdownContent 
+}) => {
+  // Use provided markdown content or generate default content
+  const content = markdownContent || `
 # ${problem.title}
 
 ${problem.description}
-
-## Examples
-
-### Example 1:
-**Input:** nums1 = [1,3], nums2 = [2]  
-**Output:** 2.00000  
-**Explanation:** merged array = [1,2,3] and median is 2.
-
-### Example 2:
-**Input:** nums1 = [1,2], nums2 = [3,4]  
-**Output:** 2.50000  
-**Explanation:** merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.
-
-## Constraints
-
-- nums1.length == m
-- nums2.length == n
-- 0 ≤ m ≤ 1000
-- 0 ≤ n ≤ 1000
-- 1 ≤ m + n ≤ 2000
-- -10^6 ≤ nums1[i], nums2[i] ≤ 10^6
-
-## Follow-up
-
-The overall run time complexity should be O(log (m+n)).
 `;
 
-  const renderMarkdown = (content: string) => {
-    return content
-      .split('\n')
-      .map((line, index) => {
-        // Headers
-        if (line.startsWith('# ')) {
-          return `<h1 class="text-2xl font-bold mb-4">${line.slice(2)}</h1>`;
-        }
-        if (line.startsWith('## ')) {
-          return `<h2 class="text-xl font-semibold mb-3 mt-6">${line.slice(3)}</h2>`;
-        }
-        if (line.startsWith('### ')) {
-          return `<h3 class="text-lg font-medium mb-2 mt-4">${line.slice(4)}</h3>`;
-        }
-        
-        // Bold text
-        if (line.includes('**')) {
-          line = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
-        }
-        
-        // Lists
-        if (line.startsWith('- ')) {
-          return `<li class="ml-4 mb-1">${line.slice(2)}</li>`;
-        }
-        
-        // Empty lines
-        if (line.trim() === '') {
-          return '<br>';
-        }
-        
-        // Regular paragraphs
-        return `<p class="mb-3 leading-relaxed">${line}</p>`;
-      })
-      .join('');
+  // Custom components for ReactMarkdown
+  const components: Components = {
+    // Custom component styling
+    h1: ({ children }) => (
+      <h1 className="text-2xl font-bold mb-4 text-foreground">{children}</h1>
+    ),
+    h2: ({ children }) => (
+      <h2 className="text-xl font-semibold mb-3 mt-6 text-foreground">{children}</h2>
+    ),
+    h3: ({ children }) => (
+      <h3 className="text-lg font-medium mb-2 mt-4 text-foreground">{children}</h3>
+    ),
+    p: ({ children }) => (
+      <p className="mb-3 leading-relaxed text-foreground">{children}</p>
+    ),
+    strong: ({ children }) => (
+      <strong className="font-semibold text-foreground">{children}</strong>
+    ),
+    ul: ({ children }) => (
+      <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>
+    ),
+    li: ({ children, ...props }: any) => {
+      // Handle task list items (GitHub Flavored Markdown)
+      const checked = (props as any).checked;
+      if (checked !== null && checked !== undefined) {
+        return (
+          <li className="flex items-center ml-4 mb-1 text-foreground">
+            <input
+              type="checkbox"
+              checked={checked}
+              readOnly
+              className="mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            />
+            <span>{children}</span>
+          </li>
+        );
+      }
+      return (
+        <li className="ml-4 mb-1 text-foreground">{children}</li>
+      );
+    },
+    code: ({ children, className, ...props }: any) => {
+      const inline = (props as any).inline;
+      const isInline = inline || !className;
+      if (isInline) {
+        return (
+          <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono text-foreground">
+            {children}
+          </code>
+        );
+      }
+      
+      // Extract language from className (format: language-{lang})
+      const language = className?.replace('language-', '') || '';
+      
+      return (
+        <div className="relative">
+          {language && (
+            <div className="absolute top-0 right-0 bg-muted px-2 py-1 text-xs text-muted-foreground rounded-bl">
+              {language}
+            </div>
+          )}
+          <code className={`${className} block bg-muted p-3 rounded text-sm font-mono text-foreground overflow-x-auto ${language ? 'pt-8' : ''}`}>
+            {children}
+          </code>
+        </div>
+      );
+    },
+    pre: ({ children }) => (
+      <pre className="bg-muted p-3 rounded text-sm font-mono text-foreground overflow-x-auto mb-3">
+        {children}
+      </pre>
+    ),
+    blockquote: ({ children }) => (
+      <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground mb-3">
+        {children}
+      </blockquote>
+    ),
+    table: ({ children }) => (
+      <div className="overflow-x-auto mb-3">
+        <table className="min-w-full border-collapse border border-border">
+          {children}
+        </table>
+      </div>
+    ),
+    th: ({ children }) => (
+      <th className="border border-border px-3 py-2 text-left font-semibold bg-muted">
+        {children}
+      </th>
+    ),
+    td: ({ children }) => (
+      <td className="border border-border px-3 py-2 text-foreground">
+        {children}
+      </td>
+    ),
+    hr: () => (
+      <hr className="border-border my-6" />
+    ),
+    a: ({ children, href }) => (
+      <a 
+        href={href} 
+        className="text-primary hover:text-primary/80 underline"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {children}
+      </a>
+    ),
+    // Handle task lists
+    input: ({ type, checked }) => {
+      if (type === 'checkbox') {
+        return (
+          <input
+            type="checkbox"
+            checked={checked}
+            readOnly
+            className="mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+          />
+        );
+      }
+      return null;
+    },
   };
 
   return (
     <div className="h-full w-full bg-card text-card-foreground">
       <div className="p-4 h-full overflow-y-auto">
-        <div 
-          className="prose prose-sm dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ 
-            __html: renderMarkdown(markdownContent) 
-          }} 
-        />
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw, rehypeHighlight]}
+            components={components}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
       </div>
     </div>
   );
