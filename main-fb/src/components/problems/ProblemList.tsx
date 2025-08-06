@@ -1,14 +1,20 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 
 interface Problem {
   _id: string;
   title: string;
   questionNumber: number;
+  slug: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   tags: string[];
   createdAt: string;
+  // Mock data for now - these would come from user progress tracking
+  successRate?: number;
+  isSolved?: boolean;
+  progress?: number;
 }
 
 interface ProblemListProps {
@@ -19,34 +25,52 @@ interface ProblemListProps {
 export default function ProblemList({ selectedTopic, searchQuery }: ProblemListProps) {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchProblems = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: '1',
-        limit: '50',
-        ...(searchQuery && { search: searchQuery })
-      });
-
-      const response = await fetch(`/api/problems?${params}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setProblems(data.problems);
-      } else {
-        console.error('Failed to fetch problems:', data.error);
-      }
-    } catch (error) {
-      console.error('Error fetching problems:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch problems from API
   useEffect(() => {
+    const fetchProblems = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (selectedTopic !== 'All Topics') {
+          params.append('tags', selectedTopic);
+        }
+        if (searchQuery) {
+          params.append('search', searchQuery);
+        }
+        
+        const response = await fetch(`/api/problems?${params.toString()}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Problems API response:', data);
+          // Add mock data for success rate, isSolved, and progress
+          const problemsWithMockData = data.problems.map((problem: Problem) => ({
+            ...problem,
+            successRate: Math.floor(Math.random() * 60) + 20, // Random success rate 20-80%
+            isSolved: Math.random() > 0.7, // 30% chance of being solved
+            progress: Math.random() > 0.7 ? 100 : Math.floor(Math.random() * 100) // Random progress
+          }));
+          setProblems(problemsWithMockData);
+        } else {
+          const errorData = await response.json();
+          console.error('Failed to load problems:', errorData);
+          setError('Failed to load problems');
+        }
+      } catch (err) {
+        console.error('Error fetching problems:', err);
+        setError('Failed to load problems');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProblems();
-  }, [searchQuery]);
+  }, [selectedTopic, searchQuery]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -74,20 +98,24 @@ export default function ProblemList({ selectedTopic, searchQuery }: ProblemListP
     }
   };
 
-  const filteredProblems = problems.filter(problem => {
-    const matchesTopic = selectedTopic === 'All Topics' || 
-      problem.tags.some(tag => tag.toLowerCase().includes(selectedTopic.toLowerCase()));
-    const matchesSearch = problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         problem.questionNumber.toString().includes(searchQuery);
-    return matchesTopic && matchesSearch;
-  });
-
   if (loading) {
     return (
       <div className="h-full overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="text-muted-foreground">Loading problems...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-center h-32">
+            <div className="text-red-500">{error}</div>
           </div>
         </div>
       </div>
@@ -98,49 +126,56 @@ export default function ProblemList({ selectedTopic, searchQuery }: ProblemListP
     <div className="h-full overflow-y-auto">
       <div className="p-6">
         <div className="space-y-2">
-          {filteredProblems.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No problems found.
-            </div>
-          ) : (
-            filteredProblems.map((problem) => (
-              <div
+          {problems.map((problem) => {
+            console.log('Problem data:', problem);
+            // Generate slug from title if not provided
+            const problemSlug = problem.slug || problem.title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim();
+            
+            return (
+              <Link
                 key={problem._id}
-                className="flex items-center p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors"
+                href={`/problems/${problemSlug}`}
+                className="block"
               >
-                {/* Problem Number and Title */}
-                <div className="flex-1 flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {problem.questionNumber}.
+                <div className="flex items-center p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
+                  {/* Problem Number and Title */}
+                  <div className="flex-1 flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      {problem.isSolved && (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {problem.questionNumber || problem._id.slice(-4)}.
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">
+                      {problem.title}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-foreground">
-                    {problem.title}
-                  </span>
-                </div>
 
-                {/* Tags */}
-                <div className="flex items-center gap-2 mr-4">
-                  {problem.tags.slice(0, 2).map((tag, index) => (
-                    <span key={index} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">
-                      {tag}
-                    </span>
-                  ))}
-                  {problem.tags.length > 2 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{problem.tags.length - 2}
-                    </span>
-                  )}
-                </div>
+                  {/* Success Rate */}
+                  <div className="text-xs text-muted-foreground w-16 text-right">
+                    {problem.successRate || 0}%
+                  </div>
 
-                {/* Difficulty */}
-                <div className={`text-xs font-medium w-16 text-right ${getDifficultyColor(problem.difficulty)}`}>
-                  {getDifficultyLabel(problem.difficulty)}
+                  {/* Difficulty */}
+                  <div className={`text-xs font-medium w-12 text-right ${getDifficultyColor(problem.difficulty)}`}>
+                    {getDifficultyLabel(problem.difficulty)}
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-20 ml-4">
+                    <div className="w-full bg-muted rounded-full h-1">
+                      <div
+                        className="bg-primary h-1 rounded-full transition-all duration-300"
+                        style={{ width: `${problem.progress || 0}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
