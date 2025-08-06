@@ -3,6 +3,8 @@ import React from 'react';
 export interface Problem {
   title: string;
   description: string;
+  questionNumber: number;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   starterCode: string;
   testcases: TestCase[];
 }
@@ -13,40 +15,35 @@ export interface TestCase {
 }
 
 interface ProblemDescriptionProps {
-  problem: Pick<Problem, 'title' | 'description'>;
+  problem: Pick<Problem, 'title' | 'description' | 'questionNumber' | 'difficulty'>;
 }
 
 export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ problem }) => {
-  const markdownContent = `
-# ${problem.title}
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'EASY':
+        return 'text-green-500';
+      case 'MEDIUM':
+        return 'text-yellow-500';
+      case 'HARD':
+        return 'text-red-500';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
 
-${problem.description}
-
-## Examples
-
-### Example 1:
-**Input:** nums1 = [1,3], nums2 = [2]  
-**Output:** 2.00000  
-**Explanation:** merged array = [1,2,3] and median is 2.
-
-### Example 2:
-**Input:** nums1 = [1,2], nums2 = [3,4]  
-**Output:** 2.50000  
-**Explanation:** merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.
-
-## Constraints
-
-- nums1.length == m
-- nums2.length == n
-- 0 ≤ m ≤ 1000
-- 0 ≤ n ≤ 1000
-- 1 ≤ m + n ≤ 2000
-- -10^6 ≤ nums1[i], nums2[i] ≤ 10^6
-
-## Follow-up
-
-The overall run time complexity should be O(log (m+n)).
-`;
+  const getDifficultyLabel = (difficulty: string) => {
+    switch (difficulty) {
+      case 'EASY':
+        return 'Easy';
+      case 'MEDIUM':
+        return 'Medium';
+      case 'HARD':
+        return 'Hard';
+      default:
+        return difficulty;
+    }
+  };
 
   const renderMarkdown = (content: string) => {
     return content
@@ -87,10 +84,24 @@ The overall run time complexity should be O(log (m+n)).
   return (
     <div className="h-full w-full bg-card text-card-foreground">
       <div className="p-4 h-full overflow-y-auto">
+        {/* Problem Header */}
+        <div className="mb-6 pb-4 border-b border-border">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-2xl font-bold ">
+              {problem.questionNumber}.
+            </span>
+            <h1 className="text-2xl font-bold">{problem.title}</h1>
+            <span className={`px-2  text-lg font-semibold rounded-full ${getDifficultyColor(problem.difficulty)} bg-opacity-10`}>
+              {getDifficultyLabel(problem.difficulty)}
+            </span>
+          </div>
+        </div>
+
+        {/* Problem Description */}
         <div 
           className="prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ 
-            __html: renderMarkdown(markdownContent) 
+            __html: renderMarkdown(problem.description) 
           }} 
         />
       </div>

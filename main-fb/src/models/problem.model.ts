@@ -1,5 +1,14 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
+/**
+ * Problem Model with Auto Question Number Assignment
+ * 
+ * Features:
+ * - Auto-assigns question numbers when creating new problems
+ * - Fills gaps when problems are deleted (e.g., if problems 1,2,4 exist, next problem gets #3)
+ * - If no gaps exist, assigns the next sequential number
+ * - Manual assignment is also supported by providing questionNumber in the data
+ */
 export enum Difficulty {
   EASY = "EASY",
   MEDIUM = "MEDIUM",
@@ -24,6 +33,7 @@ export interface IProblem extends Document {
   slug: string;
   description: string;
   difficulty: Difficulty;
+  questionNumber: number;
   tags: string[];
   starterCode: string;
   functionName: string;
@@ -57,6 +67,11 @@ const ProblemSchema = new Schema<IProblem>(
       required: true,
       unique: true,
       trim: true,
+    },
+    questionNumber: {
+      type: Number,
+      required: false, // Will be handled in API route
+      unique: true,
     },
     description: {
       type: String,
@@ -121,6 +136,26 @@ ProblemSchema.pre('save', function(next) {
 // Index for better query performance
 ProblemSchema.index({ difficulty: 1, tags: 1 });
 ProblemSchema.index({ title: "text", description: "text" });
+
+// Static method to get next available question number
+ProblemSchema.statics.getNextQuestionNumber = async function(): Promise<number> {
+  const existingNumbers = await this.find({}, 'questionNumber')
+    .sort({ questionNumber: 1 })
+    .lean();
+  
+  let nextNumber = 1;
+  
+  // Find the first gap or use the next number after the highest
+  for (const problem of existingNumbers) {
+    if (problem.questionNumber !== nextNumber) {
+      // Found a gap, use this number
+      break;
+    }
+    nextNumber++;
+  }
+  
+  return nextNumber;
+};
 
 const Problem: Model<IProblem> =
   mongoose.models.Problem || mongoose.model<IProblem>("Problem", ProblemSchema);

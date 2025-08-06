@@ -8,6 +8,7 @@ interface Problem {
   _id: string
   slug: string
   title: string
+  questionNumber: number
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   tags: string[]
   createdAt: string
@@ -304,6 +305,9 @@ const ProblemsPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Created
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Question Number
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
@@ -350,6 +354,9 @@ const ProblemsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {new Date(problem.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {problem.questionNumber}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">

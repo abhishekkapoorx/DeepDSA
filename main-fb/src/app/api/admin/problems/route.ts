@@ -96,10 +96,32 @@ export async function POST(req: NextRequest) {
     // Process tags
     const tagsArray = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
 
+    // Auto-assign question number if not provided
+    let questionNumber = body.questionNumber;
+    if (!questionNumber) {
+      // Find all existing question numbers, sorted
+      const existingNumbers = await Problem.find({}, 'questionNumber')
+        .sort({ questionNumber: 1 })
+        .lean();
+      
+      let nextNumber = 1;
+      
+      // Find the first gap or use the next number after the highest
+      for (const problem of existingNumbers) {
+        if (problem.questionNumber !== nextNumber) {
+          break;
+        }
+        nextNumber++;
+      }
+      
+      questionNumber = nextNumber;
+    }
+
     // Create problem
     const problem = new Problem({
       title,
       slug,
+      questionNumber,
       description,
       difficulty,
       tags: tagsArray,
