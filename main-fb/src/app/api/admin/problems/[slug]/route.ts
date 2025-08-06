@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongoose'
-import { Problem, TestCase, User, generateSlug } from '@/models'
+import { Problem, TestCase, User, generateSlug, Submission, TestResult } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
 export async function GET(
@@ -163,13 +163,25 @@ export async function DELETE(
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
     }
 
+    // TODO: Implement transaction-based deletion for data consistency
+    // Delete all test results for test cases of this problem
+    const testCaseIds = await TestCase.find({ problemId: problem._id }, '_id').lean()
+    if (testCaseIds.length > 0) {
+      await TestResult.deleteMany({ 
+        testCaseId: { $in: testCaseIds.map(tc => tc._id) } 
+      })
+    }
+    
+    // Delete all submissions for this problem
+    await Submission.deleteMany({ problemId: problem._id })
+    
     // Delete test cases first
     await TestCase.deleteMany({ problemId: problem._id })
-
+    
     // Delete the problem
     await Problem.findByIdAndDelete(problem._id)
 
-    return NextResponse.json({ message: 'Problem deleted successfully' })
+    return NextResponse.json({ message: 'Problem and all associated data deleted successfully' })
   } catch (error) {
     console.error('Error deleting problem:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

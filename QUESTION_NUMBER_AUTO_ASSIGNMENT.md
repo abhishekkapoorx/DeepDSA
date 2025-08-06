@@ -126,6 +126,22 @@ await problem.save();
 The existing API routes work seamlessly with this feature:
 - `POST /api/admin/problems` - Auto-assigns question numbers
 - `PUT /api/admin/problems/[slug]` - Preserves existing question numbers
-- `DELETE /api/admin/problems/[slug]` - Frees up question numbers for reuse
+- `DELETE /api/admin/problems/[slug]` - Deletes problem and test cases in transaction
+- `POST /api/admin/problems/bulk-delete` - Bulk delete with transaction support
 - `GET /api/problems` - Returns question numbers in the response
-- `GET /api/problems/[slug]` - Returns question number for individual problems 
+- `GET /api/problems/[slug]` - Returns question number for individual problems
+
+### Transaction Support
+
+All delete operations use database transactions to ensure data consistency:
+- **Individual Delete**: Deletes problem and all associated data (test cases, submissions, test results) in a single transaction
+- **Bulk Delete**: Deletes multiple problems and all their associated data atomically
+- **Gap Filling**: When problems are deleted, their question numbers become available for new problems
+
+### Data Cleanup
+
+When a problem is deleted, the following related data is also removed:
+- **Test Cases**: All test cases associated with the problem
+- **Submissions**: All user submissions for the problem
+- **Test Results**: All test results for the problem's test cases
+- **Question Numbers**: The question number becomes available for reuse 
