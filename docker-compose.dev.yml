@@ -45,6 +45,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/deepdsa
+      - JUDGE0_API_URL=http://judge0-server:2358
     env_file:
       - ./main-fb/.env
     depends_on:
@@ -143,9 +144,14 @@ services:
     container_name: deepdsa-judge0-server-dev
     volumes:
       - ./judge0.conf:/judge0.conf:ro
+      - type: tmpfs
+        target: /box
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     ports:
       - "2358:2358"
     privileged: true
+    security_opt:
+      - seccomp:unconfined
     networks:
       - deepdsa-network
     restart: unless-stopped
@@ -163,7 +169,12 @@ services:
     command: ["bash", "-c", "sleep 10 && ./scripts/workers"]
     volumes:
       - ./judge0.conf:/judge0.conf:ro
+      - type: tmpfs
+        target: /box
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
+    security_opt:
+      - seccomp:unconfined
     networks:
       - deepdsa-network
     restart: unless-stopped

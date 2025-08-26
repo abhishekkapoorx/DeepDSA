@@ -7,6 +7,8 @@ import { useParams } from 'next/navigation';
 
 interface CodeEditorProps {
   starterCode: string;
+  onTestResults?: (results: any) => void;
+  onExecutionStart?: () => void;
 }
 
 type Language = 'cpp' | 'java' | 'python' | 'javascript';
@@ -18,7 +20,7 @@ const LANGUAGE_CONFIGS = {
   javascript: { name: 'JavaScript', monacoLanguage: 'javascript' }
 };
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
+export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResults, onExecutionStart }) => {
   const { theme } = useTheme();
   const params = useParams();
   const problemSlug = params['problem-name'] as string;
@@ -27,6 +29,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
   const [code, setCode] = useState<string>(starterCode);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   
@@ -81,6 +84,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
     if (!problemSlug) return;
     
     setIsSubmitting(true);
+    onExecutionStart?.();
     try {
       const response = await fetch(`/api/problems/${problemSlug}/submit`, {
         method: 'POST',
@@ -96,6 +100,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
       if (response.ok) {
         const data = await response.json();
         setResults(data.data);
+        onTestResults?.(data.data);
       } else {
         const errorData = await response.json();
         console.error('Submission failed:', errorData.error);
@@ -104,6 +109,38 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
       console.error('Error submitting code:', error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRun = async () => {
+    if (!problemSlug) return;
+    
+    setIsRunning(true);
+    onExecutionStart?.();
+    try {
+      const response = await fetch(`/api/problems/${problemSlug}/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          language: currentLanguage,
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data.data);
+        onTestResults?.(data.data);
+      } else {
+        const errorData = await response.json();
+        console.error('Run failed:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Error running code:', error);
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -129,14 +166,22 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode }) => {
             </SelectContent>
           </Select>
           
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || isLoading}
-            size="sm"
-            
-          >
-            {isSubmitting ? 'Running...' : 'Run Code'}
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={handleRun}
+              disabled={isRunning || isLoading}
+              size="sm"
+            >
+              {isRunning ? 'Running...' : 'Run'}
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || isLoading}
+              size="sm"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </Button>
+          </div>
         </div>
       </div>
 

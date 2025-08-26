@@ -6,10 +6,11 @@ import connectToDB from '@/lib/mongoose';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    console.log('Boilerplate API called with slug:', params.slug);
+    const { slug } = await params;
+    console.log('Boilerplate API called with slug:', slug);
     
     // Connect to database
     await connectToDB();
@@ -36,8 +37,8 @@ export async function GET(
     }
 
     // Find problem by slug
-    console.log('Searching for problem with slug:', params.slug);
-    const problem = await Problem.findOne({ slug: params.slug });
+    console.log('Searching for problem with slug:', slug);
+    const problem = await Problem.findOne({ slug });
     console.log('Problem found:', problem ? 'Yes' : 'No');
     
     if (!problem) {
@@ -61,15 +62,15 @@ export async function GET(
       data: {
         boilerplate,
         language,
-        problemSlug: params.slug,
+        problemSlug: slug,
         functionName: problem.functionName
       }
     });
 
   } catch (error) {
-    console.error('Error generating boilerplate:', error);
+    console.error('Error in boilerplate generation:', error);
     return NextResponse.json(
-      { error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

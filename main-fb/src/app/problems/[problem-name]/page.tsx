@@ -12,6 +12,18 @@ import { TestResults } from "@/components/problems/TestResults";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { desktopLayoutConfig, mobileLayoutConfig } from "@/config/layoutConfigs";
 import { useParams } from "next/navigation";
+import { IProblem } from "@/models";
+
+interface TestCase {
+  input: string;
+  output: string;
+  isHidden: boolean;
+  isExample: boolean;
+}
+
+interface ProblemWithTestCases extends IProblem {
+  testcases: TestCase[];
+}
 
 export default function ProblemDetailPage() {
   const isMobile = useIsMobile();
@@ -21,6 +33,8 @@ export default function ProblemDetailPage() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<any[] | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
   // Fetch problem data by slug
   useEffect(() => {
@@ -53,6 +67,18 @@ export default function ProblemDetailPage() {
     }
   }, [slug]);
 
+  // Handle test results from CodeEditor
+  const handleTestResults = (results: any) => {
+    setTestResults(results.results);
+    setIsRunning(false);
+  };
+
+  // Handle run/submit start
+  const handleExecutionStart = () => {
+    setIsRunning(true);
+    setTestResults(null);
+  };
+
   // Create the layout model with useMemo to ensure it updates when isMobile changes
   const layoutModel = useMemo(() => {
     const config = isMobile ? mobileLayoutConfig : desktopLayoutConfig;
@@ -74,9 +100,21 @@ export default function ProblemDetailPage() {
       case "description":
         return <ProblemDescription problem={problem} />;
       case "editor":
-        return <CodeEditor starterCode={problem.starterCode} />;
+        return (
+          <CodeEditor 
+            starterCode={problem.starterCode} 
+            onTestResults={handleTestResults}
+            onExecutionStart={handleExecutionStart}
+          />
+        );
       case "testcase":
-        return <TestcasePanel testcases={problem.testcases || []} />;
+        return (
+          <TestcasePanel 
+            testcases={problem.testcases || []} 
+            testResults={testResults}
+            isRunning={isRunning}
+          />
+        );
       case "editorial":
         return <Editorial problemTitle={problem.title} />;
       case "solutions":

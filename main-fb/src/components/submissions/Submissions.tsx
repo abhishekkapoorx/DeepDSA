@@ -1,49 +1,53 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Clock, Cpu, ChevronDown, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-interface Submission {
-  id: number;
-  status: 'Accepted' | 'Wrong Answer' | 'Time Limit Exceeded' | 'Runtime Error';
-  date: string;
-  language: string;
-  runtime: string;
-  memory: string;
-  notes?: string;
-}
-
-const dummySubmissions: Submission[] = [
-  {
-    id: 2,
-    status: 'Accepted',
-    date: 'Jul 10, 2025',
-    language: 'Java',
-    runtime: '1 ms',
-    memory: '46.6 MB'
-  },
-  {
-    id: 1,
-    status: 'Accepted',
-    date: 'Jul 09, 2025',
-    language: 'Java',
-    runtime: '1 ms',
-    memory: '46 MB'
-  }
-];
+type ApiSubmission = {
+  _id: string;
+  problemId: { title: string; difficulty: string } | string;
+  status: string;
+  runtime?: number;
+  memory?: number;
+  testsPassed: number;
+  totalTests: number;
+  createdAt: string;
+  language?: string;
+};
 
 export const Submissions: React.FC = () => {
-  const getStatusColor = (status: Submission['status']) => {
+  const [submissions, setSubmissions] = useState<ApiSubmission[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/submissions?limit=20`);
+        if (res.ok) {
+          const data = await res.json();
+          setSubmissions(data.submissions || []);
+        }
+      } catch (e) {
+        console.error('Failed to load submissions', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Accepted':
+      case 'ACCEPTED':
         return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      case 'Wrong Answer':
+      case 'WRONG_ANSWER':
         return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      case 'Time Limit Exceeded':
+      case 'TIME_LIMIT_EXCEEDED':
         return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
-      case 'Runtime Error':
+      case 'RUNTIME_ERROR':
         return 'text-red-600 bg-red-50 dark:bg-red-900/20';
       default:
         return 'text-gray-600 bg-gray-50 dark:bg-gray-900/20';
@@ -80,8 +84,8 @@ export const Submissions: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {dummySubmissions.map((submission) => (
-                <TableRow key={submission.id} className="hover:bg-muted/50">
+              {submissions.map((submission) => (
+                <TableRow key={submission._id} className="hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <Badge 
@@ -91,30 +95,30 @@ export const Submissions: React.FC = () => {
                         {submission.status}
                       </Badge>
                       <span className="text-sm text-muted-foreground">
-                        {submission.date}
+                        {new Date(submission.createdAt).toLocaleString()}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="text-xs">
-                      {submission.language}
+                      {submission.language || '-'}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm">{submission.runtime}</span>
+                      <span className="text-sm">{submission.runtime ?? '-'}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
                       <Cpu className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm">{submission.memory}</span>
+                      <span className="text-sm">{submission.memory ?? '-'}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {submission.notes || '-'}
+                      {submission.testsPassed}/{submission.totalTests} passed
                     </span>
                   </TableCell>
                 </TableRow>
@@ -124,7 +128,7 @@ export const Submissions: React.FC = () => {
         </div>
 
         {/* Empty State (when no submissions) */}
-        {dummySubmissions.length === 0 && (
+        {!loading && submissions.length === 0 && (
           <div className="text-center py-12">
             <div className="text-muted-foreground">
               <p className="text-lg font-medium mb-2">No submissions yet</p>
