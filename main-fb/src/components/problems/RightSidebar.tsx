@@ -11,6 +11,28 @@ export default function RightSidebar({ problems }: RightSidebarProps) {
   const [currentWeek, setCurrentWeek] = useState(5);
   const [companies, setCompanies] = useState<CompanyCount[]>([]);
   const [query, setQuery] = useState('');
+  const [now, setNow] = useState<Date>(new Date());
+
+  // Tick every second for countdown and today's highlight
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const monthNames = [
+    'January','February','March','April','May','June','July','August','September','October','November','December'
+  ];
+  const shortMonthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const endOfDay = new Date(year, month, day, 23, 59, 59, 999);
+  const msLeft = Math.max(0, endOfDay.getTime() - now.getTime());
+  const hh = Math.floor(msLeft / 3600000);
+  const mm = Math.floor((msLeft % 3600000) / 60000);
+  const ss = Math.floor((msLeft % 60000) / 1000);
+  const pad = (n: number) => n.toString().padStart(2, '0');
 
   useEffect(() => {
     let cancelled = false;
@@ -54,22 +76,22 @@ export default function RightSidebar({ problems }: RightSidebarProps) {
       {/* Calendar/Challenge Progress */}
       <div className="space-y-4">
         <div className="text-center">
-          <div className="text-2xl font-bold text-foreground">Day 30</div>
-          <div className="text-sm text-muted-foreground">19:15:37 left</div>
+          <div className="text-2xl font-bold text-foreground">Day {day}</div>
+          <div className="text-sm text-muted-foreground">{pad(hh)}:{pad(mm)}:{pad(ss)} left</div>
         </div>
         
         <div className="text-center">
-          <div className="text-4xl font-bold text-primary mb-2">7 JUL</div>
-          <div className="text-xs text-muted-foreground">July 2024</div>
+          <div className="text-4xl font-bold text-primary mb-2">{day} {shortMonthNames[month]}</div>
+          <div className="text-xs text-muted-foreground">{monthNames[month]} {year}</div>
         </div>
         
         {/* Simple Calendar */}
         <div className="grid grid-cols-7 gap-1 text-xs">
-          {Array.from({ length: 31 }, (_, i) => (
+          {Array.from({ length: daysInMonth }, (_, i) => (
             <div
               key={i + 1}
               className={`p-1 text-center rounded ${
-                i + 1 === 30 
+                i + 1 === day 
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-muted-foreground'
               }`}
