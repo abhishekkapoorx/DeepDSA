@@ -42,6 +42,7 @@ export interface IProblem extends Document {
   outputVariable: IOutputVariable;
   createdAt: Date;
   updatedAt: Date;
+  companyTags: string[];
 }
 
 // Function to generate slug from title
@@ -119,6 +120,10 @@ const ProblemSchema = new Schema<IProblem>(
         type: String,
       },
     },
+    companyTags: [{
+      type: String,
+      trim: true,
+    }],
   },
   {
     timestamps: true,

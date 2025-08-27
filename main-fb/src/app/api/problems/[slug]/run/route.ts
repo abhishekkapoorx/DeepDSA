@@ -1,38 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { FullBoilerplateGenerator, mergeBoilerplateCode } from '@/utils/CodeGenerator/generate-full-boilerplate';
-import { Language } from '@/utils/CodeGenerator/dtype-mapper';
-import connectToDB from '@/lib/mongoose';
+import dbConnect from '@/lib/mongoose';
 import { Problem, TestCase } from '@/models';
 
-export const dynamic = 'force-dynamic';
-
-// Judge0 configuration
-const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
-const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY;
-
-// Language ID mapping for Judge0
-const LANGUAGE_IDS = {
-  cpp: 54,
-  java: 62,
-  python: 71,
-  javascript: 63,
-};
-
 export async function POST(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    await dbConnect();
+
     const { slug } = await params;
-    console.log('=== RUN API CALLED ===');
-    console.log('Slug:', slug);
-    console.log('JUDGE0_API_URL:', JUDGE0_API_URL);
-
-    await connectToDB();
-
-    const body = await request.json();
-    const { code, language } = body as { code?: string; language?: Language };
-    console.log('Request body:', { code: code?.substring(0, 100) + '...', language });
+    const { code, language } = await req.json();
 
     if (!code || !language) {
       return NextResponse.json(
@@ -41,189 +19,214 @@ export async function POST(
       );
     }
 
-    const validLanguages: Language[] = ['cpp', 'java', 'python', 'javascript'];
-    if (!validLanguages.includes(language)) {
-      return NextResponse.json(
-        { error: 'Invalid language. Supported languages: cpp, java, python, javascript' },
-        { status: 400 }
-      );
-    }
-
-    const problem = await Problem.findOne({ slug });
+    // Find problem by slug
+    const problem = await Problem.findOne({ slug }).lean();
     if (!problem) {
       return NextResponse.json(
         { error: 'Problem not found' },
         { status: 404 }
       );
     }
-    console.log('Problem found:', {
-      title: problem.title,
-      functionName: problem.functionName,
-      inputVariables: problem.inputVariables,
-      outputVariable: problem.outputVariable
-    });
 
-    const testCases = await TestCase.find({ problemId: problem._id });
+    // Get test cases for this problem
+    const testCases = await TestCase.find({ problemId: problem._id }).lean();
     if (!testCases || testCases.length === 0) {
       return NextResponse.json(
         { error: 'No test cases found for this problem' },
         { status: 404 }
       );
     }
-    console.log('Test cases found:', testCases.length);
-    console.log('First test case:', {
-      input: testCases[0]?.input,
-      output: testCases[0]?.output
-    });
 
-    const fullGenerator = new FullBoilerplateGenerator(
-      problem.inputVariables,
-      problem.outputVariable,
-      problem.functionName
-    );
+    // Language ID mapping for Judge0
+    const LANGUAGE_IDS = {
+      'cpp': 54,
+      'java': 62,
+      'python': 71,
+      'javascript': 63
+    };
 
-    const fullBoilerplate = fullGenerator.generateAll()[language];
-    console.log('Full boilerplate generated for', language, ':', fullBoilerplate.substring(0, 200) + '...');
+    const languageId = (LANGUAGE_IDS as any)[language];
+    if (!languageId) {
+      return NextResponse.json(
+        { error: 'Unsupported language' },
+        { status: 400 }
+      );
+    }
 
-    const completeCode = mergeBoilerplateCode(fullBoilerplate, code);
-    console.log('Complete code length:', completeCode.length);
-    console.log('Complete code preview:', completeCode.substring(0, 300) + '...');
+    // Encode code as base64 to avoid syntax and space issues
+    const encodedCode = Buffer.from(code, 'utf-8').toString('base64');
 
-    const submissions = testCases.map((testCase: any) => ({
-      source_code: completeCode,
-      language_id: (LANGUAGE_IDS as any)[language],
+    console.log('Processing run request for problem:', slug);
+    console.log('Language:', language, 'Language ID:', languageId);
+    console.log('Code length:', code.length, 'Encoded length:', encodedCode.length);
+
+    // Create batch submission with all test cases
+    const batchSubmissions = testCases.map((testCase, index) => ({
+      source_code: encodedCode,
+      language_id: languageId,
       stdin: testCase.input,
       expected_output: testCase.output,
       cpu_time_limit: 5,
-      memory_limit: 512000,
+      memory_limit: 128000,
       enable_network: false,
+      callback_url: null
     }));
-    console.log('Judge0 submissions prepared:', submissions.length);
-    console.log('First submission:', {
-      language_id: submissions[0]?.language_id,
-      stdin: submissions[0]?.stdin,
-      expected_output: submissions[0]?.expected_output
+
+    console.log(`Submitting batch of ${batchSubmissions.length} test cases to Judge0`);
+
+    // Submit batch to Judge0 with base64_encoded=true since we're sending base64 code
+    const batchResponse = await fetch(`${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=true`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        submissions: batchSubmissions
+      })
     });
 
-    // Retry helper to handle Judge0 startup delays
-    const fetchWithRetry = async (url: string, init: RequestInit, retries = 3, delayMs = 500) => {
-      let lastError: any;
-      for (let i = 0; i < retries; i++) {
-        try {
-          console.log(`Attempt ${i + 1}: Calling Judge0 at ${url}`);
-          const res = await fetch(url, init);
-          if (res.ok) return res;
-          lastError = new Error(`HTTP ${res.status}`);
-        } catch (e) {
-          console.log(`Attempt ${i + 1} failed:`, e);
-          lastError = e;
-        }
-        if (i < retries - 1) await new Promise(r => setTimeout(r, delayMs));
-      }
-      throw lastError;
-    };
-
-    // Use individual submissions instead of batch for now
-    console.log('Using individual submissions approach...');
-    const results = [];
-    
-    for (let i = 0; i < testCases.length; i++) {
-      const testCase = testCases[i];
-      console.log(`Processing test case ${i + 1}:`, { input: testCase.input, output: testCase.output });
-      
-      // Create individual submission
-      const submissionData = {
-        source_code: completeCode,
-        language_id: (LANGUAGE_IDS as any)[language],
-        stdin: testCase.input,
-        expected_output: testCase.output,
-        cpu_time_limit: 5,
-        memory_limit: 512000,
-        enable_network: false,
-      };
-      
-      console.log(`Submitting test case ${i + 1} to Judge0:`, submissionData);
-      
-      const submissionResponse = await fetchWithRetry(`${JUDGE0_API_URL}/submissions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
-        },
-        body: JSON.stringify(submissionData),
-      });
-      
-      if (!submissionResponse.ok) {
-        const errorText = await submissionResponse.text();
-        console.error(`Judge0 submission ${i + 1} failed:`, errorText);
-        throw new Error(`Judge0 submission failed: ${errorText}`);
-      }
-      
-      const submission = await submissionResponse.json();
-      console.log(`Submission ${i + 1} created:`, submission);
-      
-      // Wait for result
-      let result;
-      let attempts = 0;
-      const maxAttempts = 30; // Wait up to 30 seconds
-      
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        
-        const resultResponse = await fetch(`${JUDGE0_API_URL}/submissions/${submission.token}`);
-        if (resultResponse.ok) {
-          result = await resultResponse.json();
-          console.log(`Result ${i + 1} attempt ${attempts + 1}:`, result.status?.description);
-          
-          if (result.status?.id >= 3) { // 3 = Accepted, 4 = Wrong Answer, etc.
-            break;
-          }
-        }
-        attempts++;
-      }
-      
-      if (!result) {
-        throw new Error(`Timeout waiting for result for test case ${i + 1}`);
-      }
-      
-      const passed = result.status?.id === 3 && result.stdout?.trim() === testCase.output?.trim();
-      results.push({
-        testCaseId: testCase._id,
-        testCaseNumber: i + 1,
-        status: result.status?.description || 'Unknown',
-        time: result.time,
-        memory: result.memory,
-        stdout: result.stdout,
-        stderr: result.stderr,
-        compile_output: result.compile_output,
-        expectedOutput: testCase.output,
-        actualOutput: result.stdout,
-        passed,
-      });
-      
-      console.log(`Test case ${i + 1} result:`, { passed, status: result.status?.description });
+    if (!batchResponse.ok) {
+      console.error('Judge0 batch submission failed:', batchResponse.status);
+      const errorText = await batchResponse.text();
+      console.error('Error details:', errorText);
+      return NextResponse.json(
+        { error: 'Failed to submit code to Judge0' },
+        { status: 500 }
+      );
     }
 
-    const passedCount = results.filter((r: any) => r.passed).length;
-    const totalCount = results.length;
-    console.log('Results processed:', { passedCount, totalCount });
+    const batchData = await batchResponse.json();
+    const tokens = batchData.map((submission: any) => submission.token);
+    
+    console.log('Batch submission successful. Tokens:', tokens);
+
+    // Poll for results with exponential backoff (LeetCode-style)
+    const results = [];
+    let passedTests = 0;
+    const maxWaitTime = 30000; // 30 seconds max
+    const startTime = Date.now();
+
+    while (results.length < testCases.length && (Date.now() - startTime) < maxWaitTime) {
+      // Get batch results with base64_encoded=false to get readable output
+      const resultsResponse = await fetch(`${process.env.JUDGE0_API_URL}/submissions/batch?tokens=${tokens.join(',')}&base64_encoded=false&fields=token,stdout,stderr,status_id,status,time,memory,compile_output,message`);
+      
+      if (!resultsResponse.ok) {
+        console.error('Failed to fetch batch results:', resultsResponse.status);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      const batchResults = await resultsResponse.json();
+      console.log(`Fetched batch results. Completed: ${batchResults.submissions.filter((s: any) => s.status_id > 2).length}/${testCases.length}`);
+
+      // Process completed submissions
+      for (let i = 0; i < batchResults.submissions.length; i++) {
+        const submission = batchResults.submissions[i];
+        const testCase = testCases[i];
+        
+        // Skip if already processed
+        if (results[i]) continue;
+
+        // Check if processing is complete (status_id > 2 means completed)
+        if (submission.status_id && submission.status_id > 2) {
+          // Determine if test passed
+          const passed = submission.status === 'Accepted' && 
+                        submission.stdout?.trim() === testCase.output?.trim();
+
+          if (passed) {
+            passedTests++;
+          }
+
+          // Map Judge0 status to our status
+          let status = 'Unknown';
+          if (submission.status === 'Accepted') {
+            status = 'Accepted';
+          } else if (submission.status === 'Wrong Answer') {
+            status = 'Wrong Answer';
+          } else if (submission.status === 'Time Limit Exceeded') {
+            status = 'Time Limit Exceeded';
+          } else if (submission.status === 'Compilation Error') {
+            status = 'Compilation Error';
+          } else if (submission.status === 'Runtime Error') {
+            status = 'Runtime Error';
+          } else if (submission.status === 'Internal Error') {
+            status = 'Internal Error';
+          } else {
+            status = submission.status || 'Unknown';
+          }
+
+          results[i] = {
+            testCaseId: testCase._id.toString(),
+            testCaseNumber: i + 1,
+            status: status,
+            time: submission.time ? parseFloat(submission.time) : null,
+            memory: submission.memory ? parseFloat(submission.memory) : null,
+            stdout: submission.stdout,
+            stderr: submission.stderr,
+            compile_output: submission.compile_output,
+            expectedOutput: testCase.output,
+            actualOutput: submission.stdout,
+            passed: passed
+          };
+
+          console.log(`Test case ${i + 1} completed with status:`, status, 'Passed:', passed);
+        }
+      }
+
+      // If all tests are complete, break
+      if (results.length === testCases.length) {
+        break;
+      }
+
+      // Exponential backoff: wait longer as time progresses
+      const elapsed = Date.now() - startTime;
+      const waitTime = Math.min(1000 + Math.floor(elapsed / 1000) * 500, 3000);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+
+    // Handle any incomplete results
+    for (let i = 0; i < testCases.length; i++) {
+      if (!results[i]) {
+        results[i] = {
+          testCaseId: testCases[i]._id.toString(),
+          testCaseNumber: i + 1,
+          status: 'Timeout',
+          time: null,
+          memory: null,
+          stdout: null,
+          stderr: null,
+          compile_output: null,
+          expectedOutput: testCases[i].output,
+          actualOutput: null,
+          passed: false
+        };
+      }
+    }
+
+    const successRate = testCases.length > 0 ? (passedTests / testCases.length) * 100 : 0;
+
+    console.log('Run completed. Results:', {
+      totalTests: testCases.length,
+      passedTests: passedTests,
+      successRate: successRate.toFixed(2) + '%'
+    });
 
     return NextResponse.json({
       success: true,
       data: {
         problemSlug: slug,
-        language,
-        results,
+        language: language,
+        results: results,
         summary: {
-          passed: passedCount,
-          total: totalCount,
-          successRate: (passedCount / totalCount) * 100,
-        },
-      },
+          passed: passedTests,
+          total: testCases.length,
+          successRate: Math.round(successRate)
+        }
+      }
     });
+
   } catch (error) {
-    console.error('Error running code:', error);
-    console.error('Full error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    console.error('Error in run route:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

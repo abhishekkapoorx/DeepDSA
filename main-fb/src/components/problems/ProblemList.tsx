@@ -20,15 +20,29 @@ interface Problem {
 interface ProblemListProps {
   selectedTopic: string;
   searchQuery: string;
+  problemsFromParent?: Problem[];
 }
 
-export default function ProblemList({ selectedTopic, searchQuery }: ProblemListProps) {
+export default function ProblemList({ selectedTopic, searchQuery, problemsFromParent }: ProblemListProps) {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch problems from API
   useEffect(() => {
+    // If parent provides the problems list, use it and skip fetching
+    if (Array.isArray(problemsFromParent)) {
+      const withMock = problemsFromParent.map((problem: Problem) => ({
+        ...problem,
+        successRate: Math.floor(Math.random() * 60) + 20,
+        isSolved: Math.random() > 0.7,
+        progress: Math.random() > 0.7 ? 100 : Math.floor(Math.random() * 100)
+      }));
+      setProblems(withMock);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     const fetchProblems = async () => {
       try {
         setLoading(true);
@@ -70,7 +84,7 @@ export default function ProblemList({ selectedTopic, searchQuery }: ProblemListP
     };
 
     fetchProblems();
-  }, [selectedTopic, searchQuery]);
+  }, [selectedTopic, searchQuery, problemsFromParent]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {

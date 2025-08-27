@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
-import { useTheme } from '@/components/theme';
+import { useTheme } from '@/components/theme/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useParams } from 'next/navigation';
+import { Language } from '@/utils/CodeGenerator/dtype-mapper';
 
 interface CodeEditorProps {
   starterCode: string;
   onTestResults?: (results: any) => void;
   onExecutionStart?: () => void;
 }
-
-type Language = 'cpp' | 'java' | 'python' | 'javascript';
 
 const LANGUAGE_CONFIGS = {
   cpp: { name: 'C++', monacoLanguage: 'cpp' },
@@ -70,8 +69,26 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
     fetchBoilerplate();
   }, [currentLanguage, problemSlug, starterCode]);
 
-  const handleLanguageChange = (language: string) => {
-    setCurrentLanguage(language as Language);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+' (single quote) to run code
+      if (e.ctrlKey && e.key === "'") {
+        e.preventDefault();
+        handleRun();
+      }
+      // Ctrl+Enter to submit code
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [code, currentLanguage, problemSlug]); // Add dependencies
+
+  const handleLanguageChange = (language: Language) => {
+    setCurrentLanguage(language);
   };
 
   const handleCodeChange = (value: string | undefined) => {
@@ -80,7 +97,42 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
     }
   };
 
-  const handleSubmit = async () => {
+  const handleRun = useCallback(async () => {
+    if (!problemSlug) return;
+    
+    setIsRunning(true);
+    onExecutionStart?.();
+    try {
+      const response = await fetch(`/api/problems/${problemSlug}/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          language: currentLanguage,
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("--------------------------------")
+        console.log('data from run', data);
+        console.log("--------------------------------")
+        setResults(data.data);
+        onTestResults?.(data.data);
+      } else {
+        const errorData = await response.json();
+        console.error('Run failed:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Error running code:', error);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [problemSlug, code, currentLanguage, onExecutionStart, onTestResults]);
+
+  const handleSubmit = useCallback(async () => {
     if (!problemSlug) return;
     
     setIsSubmitting(true);
@@ -110,39 +162,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleRun = async () => {
-    if (!problemSlug) return;
-    
-    setIsRunning(true);
-    onExecutionStart?.();
-    try {
-      const response = await fetch(`/api/problems/${problemSlug}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code,
-          language: currentLanguage,
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data.data);
-        onTestResults?.(data.data);
-      } else {
-        const errorData = await response.json();
-        console.error('Run failed:', errorData.error);
-      }
-    } catch (error) {
-      console.error('Error running code:', error);
-    } finally {
-      setIsRunning(false);
-    }
-  };
+  }, [problemSlug, code, currentLanguage, onExecutionStart, onTestResults]);
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor;
@@ -171,6 +191,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
               onClick={handleRun}
               disabled={isRunning || isLoading}
               size="sm"
+              title="Run code (Ctrl+')"
             >
               {isRunning ? 'Running...' : 'Run'}
             </Button>
@@ -178,6 +199,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
               onClick={handleSubmit}
               disabled={isSubmitting || isLoading}
               size="sm"
+              title="Submit code (Ctrl+Enter)"
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
@@ -239,7 +261,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
             </div>
           </div>
           
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             {results.results.map((result: any, index: number) => (
               <div
                 key={index}
@@ -263,7 +285,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
                 )}
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       )}
     </div>

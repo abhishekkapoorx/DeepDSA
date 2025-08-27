@@ -112,86 +112,127 @@ export async function POST(
     console.log('Complete code length:', completeCode.length);
     console.log('Complete code preview:', completeCode.substring(0, 300) + '...');
 
-    // Submit to Judge0 using individual submissions
-    console.log('Using individual submissions approach...');
+    // Encode code as base64 to avoid syntax and space issues
+    const encodedCode = Buffer.from(completeCode, 'utf-8').toString('base64');
+    console.log('Code encoded as base64. Original length:', completeCode.length, 'Encoded length:', encodedCode.length);
+
+    // Submit to Judge0 using batch submissions (LeetCode-style)
+    console.log('Using batch submissions approach...');
     const processedResults = [];
     const languageId = (LANGUAGE_IDS as any)[language];
+
+    // Create batch submission with all test cases
+    const batchSubmissions = testCases.map((testCase, index) => ({
+      source_code: completeCode,
+      language_id: LANGUAGE_IDS[language as keyof typeof LANGUAGE_IDS],
+      stdin: testCase.input,
+      expected_output: testCase.output,
+      cpu_time_limit: 5,
+      memory_limit: 512000,
+      enable_network: false,
+      callback_url: null
+    }));
+
+    console.log(`Submitting batch of ${batchSubmissions.length} test cases to Judge0`);
+
+    // Submit batch to Judge0 with base64_encoded=false since we're sending plain text
+    const batchResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?base64_encoded=false`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
+      },
+      body: JSON.stringify({
+        submissions: batchSubmissions
+      })
+    });
+
+    if (!batchResponse.ok) {
+      const errorText = await batchResponse.text();
+      console.error('Judge0 batch submission failed:', errorText);
+      throw new Error(`Judge0 batch submission failed: ${errorText}`);
+    }
+
+    const batchData = await batchResponse.json();
+    const tokens = batchData.map((submission: any) => submission.token);
     
-    for (let i = 0; i < testCases.length; i++) {
-      const testCase = testCases[i];
-      console.log(`Processing test case ${i + 1}:`, { input: testCase.input, output: testCase.output });
+    console.log('Batch submission successful. Tokens:', tokens);
+
+    // Poll for results with exponential backoff (LeetCode-style)
+    const maxWaitTime = 30000; // 30 seconds max
+    const startTime = Date.now();
+
+    while (processedResults.length < testCases.length && (Date.now() - startTime) < maxWaitTime) {
+      // Get batch results with base64_encoded=false to get readable output
+      const resultsResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?tokens=${tokens.join(',')}&base64_encoded=false&fields=token,stdout,stderr,status_id,status,time,memory,compile_output,message`);
       
-      // Create individual submission
-      const submissionData = {
-        source_code: completeCode,
-        language_id: LANGUAGE_IDS[language as keyof typeof LANGUAGE_IDS],
-        stdin: testCase.input,
-        expected_output: testCase.output,
-        cpu_time_limit: 5,
-        memory_limit: 512000,
-        enable_network: false,
-      };
-      
-      console.log(`Submitting test case ${i + 1} to Judge0:`, submissionData);
-      
-      const submissionResponse = await fetch(`${JUDGE0_API_URL}/submissions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
-        },
-        body: JSON.stringify(submissionData),
-      });
-      
-      if (!submissionResponse.ok) {
-        const errorText = await submissionResponse.text();
-        console.error(`Judge0 submission ${i + 1} failed:`, errorText);
-        throw new Error(`Judge0 submission failed: ${errorText}`);
+      if (!resultsResponse.ok) {
+        console.error('Failed to fetch batch results:', resultsResponse.status);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
       }
-      
-      const submission = await submissionResponse.json();
-      console.log(`Submission ${i + 1} created:`, submission);
-      
-      // Wait for result
-      let result;
-      let attempts = 0;
-      const maxAttempts = 30; // Wait up to 30 seconds
-      
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+
+      const batchResults = await resultsResponse.json();
+      console.log(`Fetched batch results. Completed: ${batchResults.submissions.filter((s: any) => s.status_id > 2).length}/${testCases.length}`);
+
+      // Process completed submissions
+      for (let i = 0; i < batchResults.submissions.length; i++) {
+        const submission = batchResults.submissions[i];
+        const testCase = testCases[i];
         
-        const resultResponse = await fetch(`${JUDGE0_API_URL}/submissions/${submission.token}`);
-        if (resultResponse.ok) {
-          result = await resultResponse.json();
-          console.log(`Result ${i + 1} attempt ${attempts + 1}:`, result.status?.description);
+        // Skip if already processed
+        if (processedResults[i]) continue;
+
+        // Check if processing is complete (status_id > 2 means completed)
+        if (submission.status_id && submission.status_id > 2) {
+          const passed = submission.status === 'Accepted' && submission.stdout?.trim() === testCase.output?.trim();
           
-          if (result.status?.id >= 3) { // 3 = Accepted, 4 = Wrong Answer, etc.
-            break;
-          }
+          processedResults[i] = {
+            testCaseId: testCase._id,
+            testCaseNumber: i + 1,
+            status: submission.status || 'Unknown',
+            time: submission.time,
+            memory: submission.memory,
+            stdout: submission.stdout,
+            stderr: submission.stderr,
+            compile_output: submission.compile_output,
+            expectedOutput: testCase.output,
+            actualOutput: submission.stdout,
+            passed,
+          };
+          
+          console.log(`Test case ${i + 1} result:`, { passed, status: submission.status });
         }
-        attempts++;
       }
-      
-      if (!result) {
-        throw new Error(`Timeout waiting for result for test case ${i + 1}`);
+
+      // If all tests are complete, break
+      if (processedResults.length === testCases.length) {
+        break;
       }
-      
-      const passed = result.status?.id === 3 && result.stdout?.trim() === testCase.output?.trim();
-      processedResults.push({
-        testCaseId: testCase._id,
-        testCaseNumber: i + 1,
-        status: result.status?.description || 'Unknown',
-        time: result.time,
-        memory: result.memory,
-        stdout: result.stdout,
-        stderr: result.stderr,
-        compile_output: result.compile_output,
-        expectedOutput: testCase.output,
-        actualOutput: result.stdout,
-        passed,
-      });
-      
-      console.log(`Test case ${i + 1} result:`, { passed, status: result.status?.description });
+
+      // Exponential backoff: wait longer as time progresses
+      const elapsed = Date.now() - startTime;
+      const waitTime = Math.min(1000 + Math.floor(elapsed / 1000) * 500, 3000);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+
+    // Handle any incomplete results
+    for (let i = 0; i < testCases.length; i++) {
+      if (!processedResults[i]) {
+        processedResults[i] = {
+          testCaseId: testCases[i]._id,
+          testCaseNumber: i + 1,
+          status: 'Timeout',
+          time: null,
+          memory: null,
+          stdout: null,
+          stderr: null,
+          compile_output: null,
+          expectedOutput: testCases[i].output,
+          actualOutput: null,
+          passed: false
+        };
+      }
     }
 
     const passedCount = processedResults.filter((r: any) => r.passed).length;

@@ -1,25 +1,53 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const companies = [
-  { name: 'Meta', count: 1265 },
-  { name: 'Google', count: 2064 },
-  { name: 'Amazon', count: 1871 },
-  { name: 'Microsoft', count: 1219 },
-  { name: 'Uber', count: 522 },
-  { name: 'Bloomberg', count: 1084 },
-  { name: 'Apple', count: 569 },
-  { name: 'TikTok', count: 443 },
-  { name: 'Oracle', count: 309 },
-  { name: 'Adobe', count: 510 },
-  { name: 'Citadel', count: 104 },
-  { name: 'TCS', count: 194 },
-  { name: 'Goldman Sachs', count: 275 }
-];
+interface CompanyCount { name: string; count: number }
+interface RightSidebarProps {
+  problems?: Array<{ companyTags?: string[] }>;
+}
 
-export default function RightSidebar() {
+export default function RightSidebar({ problems }: RightSidebarProps) {
   const [currentWeek, setCurrentWeek] = useState(5);
+  const [companies, setCompanies] = useState<CompanyCount[]>([]);
+  const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    const computeFromProblems = (list: Array<{ companyTags?: string[] }>) => {
+      const map = new Map<string, number>();
+      for (const p of list) {
+        const tags: string[] = Array.isArray(p.companyTags) ? p.companyTags : [];
+        for (const t of tags) map.set(t, (map.get(t) || 0) + 1);
+      }
+      return Array.from(map, ([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    };
+    const loadCompanies = async () => {
+      // If parent provided problems, use them directly
+      if (Array.isArray(problems)) {
+        const agg = computeFromProblems(problems);
+        if (!cancelled) setCompanies(agg);
+        return;
+      }
+      try {
+        const res = await fetch('/api/problems?limit=500', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = data?.problems || [];
+        const agg: CompanyCount[] = computeFromProblems(list);
+        if (!cancelled) setCompanies(agg);
+      } catch {}
+    };
+    loadCompanies();
+    return () => { cancelled = true };
+  }, [problems]);
+
+  const filteredCompanies = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return companies;
+    return companies.filter(c => c.name.toLowerCase().includes(q));
+  }, [companies, query]);
 
   return (
     <div className="w-80 border-l border-border p-4 space-y-6 hidden xl:block">
@@ -104,12 +132,14 @@ export default function RightSidebar() {
           <input
             type="text"
             placeholder="Q Search for a company..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-1 text-xs bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         
         <div className="space-y-1 max-h-60 overflow-y-auto">
-          {companies.map((company) => (
+          {filteredCompanies.map((company) => (
             <div
               key={company.name}
               className="flex items-center justify-between p-2 rounded hover:bg-accent cursor-pointer"
@@ -118,6 +148,9 @@ export default function RightSidebar() {
               <span className="text-xs text-muted-foreground">{company.count}</span>
             </div>
           ))}
+          {filteredCompanies.length === 0 && (
+            <div className="p-2 text-xs text-muted-foreground">No companies found</div>
+          )}
         </div>
       </div>
     </div>

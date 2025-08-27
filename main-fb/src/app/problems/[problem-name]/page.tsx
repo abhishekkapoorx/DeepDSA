@@ -126,7 +126,7 @@ export default function ProblemDetailPage() {
       case "code-visualization":
         return <CodeVisualization />;
       case "test-results":
-        return <TestResults />;
+        return <TestResults testResults={testResults} isRunning={isRunning} />;
       default:
         return <div>Component not found</div>;
     }

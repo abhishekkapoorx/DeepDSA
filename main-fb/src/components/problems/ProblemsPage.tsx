@@ -9,6 +9,8 @@ export default function ProblemsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [problems, setProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Keyboard shortcut for sidebar toggle (Ctrl/Cmd + B)
   useEffect(() => {
@@ -22,6 +24,24 @@ export default function ProblemsPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSidebarOpen]);
+
+  // Fetch once at page level and share
+  useEffect(() => {
+    const fetchOnce = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/problems?limit=500', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch problems');
+        const data = await res.json();
+        setProblems(data?.problems || []);
+      } catch (e) {
+        setProblems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOnce();
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -75,6 +95,7 @@ export default function ProblemsPage() {
             onTopicChange={setSelectedTopic}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            problems={problems}
           />
         </div>
         
@@ -83,12 +104,13 @@ export default function ProblemsPage() {
           <ProblemList 
             selectedTopic={selectedTopic}
             searchQuery={searchQuery}
+            problemsFromParent={problems}
           />
         </div>
       </div>
       
       {/* Right Sidebar */}
-      <RightSidebar />
+      <RightSidebar problems={problems} />
     </div>
   );
 } 
