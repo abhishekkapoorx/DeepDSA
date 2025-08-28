@@ -33,8 +33,17 @@ interface Problem {
 }
 
 const CreateEditorialPage = () => {
+  const supportedLanguages = [
+    { label: 'C++', value: 'C++' },
+    { label: 'Java', value: 'Java' },
+    { label: 'Python', value: 'Python' },
+    { label: 'JavaScript', value: 'JavaScript' },
+  ]
   const [problems, setProblems] = useState<Problem[]>([])
   const [selectedProblemId, setSelectedProblemId] = useState('')
+  const [problemSearch, setProblemSearch] = useState('')
+  const [isProblemOpen, setIsProblemOpen] = useState(false)
+  const [activeProblemIndex, setActiveProblemIndex] = useState(0)
   const [formData, setFormData] = useState({
     title: 'Two Sum - Multiple Approaches Explained',
     overview: 'This problem asks us to find two numbers in an array that add up to a specific target value. We\'ll explore multiple approaches from brute force to optimized solutions, analyzing their time and space complexities.',
@@ -385,29 +394,108 @@ const CreateEditorialPage = () => {
           {/* Problem Selection */}
           <div className="bg-card border border-border rounded-lg p-6">
             <h2 className="text-xl font-semibold text-foreground mb-4">Problem Selection</h2>
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-foreground mb-2">
-                Select Problem *
+                Search and Select Problem *
               </label>
-              <select
-                required
-                value={selectedProblemId}
-                onChange={(e) => setSelectedProblemId(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              <div
+                className="flex items-center gap-2"
+                onFocus={() => setIsProblemOpen(true)}
               >
-                <option value="">Choose a problem...</option>
-                {problems.map((problem) => (
-                  <option key={problem._id} value={problem._id}>
-                    #{problem.questionNumber} - {problem.title} ({problem.difficulty})
-                  </option>
-                ))}
-              </select>
+                <input
+                  type="text"
+                  value={problemSearch}
+                  onChange={(e) => {
+                    setProblemSearch(e.target.value)
+                    setIsProblemOpen(true)
+                    setActiveProblemIndex(0)
+                  }}
+                  onKeyDown={(e) => {
+                    const filtered = problems.filter(p =>
+                      (p.title + ' ' + p.slug + ' #' + p.questionNumber)
+                        .toLowerCase()
+                        .includes(problemSearch.toLowerCase())
+                    )
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault()
+                      setActiveProblemIndex((prev) => Math.min(prev + 1, Math.max(filtered.length - 1, 0)))
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault()
+                      setActiveProblemIndex((prev) => Math.max(prev - 1, 0))
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const choice = filtered[activeProblemIndex]
+                      if (choice) {
+                        setSelectedProblemId(choice._id)
+                        setProblemSearch(`#${choice.questionNumber} · ${choice.title}`)
+                        setIsProblemOpen(false)
+                      }
+                    } else if (e.key === 'Escape') {
+                      setIsProblemOpen(false)
+                    }
+                  }}
+                  placeholder="Type to search (title, slug, or #number)"
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsProblemOpen((s) => !s)}
+                  className="px-3 py-2 border border-border rounded-md text-sm hover:bg-muted"
+                >
+                  {isProblemOpen ? 'Hide' : 'Browse'}
+                </button>
+              </div>
+
+              {isProblemOpen && (
+                <div className="absolute z-10 mt-2 w-full bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-72 overflow-auto">
+                  {problems
+                    .filter(p => (p.title + ' ' + p.slug + ' #' + p.questionNumber).toLowerCase().includes(problemSearch.toLowerCase()))
+                    .slice(0, 200)
+                    .map((p, idx) => {
+                      const isActive = idx === activeProblemIndex
+                      const isSelected = selectedProblemId === p._id
+                      return (
+                        <button
+                          key={p._id}
+                          type="button"
+                          onMouseEnter={() => setActiveProblemIndex(idx)}
+                          onClick={() => {
+                            setSelectedProblemId(p._id)
+                            setProblemSearch(`#${p.questionNumber} · ${p.title}`)
+                            setIsProblemOpen(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-accent ${isActive ? 'bg-accent' : ''}`}
+                        >
+                          <div>
+                            <div className="text-sm font-medium">#{p.questionNumber} · {p.title}</div>
+                            <div className="text-xs text-muted-foreground">{p.slug}</div>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded ${p.difficulty === 'EASY' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : p.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                            {p.difficulty}
+                          </span>
+                          {isSelected && <span className="ml-2 text-xs text-primary">Selected</span>}
+                        </button>
+                      )
+                    })}
+                  {problems.filter(p => (p.title + ' ' + p.slug + ' #' + p.questionNumber).toLowerCase().includes(problemSearch.toLowerCase())).length === 0 && (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">No results</div>
+                  )}
+                </div>
+              )}
+
               {selectedProblem && (
-                <div className="mt-2 p-3 bg-muted/50 rounded-md">
-                  <div className="text-sm text-foreground font-medium">{selectedProblem.title}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Difficulty: {selectedProblem.difficulty} • Slug: {selectedProblem.slug}
+                <div className="mt-3 p-3 bg-muted/50 rounded-md flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-foreground font-medium">{selectedProblem.title}</div>
+                    <div className="text-xs text-muted-foreground">Difficulty: {selectedProblem.difficulty} • Slug: {selectedProblem.slug}</div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedProblemId(''); setProblemSearch(''); setIsProblemOpen(true) }}
+                    className="text-xs px-2 py-1 border border-border rounded hover:bg-muted"
+                  >
+                    Change
+                  </button>
                 </div>
               )}
             </div>
@@ -556,76 +644,91 @@ const CreateEditorialPage = () => {
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-medium text-foreground">Code Solutions</h4>
-                      <button
-                        type="button"
-                        onClick={() => addCodeSolution(approachIndex)}
-                        className="inline-flex items-center px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add Language
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {supportedLanguages.map((lang) => (
+                          <button
+                            key={lang.value}
+                            type="button"
+                            onClick={() => {
+                              const newApproaches = [...approaches]
+                              newApproaches[approachIndex].codeSolutions.push({ language: lang.value, code: '', explanation: '' })
+                              setApproaches(newApproaches)
+                            }}
+                            className="inline-flex items-center px-2 py-1 text-xs border border-border rounded hover:bg-muted"
+                          >
+                            + {lang.label}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addCodeSolution(approachIndex)}
+                          className="inline-flex items-center px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Custom
+                        </button>
+                      </div>
                     </div>
-                    
-                    <div className="space-y-3">
-                      {approach.codeSolutions.map((solution, solutionIndex) => (
-                        <div key={solutionIndex} className="border border-border rounded p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <h5 className="text-xs font-medium text-foreground">Solution {solutionIndex + 1}</h5>
-                            {approach.codeSolutions.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeCodeSolution(approachIndex, solutionIndex)}
-                                className="text-destructive hover:bg-destructive/10 rounded p-1"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            )}
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-foreground mb-1">
-                                Language *
-                              </label>
-                              <input
-                                type="text"
-                                required
-                                value={solution.language}
-                                onChange={(e) => updateCodeSolution(approachIndex, solutionIndex, 'language', e.target.value)}
-                                className="w-full px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                                placeholder="JavaScript"
-                              />
-                            </div>
-                            
-                            <div className="md:col-span-2">
-                              <label className="block text-xs font-medium text-foreground mb-1">
-                                Code *
-                              </label>
-                              <textarea
-                                required
-                                value={solution.code}
-                                onChange={(e) => updateCodeSolution(approachIndex, solutionIndex, 'code', e.target.value)}
-                                rows={4}
-                                className="w-full px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-                                placeholder="// Your code here..."
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="mt-2">
-                            <label className="block text-xs font-medium text-foreground mb-1">
-                              Explanation
-                            </label>
-                            <textarea
-                              value={solution.explanation}
-                              onChange={(e) => updateCodeSolution(approachIndex, solutionIndex, 'explanation', e.target.value)}
-                              rows={2}
-                              className="w-full px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                              placeholder="Explain the code logic..."
-                            />
-                          </div>
-                        </div>
-                      ))}
+
+                    <div className="overflow-x-auto border border-border rounded">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50 text-foreground">
+                          <tr>
+                            <th className="text-left px-3 py-2 w-40">Language</th>
+                            <th className="text-left px-3 py-2">Code</th>
+                            <th className="text-left px-3 py-2 w-64">Explanation</th>
+                            <th className="text-left px-3 py-2 w-16">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {approach.codeSolutions.map((solution, solutionIndex) => (
+                            <tr key={solutionIndex} className="border-t border-border align-top">
+                              <td className="px-3 py-2">
+                                <select
+                                  value={solution.language}
+                                  onChange={(e) => updateCodeSolution(approachIndex, solutionIndex, 'language', e.target.value)}
+                                  className="w-full px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                >
+                                  <option value="">Select language</option>
+                                  {supportedLanguages.map((lang) => (
+                                    <option key={lang.value} value={lang.value}>{lang.label}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-3 py-2">
+                                <textarea
+                                  required
+                                  value={solution.code}
+                                  onChange={(e) => updateCodeSolution(approachIndex, solutionIndex, 'code', e.target.value)}
+                                  rows={6}
+                                  className="w-full px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                                  placeholder={`// ${solution.language || 'Language'} code here...`}
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <textarea
+                                  value={solution.explanation || ''}
+                                  onChange={(e) => updateCodeSolution(approachIndex, solutionIndex, 'explanation', e.target.value)}
+                                  rows={6}
+                                  className="w-full px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                  placeholder="Explain the code logic..."
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                {approach.codeSolutions.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCodeSolution(approachIndex, solutionIndex)}
+                                    className="text-destructive hover:bg-destructive/10 rounded p-1"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
 
