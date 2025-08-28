@@ -9,15 +9,17 @@ Solution content and code
 Tags and categories
 Search and filtering functionality
 
+If question is not solved then when user open  editorial show option to open editorial as it contains the solution
 
-2. Editorial Component (/components/editorial/Editorial.tsx)
+
+<!-- 2. Editorial Component (/components/editorial/Editorial.tsx)
 Hardcoded: Static editorial content with hardcoded problem title
 What needs to be live:
 Dynamic editorial content based on current problem
 Real upvotes, views, comments counts
 Editorial content from database
 Multiple editorial approaches per problem
-User-generated editorial content
+User-generated editorial content -->
 
 
 3. AI Interview Component (/components/problems/AIInterview.tsx)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useParams } from 'next/navigation';
 import { Language } from '@/utils/CodeGenerator/dtype-mapper';
 
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
 interface CodeEditorProps {
   starterCode: string;
   onTestResults?: (results: any) => void;
   onExecutionStart?: () => void;
+  onCodeChange?: (code: string, language: string) => void;
 }
 
 const LANGUAGE_CONFIGS = {
@@ -19,7 +29,7 @@ const LANGUAGE_CONFIGS = {
   javascript: { name: 'JavaScript', monacoLanguage: 'javascript' }
 };
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResults, onExecutionStart }) => {
+export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResults, onExecutionStart, onCodeChange }) => {
   const { theme } = useTheme();
   const params = useParams();
   const problemSlug = params['problem-name'] as string;
@@ -89,13 +99,24 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
 
   const handleLanguageChange = (language: Language) => {
     setCurrentLanguage(language);
+    onCodeChange?.(code, language);
   };
 
-  const handleCodeChange = (value: string | undefined) => {
+  const handleCodeChange = useCallback((value: string | undefined) => {
     if (value !== undefined) {
       setCode(value);
+      // Debounced code context update to parent
+      debouncedCodeUpdate(value, currentLanguage);
     }
-  };
+  }, [currentLanguage]);
+
+  // Debounced function for code context updates
+  const debouncedCodeUpdate = useCallback(
+    debounce((code: string, language: string) => {
+      onCodeChange?.(code, language);
+    }, 500), // 500ms delay
+    [onCodeChange]
+  );
 
   const handleRun = useCallback(async () => {
     if (!problemSlug) return;

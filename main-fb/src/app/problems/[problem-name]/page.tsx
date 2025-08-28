@@ -35,6 +35,8 @@ export default function ProblemDetailPage() {
   const [testResults, setTestResults] = useState<any[] | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [editorial, setEditorial] = useState<any>(null);
+  const [currentCode, setCurrentCode] = useState<string>('');
+  const [currentLanguage, setCurrentLanguage] = useState<string>('java');
 
   // Fetch problem data by slug
   useEffect(() => {
@@ -54,6 +56,7 @@ export default function ProblemDetailPage() {
 
         const data = await response.json();
         setProblem(data);
+        setCurrentCode(data.starterCode || '');
       } catch (err) {
         console.error('Error fetching problem:', err);
         setError('Failed to load problem');
@@ -98,6 +101,12 @@ export default function ProblemDetailPage() {
     setTestResults(null);
   };
 
+  // Handle code changes from CodeEditor
+  const handleCodeChange = (code: string, language: string) => {
+    setCurrentCode(code);
+    setCurrentLanguage(language);
+  };
+
   // Create the layout model with useMemo to ensure it updates when isMobile changes
   const layoutModel = useMemo(() => {
     const config = isMobile ? mobileLayoutConfig : desktopLayoutConfig;
@@ -124,6 +133,7 @@ export default function ProblemDetailPage() {
             starterCode={problem.starterCode} 
             onTestResults={handleTestResults}
             onExecutionStart={handleExecutionStart}
+            onCodeChange={handleCodeChange}
           />
         );
       case "testcase":
@@ -141,7 +151,15 @@ export default function ProblemDetailPage() {
       case "submissions":
         return <Submissions />;
       case "ai-interview":
-        return <AIInterview />;
+        return (
+          <AIInterview 
+            problem={problem}
+            codeContext={{
+              code: currentCode,
+              language: currentLanguage,
+            }}
+          />
+        );
       case "code-visualization":
         return <CodeVisualization />;
       case "test-results":
@@ -157,34 +175,44 @@ export default function ProblemDetailPage() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full bg-background text-foreground flex items-center justify-center">
-        <div className="text-lg">Loading problem...</div>
+      <div
+        className="flex items-center justify-center h-screen"
+        style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading problem...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !problem) {
     return (
-      <div className="h-screen w-full bg-background text-foreground flex items-center justify-center">
-        <div className="text-lg text-red-500">{error || 'Problem not found'}</div>
+      <div
+        className="flex items-center justify-center h-screen"
+        style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}
+      >
+        <div className="text-center">
+          <div className="text-white text-6xl mb-4">⚠️</div>
+          <h1 className="text-white text-2xl font-bold mb-2">Oops!</h1>
+          <p className="text-white text-lg">{error || 'Problem not found'}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-full bg-background text-foreground">
-      {/* Main layout container - full screen height since navbar is hidden */}
-      <div className="h-full p-2">
-        <div className="h-full w-full rounded-lg overflow-hidden border border-border/50">
-          <FlexLayout.Layout
-            model={layoutModel}
-            factory={factory}
-            onRenderTabSet={onRenderTabSet}
-            realtimeResize
-            key={isMobile ? 'mobile' : 'desktop'} // Force re-render when layout changes
-          />
-        </div>
-      </div>
+    <div className="h-screen w-full">
+      <FlexLayout.Layout
+        model={layoutModel}
+        factory={factory}
+        onRenderTabSet={onRenderTabSet}
+      />
     </div>
   );
 }
