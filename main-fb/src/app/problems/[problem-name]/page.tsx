@@ -12,7 +12,6 @@ import { TestResults } from "@/components/problems/TestResults";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { desktopLayoutConfig, mobileLayoutConfig } from "@/config/layoutConfigs";
 import { useParams } from "next/navigation";
-import { IProblem } from "@/models";
 
 interface TestCase {
   input: string;
@@ -21,7 +20,7 @@ interface TestCase {
   isExample: boolean;
 }
 
-interface ProblemWithTestCases extends IProblem {
+interface ProblemWithTestCases extends Problem {
   testcases: TestCase[];
 }
 
@@ -35,6 +34,7 @@ export default function ProblemDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<any[] | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [editorial, setEditorial] = useState<any>(null);
 
   // Fetch problem data by slug
   useEffect(() => {
@@ -66,6 +66,25 @@ export default function ProblemDetailPage() {
       fetchProblem();
     }
   }, [slug]);
+
+  // Fetch editorial data
+  useEffect(() => {
+    const fetchEditorial = async () => {
+      if (!problem) return;
+      
+      try {
+        const response = await fetch(`/api/editorials/${slug}`);
+        if (response.ok) {
+          const data = await response.json();
+          setEditorial(data.editorial);
+        }
+      } catch (err) {
+        console.error('Error fetching editorial:', err);
+      }
+    };
+
+    fetchEditorial();
+  }, [problem, slug]);
 
   // Handle test results from CodeEditor
   const handleTestResults = (results: any) => {
@@ -116,7 +135,7 @@ export default function ProblemDetailPage() {
           />
         );
       case "editorial":
-        return <Editorial problemTitle={problem.title} />;
+        return <Editorial problemTitle={problem.title} editorial={editorial} />;
       case "solutions":
         return <Solutions />;
       case "submissions":

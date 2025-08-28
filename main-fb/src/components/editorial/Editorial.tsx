@@ -1,180 +1,251 @@
-"use client";
-import React from 'react';
-import { Play, ThumbsUp, Eye, MessageCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+'use client'
+
+import React, { useState } from 'react'
+import { ChevronDown, ChevronRight, CheckCircle, XCircle, Clock, Zap, Code, BookOpen } from 'lucide-react'
+
+interface CodeSolution {
+  language: string
+  code: string
+  explanation?: string
+}
+
+interface Approach {
+  type: string
+  title: string
+  description: string
+  algorithm: string
+  codeSolutions: CodeSolution[]
+  timeComplexity: string
+  spaceComplexity: string
+  pros: string[]
+  cons: string[]
+}
+
+interface Editorial {
+  _id: string
+  title: string
+  overview: string
+  approaches: Approach[]
+  followUpQuestions?: string[]
+  relatedProblems?: string[]
+  isPublished: boolean
+}
 
 interface EditorialProps {
-  problemTitle?: string;
+  problemTitle: string
+  editorial?: Editorial | null
 }
 
-export const Editorial: React.FC<EditorialProps> = ({ problemTitle = "Median of Two Sorted Arrays" }) => {
-  const editorialContent = `
-# Editorial: ${problemTitle}
+const EditorialComponent = ({ editorial, problemTitle }: EditorialProps) => {
+  const [expandedApproaches, setExpandedApproaches] = useState<Set<number>>(new Set([0]))
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('')
 
-## Problem Overview
-Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays. The overall run time complexity should be O(log (m+n)).
-
-## Approach 1: Brute Force
-The simplest approach is to merge the two sorted arrays and find the median.
-
-\`\`\`java
-class Solution {
-    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
-        int[] merged = new int[nums1.length + nums2.length];
-        int i = 0, j = 0, k = 0;
-        
-        while (i < nums1.length && j < nums2.length) {
-            if (nums1[i] <= nums2[j]) {
-                merged[k++] = nums1[i++];
-            } else {
-                merged[k++] = nums2[j++];
-            }
-        }
-        
-        while (i < nums1.length) {
-            merged[k++] = nums1[i++];
-        }
-        
-        while (j < nums2.length) {
-            merged[k++] = nums2[j++];
-        }
-        
-        int n = merged.length;
-        if (n % 2 == 0) {
-            return (merged[n/2 - 1] + merged[n/2]) / 2.0;
+  const toggleApproach = (index: number) => {
+    const newExpanded = new Set(expandedApproaches)
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index)
         } else {
-            return merged[n/2];
-        }
+      newExpanded.add(index)
     }
-}
-\`\`\`
+    setExpandedApproaches(newExpanded)
+  }
 
-**Time Complexity:** O(m + n)  
-**Space Complexity:** O(m + n)
-
-## Approach 2: Binary Search (Optimal)
-We can find the median without merging the arrays using binary search.
-
-\`\`\`java
-class Solution {
-    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
-        if (nums1.length > nums2.length) {
-            return findMedianSortedArrays(nums2, nums1);
-        }
-        
-        int x = nums1.length;
-        int y = nums2.length;
-        
-        int low = 0;
-        int high = x;
-        
-        while (low <= high) {
-            int partitionX = (low + high) / 2;
-            int partitionY = (x + y + 1) / 2 - partitionX;
-            
-            int maxLeftX = (partitionX == 0) ? Integer.MIN_VALUE : nums1[partitionX - 1];
-            int minRightX = (partitionX == x) ? Integer.MAX_VALUE : nums1[partitionX];
-            
-            int maxLeftY = (partitionY == 0) ? Integer.MIN_VALUE : nums2[partitionY - 1];
-            int minRightY = (partitionY == y) ? Integer.MAX_VALUE : nums2[partitionY];
-            
-            if (maxLeftX <= minRightY && maxLeftY <= minRightX) {
-                if ((x + y) % 2 == 0) {
-                    return (Math.max(maxLeftX, maxLeftY) + Math.min(minRightX, minRightY)) / 2.0;
-                } else {
-                    return Math.max(maxLeftX, maxLeftY);
-                }
-            } else if (maxLeftX > minRightY) {
-                high = partitionX - 1;
-            } else {
-                low = partitionX + 1;
-            }
-        }
-        
-        throw new IllegalArgumentException("Input arrays are not sorted");
+  const getApproachIcon = (type: string) => {
+    switch (type) {
+      case 'BRUTE_FORCE': return <Zap className="h-4 w-4" />
+      case 'OPTIMIZED': return <CheckCircle className="h-4 w-4" />
+      case 'DYNAMIC_PROGRAMMING': return <BookOpen className="h-4 w-4" />
+      case 'GREEDY': return <Zap className="h-4 w-4" />
+      default: return <Code className="h-4 w-4" />
     }
-}
-\`\`\`
+  }
 
-**Time Complexity:** O(log(min(m, n)))  
-**Space Complexity:** O(1)
+  const getApproachColor = (type: string) => {
+    switch (type) {
+      case 'BRUTE_FORCE': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      case 'OPTIMIZED': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      case 'DYNAMIC_PROGRAMMING': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'GREEDY': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    }
+  }
 
-## Key Insights
-1. The median divides the combined array into two equal halves
-2. We can use binary search to find the correct partition
-3. The optimal solution runs in logarithmic time
-`;
+  if (!editorial || !editorial.isPublished) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-6 text-center">
+        <div className="text-muted-foreground">
+          Editorial not available for this problem yet.
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-6 space-y-6">
-        {/* Editorial Header */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-semibold">LeetCode</span>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                    Editorial
-                  </Badge>
-                </div>
-                <Button variant="ghost" size="sm" className="p-1">
-                  <Play className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <div className="flex items-center space-x-1">
-                  <ThumbsUp className="h-4 w-4" />
-                  <span>491</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Eye className="h-4 w-4" />
-                  <span>702K</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <MessageCircle className="h-4 w-4" />
-                  <span>203</span>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <div 
-                className="markdown-content"
-                dangerouslySetInnerHTML={{ 
-                  __html: editorialContent 
-                    .split('\n')
-                    .map(line => {
-                      if (line.startsWith('```')) {
-                        return `<pre><code class="language-java">`;
-                      }
-                      if (line.startsWith('**') && line.endsWith('**')) {
-                        return `<strong>${line.slice(2, -2)}</strong>`;
-                      }
-                      if (line.startsWith('#')) {
-                        const match = line.match(/^#+/);
-                        if (match) {
-                          const level = match[0].length;
-                          const text = line.replace(/^#+\s*/, '');
-                          return `<h${level}>${text}</h${level}>`;
-                        }
-                      }
-                      if (line.trim() === '') {
-                        return '<br>';
-                      }
-                      return `<p>${line}</p>`;
-                    })
-                    .join('')
-                }} 
-              />
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-foreground mb-2">{editorial.title}</h2>
+        <p className="text-muted-foreground">Solution explanation for: {problemTitle}</p>
       </div>
+
+      {/* Overview */}
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-xl font-semibold text-foreground mb-4">Overview</h3>
+        <div className="prose prose-sm max-w-none text-foreground">
+          <div dangerouslySetInnerHTML={{ __html: editorial.overview }} />
+        </div>
+      </div>
+
+      {/* Approaches */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold text-foreground">Solution Approaches</h3>
+        
+        {editorial.approaches.map((approach, index) => (
+          <div key={index} className="bg-card border border-border rounded-lg">
+            {/* Approach Header */}
+            <button
+              onClick={() => toggleApproach(index)}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className={`p-2 rounded-full ${getApproachColor(approach.type)}`}>
+                  {getApproachIcon(approach.type)}
+                </span>
+                <div>
+                  <h4 className="font-semibold text-foreground">{approach.title}</h4>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {approach.timeComplexity}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      {approach.spaceComplexity}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {expandedApproaches.has(index) ? (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              )}
+            </button>
+
+            {/* Approach Content */}
+            {expandedApproaches.has(index) && (
+              <div className="px-4 pb-4 space-y-4">
+                {/* Description */}
+                <div>
+                  <h5 className="font-medium text-foreground mb-2">Description</h5>
+                  <p className="text-sm text-muted-foreground">{approach.description}</p>
+                </div>
+
+                {/* Algorithm */}
+                <div>
+                  <h5 className="font-medium text-foreground mb-2">Algorithm Steps</h5>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="prose prose-sm max-w-none text-foreground">
+                      <div dangerouslySetInnerHTML={{ __html: approach.algorithm }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Code Solutions */}
+                <div>
+                  <h5 className="font-medium text-foreground mb-3">Code Solutions</h5>
+                  <div className="space-y-3">
+                    {approach.codeSolutions.map((solution, solutionIndex) => (
+                      <div key={solutionIndex} className="border border-border rounded-lg overflow-hidden">
+                        <div className="bg-muted px-3 py-2 border-b border-border">
+                          <span className="text-sm font-medium text-foreground">{solution.language}</span>
+                        </div>
+                        <div className="p-3">
+                          <pre className="text-sm overflow-x-auto">
+                            <code className="language-javascript">{solution.code}</code>
+                          </pre>
+                          {solution.explanation && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <p className="text-sm text-muted-foreground">{solution.explanation}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pros and Cons */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="font-medium text-foreground mb-2 flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Pros
+                    </h5>
+                    <ul className="space-y-1">
+                      {approach.pros.map((pro, proIndex) => (
+                        <li key={proIndex} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-green-500 mt-1">•</span>
+                          {pro}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-foreground mb-2 flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-red-500" />
+                      Cons
+                    </h5>
+                    <ul className="space-y-1">
+                      {approach.cons.map((con, conIndex) => (
+                        <li key={conIndex} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-red-500 mt-1">•</span>
+                          {con}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+            </div>
+        ))}
+      </div>
+
+      {/* Follow-up Questions */}
+      {editorial.followUpQuestions && editorial.followUpQuestions.length > 0 && (
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-xl font-semibold text-foreground mb-4">Follow-up Questions</h3>
+          <div className="space-y-2">
+            {editorial.followUpQuestions.map((question, index) => (
+              <div key={index} className="flex items-start gap-3">
+                <span className="text-sm font-medium text-primary mt-1">Q{index + 1}.</span>
+                <p className="text-sm text-muted-foreground">{question}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Related Problems */}
+      {editorial.relatedProblems && editorial.relatedProblems.length > 0 && (
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-xl font-semibold text-foreground mb-4">Related Problems</h3>
+          <div className="flex flex-wrap gap-2">
+            {editorial.relatedProblems.map((problem, index) => (
+              <span
+                key={index}
+                className="px-3 py-1 text-sm bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-foreground cursor-pointer transition-colors"
+              >
+                {problem}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
-  );
-}; 
+  )
+}
+
+export default EditorialComponent 

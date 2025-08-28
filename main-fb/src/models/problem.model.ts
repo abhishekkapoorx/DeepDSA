@@ -162,7 +162,11 @@ ProblemSchema.statics.getNextQuestionNumber = async function(): Promise<number> 
   return nextNumber;
 };
 
+
+const existingModels = (mongoose as any).models as Record<string, Model<any>> | undefined;
+
+
 const Problem: Model<IProblem> =
-  mongoose.models.Problem || mongoose.model<IProblem>("Problem", ProblemSchema);
+  (existingModels && existingModels.Problem) || mongoose.model<IProblem>("Problem", ProblemSchema);
 
 export default Problem; 

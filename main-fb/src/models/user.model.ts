@@ -47,7 +47,9 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
+const existingModels = (mongoose as any).models as Record<string, Model<any>> | undefined;
+
 const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+  (existingModels && existingModels.User) || mongoose.model<IUser>("User", UserSchema);
 
 export default User;

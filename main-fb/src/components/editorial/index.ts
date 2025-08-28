@@ -1,1 +1,1 @@
-export { Editorial } from './Editorial'; 
+export { default as Editorial } from './Editorial'; 
