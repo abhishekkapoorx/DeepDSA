@@ -228,7 +228,18 @@ export default function PremiumPage() {
             <p className="text-xl mb-6 opacity-90">
               Join thousands of developers who have improved their skills with unlimited AI interviews
             </p>
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+            <Button
+              size="lg"
+              className="
+                bg-white text-black
+                hover:bg-black hover:text-white
+                border border-gray-200
+                dark:bg-neutral-900 dark:text-white 
+                dark:hover:bg-neutral-800 
+                dark:border-neutral-700
+                transition-colors
+              "
+            >
               Start Free Trial
             </Button>
           </div>
