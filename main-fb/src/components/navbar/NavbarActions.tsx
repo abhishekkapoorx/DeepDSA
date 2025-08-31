@@ -38,8 +38,12 @@ export const NavbarActions: React.FC = () => {
       </SignedOut>
       
       <SignedIn>
-        <UserButton />
-      </SignedIn>
+  <UserButton
+    userProfileUrl="/profile"   // takes user to your custom profile page
+  />
+</SignedIn>
+
+
     </div>
   )
 }

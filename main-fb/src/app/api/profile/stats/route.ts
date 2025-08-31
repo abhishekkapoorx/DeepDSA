@@ -10,70 +10,82 @@ export async function GET(request: NextRequest) {
     const { userId } = await auth();
     
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectToDB();
 
-    // Find user by clerkId
     const user = await User.findOne({ clerkId: userId });
     
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-
-    // Get user submissions
-    const totalSubmissions = await Submission.countDocuments({ userId: user._id });
-    const acceptedSubmissions = await Submission.countDocuments({ 
-      userId: user._id, 
-      status: 'Accepted' 
-    });
-
-    // Get problem difficulty breakdown
-    const problemStats = await Submission.aggregate([
-      { $match: { userId: user._id, status: 'Accepted' } },
-      { $lookup: { from: 'problems', localField: 'problemId', foreignField: '_id', as: 'problem' } },
-      { $unwind: '$problem' },
-      {
-        $group: {
-          _id: '$problem.difficulty',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Calculate difficulty stats
-    const difficultyStats = {
-      easy: { solved: 0, total: 0 },
-      medium: { solved: 0, total: 0 },
-      hard: { solved: 0, total: 0 }
-    };
-
-    problemStats.forEach(stat => {
-      const difficulty = stat._id.toLowerCase();
-      if (difficultyStats[difficulty as keyof typeof difficultyStats]) {
-        difficultyStats[difficulty as keyof typeof difficultyStats].solved = stat.count;
-      }
-    });
 
     // Get total problems count
     const totalProblems = await Problem.countDocuments();
 
-    // Return user statistics
+    // Get submission statistics
+    const submissionStats = await Submission.aggregate([
+      { $match: { userId: user._id } },
+      {
+        $group: {
+          _id: null,
+          totalSubmissions: { $sum: 1 },
+          acceptedSubmissions: {
+            $sum: { $cond: [{ $eq: ['$status', 'Accepted'] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    // Get solved problems by difficulty
+    const solvedProblems = await Submission.aggregate([
+      { $match: { userId: user._id, status: 'Accepted' } },
+      {
+        $lookup: {
+          from: 'problems',
+          localField: 'problemId',
+          foreignField: '_id',
+          as: 'problem'
+        }
+      },
+      { $unwind: '$problem' },
+      {
+        $group: {
+          _id: '$problem.difficulty',
+          solved: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get total problems by difficulty
+    const totalByDifficulty = await Problem.aggregate([
+      {
+        $group: {
+          _id: '$difficulty',
+          total: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Process the data
     const stats = {
       totalProblems,
-      solvedProblems: acceptedSubmissions,
-      totalSubmissions,
-      acceptedSubmissions,
-      easy: difficultyStats.easy,
-      medium: difficultyStats.medium,
-      hard: difficultyStats.hard,
+      solvedProblems: submissionStats[0]?.acceptedSubmissions || 0,
+      totalSubmissions: submissionStats[0]?.totalSubmissions || 0,
+      acceptedSubmissions: submissionStats[0]?.acceptedSubmissions || 0,
+      easy: {
+        solved: solvedProblems.find(p => p._id === 'Easy')?.solved || 0,
+        total: totalByDifficulty.find(p => p._id === 'Easy')?.total || 0
+      },
+      medium: {
+        solved: solvedProblems.find(p => p._id === 'Medium')?.solved || 0,
+        total: totalByDifficulty.find(p => p._id === 'Medium')?.total || 0
+      },
+      hard: {
+        solved: solvedProblems.find(p => p._id === 'Hard')?.solved || 0,
+        total: totalByDifficulty.find(p => p._id === 'Hard')?.total || 0
+      }
     };
 
     return NextResponse.json(stats);

@@ -26,18 +26,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return user profile data
-    const profile = {
-      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
-      username: user.username,
-      email: user.email,
-      role: user.role,
+    // Return profile data in expected format
+    const profileData = {
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Anonymous',
+      username: user.username || 'user',
+      email: user.email || '',
+      imageUrl: user.imageUrl || '',
+      role: user.role || 'USER',
       country: 'Unknown', // Not in current user model
-      joinDate: user.createdAt,
-      lastActive: user.updatedAt,
+      joinDate: user.createdAt ? user.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      lastActive: user.updatedAt ? user.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     };
 
-    return NextResponse.json(profile);
+    return NextResponse.json(profileData);
   } catch (error) {
     console.error('Error fetching profile:', error);
     return NextResponse.json(
