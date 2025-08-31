@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Calendar, CheckCircle2, ChevronRight, Crown, MapPin, MessageSquare, Star, Target, Zap, TrendingUp, Trophy, Award, Clock, Users, Code, BookOpen } from "lucide-react";
+import { Calendar, CheckCircle2, ChevronRight, Crown, MapPin, MessageSquare, Star, Target, Zap, TrendingUp, Trophy, Award, Clock, Users, Code, BookOpen, User, Eye } from "lucide-react";
+import { useParams } from "next/navigation";
 
 // Helper function to format relative time
 const formatRelativeTime = (date: Date): string => {
@@ -22,103 +23,43 @@ const formatRelativeTime = (date: Date): string => {
   return `${Math.floor(diffInSeconds / 31536000)} years ago`;
 };
 
-// Dynamic profile data - this would come from your backend
-const useProfileData = () => {
-  const [profile, setProfile] = useState({
-    name: "Raghav",
-    username: "04raghavsingla28",
-    email: "raghav@example.com",
-    role: "STUDENT",
-    country: "India",
-    joinDate: "2024-01-01",
-    lastActive: "2024-01-22",
-    stats: {
-      totalProblems: 150,
-      solvedProblems: 45,
-      totalSubmissions: 67,
-      acceptedSubmissions: 45,
-      easy: { solved: 25, total: 50 },
-      medium: { solved: 15, total: 70 },
-      hard: { solved: 5, total: 30 },
-    },
-    interviews: {
-      total: 12,
-      averageScore: 7.8,
-      streakDays: 7,
-      recent: [
-        { id: "1", title: "Two Sum Interview", score: 8, date: "2 hours ago" },
-        { id: "2", title: "Valid Parentheses", score: 9, date: "1 day ago" },
-        { id: "3", title: "Binary Tree Traversal", score: 7, date: "3 days ago" },
-      ]
-    },
-    submissions: [
-      { id: "1", problemTitle: "Two Sum", status: "Accepted", language: "Java", date: "2 hours ago" },
-      { id: "2", problemTitle: "Valid Parentheses", status: "Accepted", language: "Python", date: "1 day ago" },
-      { id: "3", problemTitle: "Binary Tree Traversal", status: "Accepted", language: "C++", date: "3 days ago" },
-    ]
-  });
+// Public profile data hook
+const usePublicProfileData = (username: string) => {
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch real data from backend
   useEffect(() => {
-    const fetchProfileData = async () => {
+    const fetchPublicProfile = async () => {
       try {
-        // Fetch user profile data
-        const profileResponse = await fetch('/api/profile');
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          setProfile(prev => ({ ...prev, ...profileData }));
+        setLoading(true);
+        const response = await fetch(`/api/users/${username}/profile`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError('User not found');
+          } else {
+            setError('Failed to load profile');
+          }
+          return;
         }
 
-        // Fetch user statistics
-        const statsResponse = await fetch('/api/profile/stats');
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json();
-          setProfile(prev => ({ ...prev, stats: statsData }));
-        }
-
-        // Fetch interview data
-        const interviewsResponse = await fetch('/api/interviews');
-        if (interviewsResponse.ok) {
-          const interviewsData = await interviewsResponse.json();
-          setProfile(prev => ({ 
-            ...prev, 
-            interviews: {
-              ...prev.interviews,
-              total: interviewsData.pagination?.total || interviewsData.interviews?.length || 0,
-              recent: (interviewsData.interviews || []).slice(0, 3).map((interview: any) => ({
-                id: interview._id,
-                title: interview.problemSlug || 'General Interview',
-                score: interview.score || 0,
-                date: formatRelativeTime(new Date(interview.startedAt))
-              }))
-            }
-          }));
-        }
-
-        // Fetch submissions data
-        const submissionsResponse = await fetch('/api/submissions');
-        if (submissionsResponse.ok) {
-          const submissionsData = await submissionsResponse.json();
-          setProfile(prev => ({ 
-            ...prev, 
-            submissions: (submissionsData.submissions || []).slice(0, 5).map((submission: any) => ({
-              id: submission._id,
-              problemTitle: submission.problemId?.title || 'Unknown Problem',
-              status: submission.status,
-              language: submission.language || 'Unknown',
-              date: formatRelativeTime(new Date(submission.createdAt))
-            }))
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching profile data:', error);
+        const data = await response.json();
+        setProfile(data);
+      } catch (err) {
+        console.error('Error fetching public profile:', err);
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProfileData();
-  }, []);
+    if (username) {
+      fetchPublicProfile();
+    }
+  }, [username]);
 
-  return profile;
+  return { profile, loading, error };
 };
 
 // Simple donut with 3 difficulty segments
@@ -344,14 +285,48 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
   );
 }
 
-export default function LeetCodeStyleProfilePage() {
-  const profile = useProfileData();
+export default function PublicProfilePage() {
+  const params = useParams();
+  const username = params.username as string;
+  const { profile, loading, error } = usePublicProfileData(username);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-white text-6xl mb-4">⚠️</div>
+          <h1 className="text-white text-2xl font-bold mb-2">Oops!</h1>
+          <p className="text-white text-lg">{error || 'Profile not found'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Top bar spacer (simulate app header space) */}
         <div className="mb-4" />
+
+        {/* Public Profile Header */}
+        <div className="mb-6 text-center">
+          <div className="inline-flex items-center gap-2 text-slate-400 text-sm mb-2">
+            <Eye className="h-4 w-4" />
+            <span>Public Profile</span>
+          </div>
+          <h1 className="text-3xl font-bold text-white">@{username}</h1>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Sidebar */}
@@ -362,79 +337,96 @@ export default function LeetCodeStyleProfilePage() {
                   {/* Avatar */}
                   <div className="relative">
                     <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                      {profile.name.charAt(0)}
+                      {profile.name?.charAt(0) || username.charAt(0)}
                     </div>
                     <div className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-emerald-600 flex items-center justify-center">
-                      <Crown className="h-4 w-4 text-white" />
+                      <User className="h-4 w-4 text-white" />
                     </div>
                   </div>
 
                   <div className="flex-1">
-                    <div className="text-lg font-semibold">{profile.name}</div>
-                    <div className="text-xs text-slate-400">@{profile.username}</div>
-                    <div className="mt-2 text-sm">
-                      <span className="text-slate-400">Member since</span>{" "}
-                      <span className="font-semibold text-slate-100">{new Date(profile.joinDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="mt-2">
-                      <Badge className="bg-slate-800 text-slate-300">{profile.role}</Badge>
-                    </div>
-                    <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white">Edit Profile</Button>
+                    <div className="text-lg font-semibold">{profile.name || username}</div>
+                    <div className="text-xs text-slate-400">@{username}</div>
+                    {profile.joinDate && (
+                      <div className="mt-2 text-sm">
+                        <span className="text-slate-400">Member since</span>{" "}
+                        <span className="font-semibold text-slate-100">{new Date(profile.joinDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {profile.role && (
+                      <div className="mt-2">
+                        <Badge className="bg-slate-800 text-slate-300">{profile.role}</Badge>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <Separator className="my-5 bg-slate-800" />
 
                 <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <MapPin className="h-4 w-4 text-slate-400" />
-                    {profile.country}
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Calendar className="h-4 w-4 text-slate-400" />
-                    Last active: {profile.lastActive}
-                  </div>
+                  {profile.country && (
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <MapPin className="h-4 w-4 text-slate-400" />
+                      {profile.country}
+                    </div>
+                  )}
+                  {profile.lastActive && (
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Calendar className="h-4 w-4 text-slate-400" />
+                      Last active: {profile.lastActive}
+                    </div>
+                  )}
                 </div>
 
                 <Separator className="my-5 bg-slate-800" />
 
-                <div>
-                  <div className="text-sm font-medium mb-2 text-slate-300">Interview Stats</div>
-                  <div className="space-y-2 text-sm text-slate-400">
-                    <div className="flex items-center justify-between">
-                      <span>Total Interviews</span>
-                      <span>{profile.interviews.total}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Average Score</span>
-                      <span>{profile.interviews.averageScore}/10</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Current Streak</span>
-                      <span>{profile.interviews.streakDays} days</span>
+                {profile.interviews && (
+                  <div>
+                    <div className="text-sm font-medium mb-2 text-slate-300">Interview Stats</div>
+                    <div className="space-y-2 text-sm text-slate-400">
+                      <div className="flex items-center justify-between">
+                        <span>Total Interviews</span>
+                        <span>{profile.interviews.total || 0}</span>
+                      </div>
+                      {profile.interviews.averageScore && (
+                        <div className="flex items-center justify-between">
+                          <span>Average Score</span>
+                          <span>{profile.interviews.averageScore}/10</span>
+                        </div>
+                      )}
+                      {profile.interviews.streakDays && (
+                        <div className="flex items-center justify-between">
+                          <span>Current Streak</span>
+                          <span>{profile.interviews.streakDays} days</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
 
                 <Separator className="my-5 bg-slate-800" />
 
-                <div className="text-sm">
-                  <div className="font-medium mb-2 text-slate-300">Submission Stats</div>
-                  <div className="space-y-2 text-sm text-slate-400">
-                    <div className="flex items-center justify-between">
-                      <span>Total Submissions</span>
-                      <span>{profile.stats.totalSubmissions}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Accepted</span>
-                      <span>{profile.stats.acceptedSubmissions}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Success Rate</span>
-                      <span>{((profile.stats.acceptedSubmissions / profile.stats.totalSubmissions) * 100).toFixed(1)}%</span>
+                {profile.stats && (
+                  <div className="text-sm">
+                    <div className="font-medium mb-2 text-slate-300">Submission Stats</div>
+                    <div className="space-y-2 text-sm text-slate-400">
+                      <div className="flex items-center justify-between">
+                        <span>Total Submissions</span>
+                        <span>{profile.stats.totalSubmissions || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Accepted</span>
+                        <span>{profile.stats.acceptedSubmissions || 0}</span>
+                      </div>
+                      {profile.stats.totalSubmissions && profile.stats.acceptedSubmissions && (
+                        <div className="flex items-center justify-between">
+                          <span>Success Rate</span>
+                          <span>{((profile.stats.acceptedSubmissions / profile.stats.totalSubmissions) * 100).toFixed(1)}%</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </section>
@@ -442,65 +434,50 @@ export default function LeetCodeStyleProfilePage() {
           {/* Main Column */}
           <section className="lg:col-span-2 space-y-6">
             {/* Stats */}
-            <Card className="bg-slate-900 border-slate-800">
-              <CardContent className="p-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Donut */}
-                  <div className="flex items-center justify-center">
-                    <DifficultyDonut
-                      easy={profile.stats.easy.solved}
-                      medium={profile.stats.medium.solved}
-                      hard={profile.stats.hard.solved}
-                      total={profile.stats.totalProblems}
-                    />
-                  </div>
-                  {/* Difficulty mini cards */}
-                  <div className="flex flex-col gap-3 justify-center">
-                    <MiniStat
-                      title="Easy"
-                      value={`${profile.stats.easy.solved}/${profile.stats.easy.total}`}
-                      color="emerald"
-                    />
-                    <MiniStat
-                      title="Medium"
-                      value={`${profile.stats.medium.solved}/${profile.stats.medium.total}`}
-                      color="amber"
-                    />
-                    <MiniStat
-                      title="Hard"
-                      value={`${profile.stats.hard.solved}/${profile.stats.hard.total}`}
-                      color="slate"
-                    />
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      <Button
-                        variant="outline"
-                        className="border-slate-700 text-slate-300 hover:bg-slate-800 bg-transparent"
-                      >
-                        <Target className="mr-2 h-4 w-4" /> Practice
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-slate-700 text-slate-300 hover:bg-slate-800 bg-transparent"
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" /> Interview
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-slate-700 text-slate-300 hover:bg-slate-800 bg-transparent"
-                      >
-                        <BookOpen className="mr-2 h-4 w-4" /> Problems
-                      </Button>
+            {profile.stats && (
+              <Card className="bg-slate-900 border-slate-800">
+                <CardContent className="p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Donut */}
+                    <div className="flex items-center justify-center">
+                      <DifficultyDonut
+                        easy={profile.stats.easy?.solved || 0}
+                        medium={profile.stats.medium?.solved || 0}
+                        hard={profile.stats.hard?.solved || 0}
+                        total={profile.stats.totalProblems || 0}
+                      />
+                    </div>
+                    {/* Difficulty mini cards */}
+                    <div className="flex flex-col gap-3 justify-center">
+                      <MiniStat
+                        title="Easy"
+                        value={`${profile.stats.easy?.solved || 0}/${profile.stats.easy?.total || 0}`}
+                        color="emerald"
+                      />
+                      <MiniStat
+                        title="Medium"
+                        value={`${profile.stats.medium?.solved || 0}/${profile.stats.medium?.total || 0}`}
+                        color="amber"
+                      />
+                      <MiniStat
+                        title="Hard"
+                        value={`${profile.stats.hard?.solved || 0}/${profile.stats.hard?.total || 0}`}
+                        color="slate"
+                      />
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Heatmap */}
             <ContributionHeatmap />
 
             {/* Recent Activity */}
-            <RecentActivity interviews={profile.interviews.recent} submissions={profile.submissions} />
+            <RecentActivity 
+              interviews={profile.interviews?.recent || []} 
+              submissions={profile.submissions || []} 
+            />
           </section>
         </div>
 

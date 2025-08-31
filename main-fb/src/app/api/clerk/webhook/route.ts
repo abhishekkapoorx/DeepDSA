@@ -24,6 +24,30 @@ export async function POST(req: NextRequest) {
       (e: any) => e.id === data.primary_email_address_id
     )?.email_address || "";
 
+    // Generate username from email (everything before @)
+    const generatedUsername = primaryEmail.split('@')[0] || "";
+    
+    // Sanitize username: remove dots, special chars, make lowercase
+    const sanitizedUsername = generatedUsername
+      .replace(/[^a-zA-Z0-9]/g, '') // Remove all non-alphanumeric characters
+      .toLowerCase() // Convert to lowercase
+      .substring(0, 20); // Limit length to 20 characters
+
+    // Generate unique username by checking for conflicts
+    let finalUsername = sanitizedUsername;
+    let counter = 1;
+    
+    while (await User.findOne({ username: finalUsername })) {
+      finalUsername = `${sanitizedUsername}${counter}`;
+      counter++;
+      
+      // Prevent infinite loop with very long usernames
+      if (finalUsername.length > 25) {
+        finalUsername = `${sanitizedUsername}${Date.now().toString().slice(-4)}`;
+        break;
+      }
+    }
+
     try {
       await dbConnect();
       
@@ -33,7 +57,7 @@ export async function POST(req: NextRequest) {
           email: primaryEmail,
           firstName: data.first_name || "",
           lastName: data.last_name || "",
-          username: data.username || "",
+          username: data.username || finalUsername,
           imageUrl: data.image_url || "",
           role: Role.USER,
         },

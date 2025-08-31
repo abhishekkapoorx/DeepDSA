@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from '@/components/theme/ThemeProvider';
+import Link from 'next/link';
 
 interface ProblemNavbarProps {
   problemTitle?: string;
@@ -80,15 +81,17 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
         </Button>
 
         {/* Logo - hidden on small devices */}
-        <div className="hidden sm:block">
-          <Image
-            src={shortLogoSrc}
-            alt="DeepDSA"
-            width={24}
-            height={24}
-            className="h-6 w-6"
-          />
-        </div>
+        <Link href="/">
+          <div className="hidden sm:block">
+            <Image
+              src={shortLogoSrc}
+              alt="DeepDSA"
+              width={24}
+              height={24}
+              className="h-6 w-6"
+            />
+          </div>
+        </Link>
 
         {/* Problem title - hidden on small devices */}
         <div className="hidden sm:flex items-center gap-1">
@@ -207,9 +210,13 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
           >
             <User className="h-4 w-4" />
           </Button>
-          <div className="text-xs text-orange-500 font-medium ml-2">
-            Premium
-          </div>
+
+          <Link href="/premium">
+            <Button variant="ghost" size="sm" className="p-1 hover:bg-muted ml-1">
+              <Star className="h-4 w-4" />
+            </Button>
+          </Link>
+
         </div>
       </div>
     </div>

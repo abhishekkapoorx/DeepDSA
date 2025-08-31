@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 const plans = [
   {
     name: 'Free',
-    price: '$0',
+    price: 'Rs 0',
     period: '/month',
     description: 'Basic features for learning',
     features: [
@@ -28,7 +28,7 @@ const plans = [
   },
   {
     name: 'Pro',
-    price: '$9.99',
+    price: 'Rs 899',
     period: '/month',
     description: 'Perfect for serious learners',
     features: [
@@ -46,7 +46,7 @@ const plans = [
   },
   {
     name: 'Enterprise',
-    price: '$29.99',
+    price: 'Rs 2999',
     period: '/month',
     description: 'For teams and organizations',
     features: [
