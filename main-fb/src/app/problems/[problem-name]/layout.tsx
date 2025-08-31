@@ -1,53 +1,61 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProblemNavbar } from '@/components/problems/ProblemNavbar';
+import { ProblemProvider, useProblem } from '@/contexts/ProblemContext';
 
-interface ProblemLayoutPageProps {
-  children: React.ReactNode;
-  params: Promise<{
-    'problem-name': string;
-  }>;
-}
+function ProblemLayoutContent({ children }: { children: React.ReactNode }) {
+  const { isRunning, isSubmitting, executionTime, handleRun, handleSubmit } = useProblem();
+  const [problemTitle, setProblemTitle] = useState("Problem List");
 
-export default function ProblemLayoutPage({ children, params }: ProblemLayoutPageProps) {
-  const resolvedParams = React.use(params);
-  const problemName = resolvedParams['problem-name'];
-  
-  const handleSubmit = () => {
-    console.log('Submit solution');
-    // TODO: Implement submission logic
-  };
-
-  const handleRun = () => {
-    console.log('Run code');
-    // TODO: Implement code execution logic
-  };
+  // Extract problem title from URL for display
+  useEffect(() => {
+    const pathParts = window.location.pathname.split('/');
+    const problemSlug = pathParts[pathParts.length - 1];
+    if (problemSlug && problemSlug !== 'problems') {
+      // Convert slug to title (e.g., "two-sum" -> "Two Sum")
+      const title = problemSlug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      setProblemTitle(title);
+    }
+  }, []);
 
   const handleNavigatePrevious = () => {
+    // Implement navigation to previous problem
     console.log('Navigate to previous problem');
-    // TODO: Implement navigation to previous problem
   };
 
   const handleNavigateNext = () => {
+    // Implement navigation to next problem
     console.log('Navigate to next problem');
-    // TODO: Implement navigation to next problem
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Problem-specific navbar */}
+    <div className="h-screen flex flex-col">
       <ProblemNavbar
-        problemTitle="Problem List"
+        problemTitle={problemTitle}
         onSubmit={handleSubmit}
         onRun={handleRun}
+        isRunning={isRunning}
+        isSubmitting={isSubmitting}
+        executionTime={executionTime}
         onNavigatePrevious={handleNavigatePrevious}
         onNavigateNext={handleNavigateNext}
       />
-      
-      {/* Main content area */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1">
         {children}
       </div>
     </div>
+  );
+}
+
+export default function ProblemLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ProblemProvider>
+      <ProblemLayoutContent>
+        {children}
+      </ProblemLayoutContent>
+    </ProblemProvider>
   );
 }

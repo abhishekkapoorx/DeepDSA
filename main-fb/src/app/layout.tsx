@@ -5,7 +5,7 @@ import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { ConditionalNavbar } from '@/components/navbar'
 import { ThemeProvider } from '@/components/theme'
-import { shadcn } from "@clerk/themes";
+import { shadcn } from "@clerk/themes";import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

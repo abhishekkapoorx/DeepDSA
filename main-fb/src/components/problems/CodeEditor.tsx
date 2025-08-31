@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,12 @@ interface CodeEditorProps {
   onTestResults?: (results: any) => void;
   onExecutionStart?: () => void;
   onCodeChange?: (code: string, language: string) => void;
+  onExecutionStateChange?: (isRunning: boolean, isSubmitting: boolean) => void;
+}
+
+export interface CodeEditorRef {
+  run: () => void;
+  submit: () => void;
 }
 
 const LANGUAGE_CONFIGS = {
@@ -29,7 +35,13 @@ const LANGUAGE_CONFIGS = {
   javascript: { name: 'JavaScript', monacoLanguage: 'javascript' }
 };
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResults, onExecutionStart, onCodeChange }) => {
+export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ 
+  starterCode, 
+  onTestResults, 
+  onExecutionStart, 
+  onCodeChange,
+  onExecutionStateChange
+}, ref) => {
   const { theme } = useTheme();
   const params = useParams();
   const problemSlug = params['problem-name'] as string;
@@ -45,6 +57,17 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
   const editorRef = useRef<any>(null);
 
   const editorTheme = theme === 'dark' ? 'vs-dark' : 'vs';
+
+  // Expose run and submit functions to parent component
+  useImperativeHandle(ref, () => ({
+    run: handleRun,
+    submit: handleSubmit
+  }));
+
+  // Notify parent of execution state changes
+  useEffect(() => {
+    onExecutionStateChange?.(isRunning, isSubmitting);
+  }, [isRunning, isSubmitting, onExecutionStateChange]);
 
   // Fetch boilerplate code when language changes
   useEffect(() => {
@@ -81,20 +104,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Debug logging
+      if (e.ctrlKey) {
+        console.log('Ctrl pressed with key:', e.key, 'code:', e.code);
+      }
+      
       // Ctrl+' (single quote) to run code
       if (e.ctrlKey && e.key === "'") {
         e.preventDefault();
+        e.stopPropagation();
+        console.log('Running code via Ctrl+\'');
         handleRun();
       }
       // Ctrl+Enter to submit code
       if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
+        e.stopPropagation();
+        console.log('Submitting code via Ctrl+Enter');
         handleSubmit();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown, true); // Use capture phase
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [code, currentLanguage, problemSlug]); // Add dependencies
 
   const handleLanguageChange = (language: Language) => {
@@ -172,6 +204,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
 
       if (response.ok) {
         const data = await response.json();
+        console.log("--------------------------------")
+        console.log('data from submit', data);
+        console.log("--------------------------------")
         setResults(data.data);
         onTestResults?.(data.data);
       } else {
@@ -207,24 +242,32 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
             </SelectContent>
           </Select>
           
-          <div className="flex items-center space-x-2">
+          {/* <div className="flex items-center space-x-2">
             <Button
               onClick={handleRun}
               disabled={isRunning || isLoading}
               size="sm"
               title="Run code (Ctrl+')"
+              className="relative"
             >
               {isRunning ? 'Running...' : 'Run'}
+              <span className="absolute -top-1 -right-1 text-xs bg-muted px-1 rounded text-muted-foreground">
+                Ctrl+'
+              </span>
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || isLoading}
               size="sm"
               title="Submit code (Ctrl+Enter)"
+              className="relative"
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
+              <span className="absolute -top-1 -right-1 text-xs bg-muted px-1 rounded text-muted-foreground">
+                Ctrl+↵
+              </span>
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -311,4 +354,6 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ starterCode, onTestResul
       )}
     </div>
   );
-};
+});
+
+CodeEditor.displayName = 'CodeEditor';

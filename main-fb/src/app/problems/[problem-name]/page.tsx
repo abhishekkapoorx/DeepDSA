@@ -12,6 +12,7 @@ import { TestResults } from "@/components/problems/TestResults";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { desktopLayoutConfig, mobileLayoutConfig } from "@/config/layoutConfigs";
 import { useParams } from "next/navigation";
+import { useProblem } from "@/contexts/ProblemContext";
 
 interface TestCase {
   input: string;
@@ -29,14 +30,21 @@ export default function ProblemDetailPage() {
   const params = useParams();
   const slug = params['problem-name'] as string;
   
+  const { 
+    codeEditorRef, 
+    setIsRunning, 
+    setIsSubmitting, 
+    setExecutionTime 
+  } = useProblem();
+  
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<any[] | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
   const [editorial, setEditorial] = useState<any>(null);
   const [currentCode, setCurrentCode] = useState<string>('');
   const [currentLanguage, setCurrentLanguage] = useState<string>('java');
+  const [startTime, setStartTime] = useState<number | null>(null);
 
   // Fetch problem data by slug
   useEffect(() => {
@@ -92,19 +100,31 @@ export default function ProblemDetailPage() {
   // Handle test results from CodeEditor
   const handleTestResults = (results: any) => {
     setTestResults(results.results);
-    setIsRunning(false);
+    
+    // Calculate execution time
+    if (startTime) {
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      setExecutionTime(duration);
+      setStartTime(null);
+    }
   };
 
   // Handle run/submit start
   const handleExecutionStart = () => {
-    setIsRunning(true);
-    setTestResults(null);
+    setStartTime(Date.now());
   };
 
   // Handle code changes from CodeEditor
   const handleCodeChange = (code: string, language: string) => {
     setCurrentCode(code);
     setCurrentLanguage(language);
+  };
+
+  // Handle execution state changes from CodeEditor
+  const handleExecutionStateChange = (isRunning: boolean, isSubmitting: boolean) => {
+    setIsRunning(isRunning);
+    setIsSubmitting(isSubmitting);
   };
 
   // Create the layout model with useMemo to ensure it updates when isMobile changes
@@ -130,10 +150,12 @@ export default function ProblemDetailPage() {
       case "editor":
         return (
           <CodeEditor 
+            ref={codeEditorRef}
             starterCode={problem.starterCode} 
             onTestResults={handleTestResults}
             onExecutionStart={handleExecutionStart}
             onCodeChange={handleCodeChange}
+            onExecutionStateChange={handleExecutionStateChange}
           />
         );
       case "testcase":
@@ -141,7 +163,7 @@ export default function ProblemDetailPage() {
           <TestcasePanel 
             testcases={problem.testcases || []} 
             testResults={testResults}
-            isRunning={isRunning}
+            isRunning={false}
           />
         );
       case "editorial":
@@ -163,7 +185,7 @@ export default function ProblemDetailPage() {
       case "code-visualization":
         return <CodeVisualization />;
       case "test-results":
-        return <TestResults testResults={testResults} isRunning={isRunning} />;
+        return <TestResults testResults={testResults} isRunning={false} />;
       default:
         return <div>Component not found</div>;
     }
@@ -207,7 +229,7 @@ export default function ProblemDetailPage() {
   }
 
   return (
-    <div className="h-screen w-full">
+    <div className="h-full w-full">
       <FlexLayout.Layout
         model={layoutModel}
         factory={factory}
