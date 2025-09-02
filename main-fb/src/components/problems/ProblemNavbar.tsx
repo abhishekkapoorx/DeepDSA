@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from '@/components/theme/ThemeProvider';
+import Link from 'next/link';
 
 interface ProblemNavbarProps {
   problemTitle?: string;
@@ -14,6 +15,9 @@ interface ProblemNavbarProps {
   onShowProblemList?: () => void;
   onSubmit?: () => void;
   onRun?: () => void;
+  isRunning?: boolean;
+  isSubmitting?: boolean;
+  executionTime?: number; // Execution time in milliseconds
 }
 
 export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
@@ -24,6 +28,9 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
   onShowProblemList,
   onSubmit,
   onRun,
+  isRunning = false,
+  isSubmitting = false,
+  executionTime = 0,
 }) => {
   const router = useRouter();
   const { theme } = useTheme();
@@ -32,6 +39,17 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
   const shortLogoSrc = theme === 'dark'
     ? '/SVG/LOGO_TRANS_DARK.svg'
     : '/SVG/LOGO_TRANS_LIGHT.svg';
+
+  const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${(minutes % 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+  };
 
   const handleBack = () => {
     if (onNavigateBack) {
@@ -63,15 +81,17 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
         </Button>
 
         {/* Logo - hidden on small devices */}
-        <div className="hidden sm:block">
-          <Image
-            src={shortLogoSrc}
-            alt="DeepDSA"
-            width={24}
-            height={24}
-            className="h-6 w-6"
-          />
-        </div>
+        <Link href="/">
+          <div className="hidden sm:block">
+            <Image
+              src={shortLogoSrc}
+              alt="DeepDSA"
+              width={24}
+              height={24}
+              className="h-6 w-6"
+            />
+          </div>
+        </Link>
 
         {/* Problem title - hidden on small devices */}
         <div className="hidden sm:flex items-center gap-1">
@@ -141,9 +161,13 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
           variant="ghost"
           size="sm"
           onClick={onRun}
+          disabled={isRunning || isSubmitting}
+          className={isRunning ? 'bg-blue-100 text-blue-700' : ''}
         >
           <Play className="h-4 w-4" />
-          <span className="ml-1 hidden sm:inline">Run</span>
+          <span className="ml-1 hidden sm:inline">
+            {isRunning ? 'Running...' : 'Run'}
+          </span>
         </Button>
 
         {/* Submit button - visible on all devices */}
@@ -151,10 +175,17 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
           variant="ghost"
           size="sm"
           onClick={onSubmit}
-          className="bg-green-600 hover:bg-green-700 text-white"
+          disabled={isRunning || isSubmitting}
+          className={`${
+            isSubmitting 
+              ? 'bg-orange-100 text-orange-700' 
+              : 'bg-green-600 hover:bg-green-700 text-white'
+          }`}
         >
           <Upload className="h-4 w-4" />
-          <span className="ml-1 hidden sm:inline">Submit</span>
+          <span className="ml-1 hidden sm:inline">
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </span>
         </Button>
 
         {/* Settings and timer - hidden on small devices */}
@@ -169,7 +200,7 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
 
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Timer className="h-3 w-3" />
-            <span>00:00:00</span>
+            <span>{formatTime(executionTime)}</span>
           </div>
 
           <Button
@@ -179,9 +210,13 @@ export const ProblemNavbar: React.FC<ProblemNavbarProps> = ({
           >
             <User className="h-4 w-4" />
           </Button>
-          <div className="text-xs text-orange-500 font-medium ml-2">
-            Premium
-          </div>
+
+          <Link href="/premium">
+            <Button variant="ghost" size="sm" className="p-1 hover:bg-muted ml-1">
+              <Star className="h-4 w-4" />
+            </Button>
+          </Link>
+
         </div>
       </div>
     </div>

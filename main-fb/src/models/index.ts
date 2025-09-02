@@ -1,15 +1,19 @@
 // Export all models
 export { default as User, Role } from './user.model';
 export { default as Problem, Difficulty, generateSlug } from './problem.model';
+export { default as Editorial } from './editorial.model';
 export { default as TestCase } from './testCase.model';
 export { default as Submission, SubmissionStatus } from './submission.model';
 export { default as TestResult } from './testResult.model';
 export { default as UserProgress } from './userProgress.model';
+export { default as Interview } from './interview.model';
 
 // Export types
 export type { IUser } from './user.model';
 export type { IProblem, IInputVariable, IOutputVariable } from './problem.model';
+export type { IEditorial, IApproach, ICodeSolution } from './editorial.model';
 export type { ITestCase } from './testCase.model';
 export type { ISubmission } from './submission.model';
 export type { ITestResult } from './testResult.model';
 export type { IUserProgress } from './userProgress.model'; 
+export type { IInterview, IInterviewMessage, IInterviewScoreBreakdown } from './interview.model';

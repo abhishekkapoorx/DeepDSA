@@ -1,99 +1,87 @@
-import { NextRequest, NextResponse } from 'next/server'
-import dbConnect from '@/lib/mongoose'
-import { Submission, SubmissionStatus } from '@/models'
-import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { connectToDB } from '@/lib/mongoose';
+import User from '@/models/user.model';
+import Submission, { SubmissionStatus } from '@/models/submission.model';
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth()
+    const { userId } = await auth();
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await dbConnect()
+    await connectToDB();
 
-    const { User } = await import('@/models')
-    const user = await User.findOne({ clerkId: userId })
+    const user = await User.findOne({ clerkId: userId });
+    
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const { searchParams } = new URL(req.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const status = searchParams.get('status')
-    const problemId = searchParams.get('problemId')
+    // Get user submissions with problem details
+    const submissions = await Submission.find({ userId: user._id })
+      .populate('problemId', 'title difficulty')
+      .sort({ createdAt: -1 })
+      .limit(100); // Limit to recent submissions
 
-    const skip = (page - 1) * limit
-
-    // Build query filter
-    const filter: any = { userId: user._id }
-    
-    if (status && status !== 'ALL') {
-      filter.status = status
-    }
-    
-    if (problemId) {
-      filter.problemId = problemId
-    }
-
-    const [submissions, total] = await Promise.all([
-      Submission.find(filter)
-        .populate('problemId', 'title difficulty')
-        .select('problemId status runtime memory testsPassed totalTests createdAt')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Submission.countDocuments(filter)
-    ])
+    // Format submissions for response
+    const formattedSubmissions = submissions.map(submission => ({
+      _id: submission._id,
+      problemId: {
+        title: (submission.problemId as any)?.title || 'Unknown Problem',
+        difficulty: (submission.problemId as any)?.difficulty || 'Unknown'
+      },
+      status: submission.status,
+      language: submission.language || 'Unknown',
+      createdAt: submission.createdAt,
+      runtime: submission.runtime,
+      memory: submission.memory
+    }));
 
     return NextResponse.json({
-      submissions,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    })
+      submissions: formattedSubmissions,
+      total: formattedSubmissions.length
+    });
   } catch (error) {
-    console.error('Error fetching submissions:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error fetching submissions:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth()
+    const { userId } = await auth();
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await dbConnect()
+    await connectToDB();
 
-    const { User } = await import('@/models')
-    const user = await User.findOne({ clerkId: userId })
+    const user = await User.findOne({ clerkId: userId });
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const body = await req.json()
+    const body = await req.json();
     const submission = new Submission({
       ...body,
       userId: user._id,
       status: SubmissionStatus.PENDING,
       testsPassed: 0,
       totalTests: 0,
-    })
+    });
     
-    await submission.save()
+    await submission.save();
 
-    return NextResponse.json(submission, { status: 201 })
+    return NextResponse.json(submission, { status: 201 });
   } catch (error) {
-    console.error('Error creating submission:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error creating submission:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

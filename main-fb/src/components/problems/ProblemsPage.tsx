@@ -2,12 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Sidebar, ProblemList, RightSidebar, FeaturedCourses, TopicFilters } from './index';
+import { Button } from '../ui/button';
 
 export default function ProblemsPage() {
   const [selectedTopic, setSelectedTopic] = useState('All Topics');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [problems, setProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Keyboard shortcut for sidebar toggle (Ctrl/Cmd + B)
   useEffect(() => {
@@ -22,6 +25,24 @@ export default function ProblemsPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSidebarOpen]);
 
+  // Fetch once at page level and share
+  useEffect(() => {
+    const fetchOnce = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/problems?limit=500', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch problems');
+        const data = await res.json();
+        setProblems(data?.problems || []);
+      } catch (e) {
+        setProblems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOnce();
+  }, []);
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -29,21 +50,23 @@ export default function ProblemsPage() {
   return (
     <div className="min-h-screen bg-background flex pt-16">
       {/* Mobile Menu Button */}
-      <button
-        className="lg:hidden fixed top-20 left-4 z-50 p-2 bg-card border border-border rounded-md"
+      <Button
+        variant='ghost'
+        className="lg:hidden fixed top-20 left-4 z-50 p-2 "
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
         {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
+      </Button>
 
       {/* Desktop Sidebar Toggle Button */}
-      <button
-        className={`hidden lg:flex fixed top-20 z-50 p-2 bg-card border border-border rounded-md hover:bg-accent transition-all duration-300 ease-in-out ${isSidebarOpen ? 'left-4' : 'left-4'}`}
+      <Button
+        variant='ghost'
+        className={`hidden lg:flex fixed top-20 z-50 p-2  transition-all duration-300 ease-in-out ${isSidebarOpen ? 'left-4' : 'left-4'}`}
         onClick={toggleSidebar}
         title={`${isSidebarOpen ? 'Hide' : 'Show'} Sidebar (Ctrl+B)`}
       >
         {isSidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
-      </button>
+      </Button>
 
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
@@ -72,6 +95,7 @@ export default function ProblemsPage() {
             onTopicChange={setSelectedTopic}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            problems={problems}
           />
         </div>
         
@@ -80,12 +104,13 @@ export default function ProblemsPage() {
           <ProblemList 
             selectedTopic={selectedTopic}
             searchQuery={searchQuery}
+            problemsFromParent={problems}
           />
         </div>
       </div>
       
       {/* Right Sidebar */}
-      <RightSidebar />
+      <RightSidebar problems={problems} />
     </div>
   );
 } 

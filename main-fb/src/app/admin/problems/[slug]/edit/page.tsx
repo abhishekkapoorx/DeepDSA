@@ -17,6 +17,7 @@ interface Problem {
   _id: string
   slug: string
   title: string
+  questionNumber: number
   description: string
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   tags: string[]
@@ -232,7 +233,12 @@ const EditProblemPage = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Problems
           </Link>
-          <h1 className="text-3xl font-bold text-foreground">Edit Problem</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-lg font-medium text-muted-foreground">
+              Problem #{problem.questionNumber}
+            </span>
+            <h1 className="text-3xl font-bold text-foreground">Edit Problem</h1>
+          </div>
           <p className="text-muted-foreground mt-2">Update the problem details</p>
         </div>
 

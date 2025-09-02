@@ -8,6 +8,7 @@ interface Problem {
   _id: string
   slug: string
   title: string
+  questionNumber: number
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   tags: string[]
   createdAt: string
@@ -69,11 +70,14 @@ const ProblemsPage = () => {
           newSet.delete(problemSlug)
           return newSet
         })
+        alert('Problem and all associated data deleted successfully')
       } else {
-        console.error('Failed to delete problem')
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
       }
     } catch (error) {
       console.error('Error deleting problem:', error)
+      alert('Failed to delete problem')
     }
   }
 
@@ -102,15 +106,25 @@ const ProblemsPage = () => {
 
     setBulkActionLoading(true)
     try {
-      const deletePromises = Array.from(selectedProblems).map(id =>
-        fetch(`/api/admin/problems/${id}`, { method: 'DELETE' })
-      )
-      
-      await Promise.all(deletePromises)
-      
-      setProblems(problems.filter(p => !selectedProblems.has(p.slug)))
-      setSelectedProblems(new Set())
-      alert(`Successfully deleted ${selectedProblems.size} problem(s)`)
+      const response = await fetch('/api/admin/problems/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          slugs: Array.from(selectedProblems)
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setProblems(problems.filter(p => !selectedProblems.has(p.slug)))
+        setSelectedProblems(new Set())
+        alert(result.message)
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
     } catch (error) {
       console.error('Error in bulk delete:', error)
       alert('Some problems could not be deleted')
@@ -304,6 +318,9 @@ const ProblemsPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Created
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Question Number
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
@@ -350,6 +367,9 @@ const ProblemsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {new Date(problem.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {problem.questionNumber}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">

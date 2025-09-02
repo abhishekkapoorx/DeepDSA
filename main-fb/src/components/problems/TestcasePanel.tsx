@@ -7,18 +7,22 @@ import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface TestcasePanelProps {
   testcases: TestCase[];
+  testResults?: any[] | null;
+  isRunning?: boolean;
 }
 
-export const TestcasePanel: React.FC<TestcasePanelProps> = ({ testcases }) => {
+export const TestcasePanel: React.FC<TestcasePanelProps> = ({ testcases, testResults, isRunning }) => {
   const [activeTab, setActiveTab] = useState(0);
   
-  // Mock test results for demonstration
-  const mockTestResults = [
-    { status: 'passed' as const, runtime: '1ms', memory: '46.6MB' },
-    { status: 'passed' as const, runtime: '1ms', memory: '46.6MB' },
-    { status: 'failed' as const, runtime: '1ms', memory: '46.6MB' },
-    { status: 'running' as const, runtime: '1ms', memory: '46.6MB' }
-  ];
+  // Get test result for current tab
+  const getCurrentTestResult = () => {
+    if (!testResults || activeTab >= testResults.length) return null;
+    return testResults[activeTab];
+  };
+
+  const currentResult = getCurrentTestResult();
+  const status = currentResult?.status?.toLowerCase() || (isRunning ? 'running' : 'pending');
+  const passed = currentResult?.passed || false;
 
   const getStatusIcon = (status: 'passed' | 'failed' | 'running' | 'error') => {
     switch (status) {
@@ -89,18 +93,18 @@ export const TestcasePanel: React.FC<TestcasePanelProps> = ({ testcases }) => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    {getStatusIcon(mockTestResults[activeTab]?.status || 'passed')}
+                    {getStatusIcon(status)}
                     <span className="font-medium">Test Case {activeTab + 1}</span>
                     <Badge 
                       variant="outline" 
-                      className={`${getStatusColor(mockTestResults[activeTab]?.status || 'passed')} border-0`}
+                      className={`${getStatusColor(status)} border-0`}
                     >
-                      {mockTestResults[activeTab]?.status || 'passed'}
+                      {status}
                     </Badge>
                   </div>
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <span>Runtime: {mockTestResults[activeTab]?.runtime || '1ms'}</span>
-                    <span>Memory: {mockTestResults[activeTab]?.memory || '46.6MB'}</span>
+                    <span>Runtime: {currentResult?.time ? `${currentResult.time}s` : 'N/A'}</span>
+                    <span>Memory: {currentResult?.memory ? `${currentResult.memory}KB` : 'N/A'}</span>
                   </div>
                 </div>
               </CardHeader>
@@ -122,30 +126,60 @@ export const TestcasePanel: React.FC<TestcasePanelProps> = ({ testcases }) => {
                 </div>
 
                 {/* Actual Output (if failed) */}
-                {mockTestResults[activeTab]?.status === 'failed' && (
+                {status === 'failed' && currentResult?.actualOutput && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Actual Output</p>
                     <code className="text-sm bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded">
-                      Wrong Answer
+                      {currentResult.actualOutput}
                     </code>
                   </div>
                 )}
 
                 {/* Error Message (if failed) */}
-                {mockTestResults[activeTab]?.status === 'failed' && (
+                {status === 'failed' && (
                   <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
                     <p className="text-xs text-red-600 dark:text-red-400">
-                      Test failed: Expected {testcases[activeTab].output}, but got Wrong Answer
+                      Test failed: Expected {testcases[activeTab].output}, but got {currentResult?.actualOutput || 'Wrong Answer'}
                     </p>
                   </div>
                 )}
 
                 {/* Running Status */}
-                {mockTestResults[activeTab]?.status === 'running' && (
+                {status === 'running' && (
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-md">
                     <p className="text-xs text-yellow-600 dark:text-yellow-400">
                       Test case is currently running...
                     </p>
+                  </div>
+                )}
+
+                {/* Stdout (if available) */}
+                {currentResult?.stdout && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Output</p>
+                    <code className="text-sm bg-muted px-2 py-1 rounded block whitespace-pre-wrap">
+                      {currentResult.stdout}
+                    </code>
+                  </div>
+                )}
+
+                {/* Stderr (if available) */}
+                {currentResult?.stderr && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Error Output</p>
+                    <code className="text-sm bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded block whitespace-pre-wrap">
+                      {currentResult.stderr}
+                    </code>
+                  </div>
+                )}
+
+                {/* Compile Output (if available) */}
+                {currentResult?.compile_output && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Compilation Output</p>
+                    <code className="text-sm bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded block whitespace-pre-wrap">
+                      {currentResult.compile_output}
+                    </code>
                   </div>
                 )}
               </CardContent>
@@ -172,9 +206,9 @@ export const TestcasePanel: React.FC<TestcasePanelProps> = ({ testcases }) => {
                     <span className="text-muted-foreground">Status:</span>
                     <Badge 
                       variant="outline" 
-                      className={`text-xs ${getStatusColor(mockTestResults[activeTab]?.status || 'passed')} border-0`}
+                      className={`text-xs ${getStatusColor(status)} border-0`}
                     >
-                      {mockTestResults[activeTab]?.status || 'passed'}
+                      {status}
                     </Badge>
                   </div>
                 </div>

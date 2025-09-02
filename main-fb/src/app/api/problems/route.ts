@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     const [problems, total] = await Promise.all([
       Problem.find(filter)
-        .select('title description difficulty tags createdAt')
+        .select('title description difficulty tags companyTags createdAt slug questionNumber')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

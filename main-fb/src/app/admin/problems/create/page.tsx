@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import MarkdownEditor from '@/components/ui/MarkdownEditor'
@@ -26,6 +26,14 @@ interface OutputVariable {
   type: string
   description: string
 }
+
+const TAG_SUGGESTIONS: string[] = [
+  'Array','String','Hash Table','Dynamic Programming','Math','Sorting','Greedy','Depth-First Search','Binary Search','Database','Matrix','Tree','Breadth-First Search','Bit Manipulation','Two Pointers','Prefix Sum','Heap (Priority Queue)','Simulation','Binary Tree','Graph','Stack','Counting','Sliding Window','Design','Enumeration','Backtracking','Union Find','Linked List','Number Theory','Ordered Set','Monotonic Stack','Segment Tree','Trie','Combinatorics','Bitmask','Divide and Conquer','Queue','Recursion','Geometry','Binary Indexed Tree','Memoization','Hash Function','Binary Search Tree','Shortest Path','String Matching','Topological Sort','Rolling Hash','Game Theory','Interactive','Data Stream','Monotonic Queue','Brainteaser','Doubly-Linked List','Randomized','Merge Sort','Counting Sort','Iterator','Concurrency','Probability and Statistics','Quickselect','Suffix Array','Line Sweep','Minimum Spanning Tree','Bucket Sort','Shell','Reservoir Sampling','Strongly Connected Component','Eulerian Circuit','Radix Sort','Rejection Sampling','Biconnected Component'
+];
+
+const COMPANY_SUGGESTIONS: string[] = [
+  'Google','Amazon','Meta','Microsoft','Apple','Uber','Bloomberg','TikTok','Oracle','Adobe','Netflix','Airbnb','Stripe','Dropbox','Salesforce','DoorDash','PayPal','Atlassian','Spotify','Qualcomm','NVIDIA','Goldman Sachs','Citadel','TCS','Infosys','Walmart','Flipkart'
+];
 
 const CreateProblemPage = () => {
   const [formData, setFormData] = useState({
@@ -107,6 +115,82 @@ This is a basic implementation problem designed for beginners to get familiar wi
       isExample: false
     }
   ])
+
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [])
+  const [tagQuery, setTagQuery] = useState('')
+  const [tagInputFocused, setTagInputFocused] = useState(false)
+  const filteredSuggestions = useMemo(() => {
+    const q = tagQuery.trim().toLowerCase()
+    if (!q) return TAG_SUGGESTIONS.filter(t => !selectedTags.includes(t)).slice(0, 12)
+    return TAG_SUGGESTIONS
+      .filter(t => t.toLowerCase().includes(q) && !selectedTags.includes(t))
+      .slice(0, 12)
+  }, [tagQuery, selectedTags])
+
+  // Company tags state and filter
+  const [companyQuery, setCompanyQuery] = useState('')
+  const [companyInputFocused, setCompanyInputFocused] = useState(false)
+  const [companyTags, setCompanyTags] = useState<string[]>([])
+  const filteredCompanySuggestions = useMemo(() => {
+    const q = companyQuery.trim().toLowerCase()
+    const source = COMPANY_SUGGESTIONS
+    if (!q) return source.filter(c => !companyTags.includes(c)).slice(0, 12)
+    return source.filter(c => c.toLowerCase().includes(q) && !companyTags.includes(c)).slice(0, 12)
+  }, [companyQuery, companyTags])
+
+  const addTag = (tag: string) => {
+    if (!tag) return
+    if (selectedTags.includes(tag)) return
+    const next = [...selectedTags, tag]
+    setSelectedTags(next)
+    setFormData({ ...formData, tags: next.join(', ') })
+    setTagQuery('')
+  }
+
+  const removeTag = (tag: string) => {
+    const next = selectedTags.filter(t => t !== tag)
+    setSelectedTags(next)
+    setFormData({ ...formData, tags: next.join(', ') })
+  }
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const candidate = tagQuery.trim()
+      if (candidate.length === 0) return
+      // Prefer exact suggestion case if exists
+      const matched = TAG_SUGGESTIONS.find(t => t.toLowerCase() === candidate.toLowerCase()) || candidate
+      addTag(matched)
+    } else if (e.key === 'Backspace' && tagQuery.length === 0 && selectedTags.length > 0) {
+      // Backspace to remove last tag when query empty
+      removeTag(selectedTags[selectedTags.length - 1])
+    }
+  }
+
+  const addCompanyTag = (tag: string) => {
+    if (!tag) return
+    if (companyTags.includes(tag)) return
+    const next = [...companyTags, tag]
+    setCompanyTags(next)
+    setCompanyQuery('')
+  }
+
+  const removeCompanyTag = (tag: string) => {
+    const next = companyTags.filter(t => t !== tag)
+    setCompanyTags(next)
+  }
+
+  const handleCompanyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const candidate = companyQuery.trim()
+      if (candidate.length === 0) return
+      const matched = COMPANY_SUGGESTIONS.find(t => t.toLowerCase() === candidate.toLowerCase()) || candidate
+      addCompanyTag(matched)
+    } else if (e.key === 'Backspace' && companyQuery.length === 0 && companyTags.length > 0) {
+      removeCompanyTag(companyTags[companyTags.length - 1])
+    }
+  }
 
   const addTestCase = () => {
     const newTestCase: TestCase = {
@@ -257,6 +341,7 @@ This is a basic implementation problem designed for beginners to get familiar wi
         },
         body: JSON.stringify({
           ...formData,
+          companyTags,
           inputVariables: inputVariables.map(iv => ({
             name: iv.name,
             type: iv.type,
@@ -341,16 +426,109 @@ This is a basic implementation problem designed for beginners to get familiar wi
               
               <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Tags (comma-separated)
+                  Tags
                 </label>
+                {/* Chips */}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {selectedTags.map(tag => (
+                    <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="hover:text-destructive"
+                        aria-label={`Remove ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                {/* Input with suggestions */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={tagQuery}
+                    onChange={(e) => setTagQuery(e.target.value)}
+                    onKeyDown={handleTagKeyDown}
+                    onFocus={() => setTagInputFocused(true)}
+                    onBlur={() => setTimeout(() => setTagInputFocused(false), 120)}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Type to search topics (press Enter to add)"
+                  />
+                  {tagInputFocused && filteredSuggestions.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-sm max-h-56 overflow-auto">
+                      {filteredSuggestions.map(s => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => { addTag(s) }}
+                          className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Popular topics include Array, Dynamic Programming, Graph, Sorting, Two Pointers, Greedy, and more.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Company Tags */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Company Tags</h2>
+            <div className="lg:col-span-2 mb-8">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Companies
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {companyTags.map(tag => (
+                  <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded">
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeCompanyTag(tag)}
+                      className="hover:text-destructive"
+                      aria-label={`Remove ${tag}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="relative">
                 <input
                   type="text"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                  value={companyQuery}
+                  onChange={(e) => setCompanyQuery(e.target.value)}
+                  onKeyDown={handleCompanyKeyDown}
+                  onFocus={() => setCompanyInputFocused(true)}
+                  onBlur={() => setTimeout(() => setCompanyInputFocused(false), 120)}
                   className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="e.g., array, hash-table, two-pointers"
+                  placeholder="Type to search companies (press Enter to add)"
                 />
+                {companyInputFocused && filteredCompanySuggestions.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-sm max-h-56 overflow-auto">
+                    {filteredCompanySuggestions.map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => { addCompanyTag(s) }}
+                        className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Choose from popular companies or add a new one.
+              </p>
             </div>
           </div>
 

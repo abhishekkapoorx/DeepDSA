@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
-import { prisma } from '@/lib/prisma'
+import dbConnect from '@/lib/mongoose'
+import { User } from '@/models'
 import { NextResponse } from 'next/server'
 
 export async function validateAdminAccess() {
@@ -9,10 +10,9 @@ export async function validateAdminAccess() {
     return { error: 'Unauthorized', status: 401 }
   }
 
-  const user = await prisma.user.findUnique({ 
-    where: { clerkId: userId },
-    select: { role: true }
-  })
+  await dbConnect()
+  
+  const user = await User.findOne({ clerkId: userId }).select('role')
   
   if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
     return { error: 'Forbidden - Admin access required', status: 403 }
