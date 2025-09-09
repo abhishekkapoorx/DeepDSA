@@ -99,12 +99,17 @@ const useProfileData = () => {
   // Generate submission activity data for heatmap
   const generateSubmissionActivity = (submissions: any[]) => {
     const activityMap = new Map<string, number>();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const today = new Date();
+    
+    // Start from 12 months ago (not exactly 365 days)
+    const startDate = new Date(today);
+    startDate.setMonth(today.getMonth() - 11);
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
     
     submissions.forEach((submission) => {
       const date = new Date(submission.createdAt);
-      if (date >= thirtyDaysAgo) {
+      if (date >= startDate) {
         const dateStr = date.toISOString().split('T')[0];
         activityMap.set(dateStr, (activityMap.get(dateStr) || 0) + 1);
       }
@@ -353,24 +358,32 @@ function MiniStat({
 }
 
 function ContributionHeatmap({ submissionActivity }: { submissionActivity: { date: string; count: number }[] }) {
-  // Generate heatmap data from real submission activity
+  // Generate heatmap data for the past year (365 days)
   const generateHeatmapData = () => {
-    const weeks = 30;
+    const weeks = 53; // 53 weeks for a year
     const days = weeks * 7;
     const heatmapData = new Array(days).fill(0);
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
+    // Calculate the start date (12 months ago)
+    const startDate = new Date(today);
+    startDate.setMonth(today.getMonth() - 11);
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
+    
     // Fill in actual submission data
     submissionActivity.forEach(({ date, count }) => {
       const submissionDate = new Date(date);
-      const daysDiff = Math.floor((today.getTime() - submissionDate.getTime()) / (1000 * 60 * 60 * 24));
+      submissionDate.setHours(0, 0, 0, 0);
       
-      if (daysDiff >= 0 && daysDiff < days) {
-        const index = days - 1 - daysDiff;
-        if (index >= 0 && index < days) {
-          heatmapData[index] = Math.min(count, 4); // Cap at level 4
+      // Check if submission is within our range
+      if (submissionDate >= startDate && submissionDate <= today) {
+        const daysDiff = Math.floor((submissionDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff >= 0 && daysDiff < days) {
+          heatmapData[daysDiff] = Math.min(count, 4); // Cap at level 4
         }
       }
     });
@@ -378,7 +391,32 @@ function ContributionHeatmap({ submissionActivity }: { submissionActivity: { dat
     return heatmapData;
   };
 
+  // Generate month labels
+  const generateMonthLabels = () => {
+    const months = [];
+    const today = new Date();
+    
+    // Start from 12 months ago
+    const startDate = new Date(today);
+    startDate.setMonth(today.getMonth() - 11);
+    startDate.setDate(1);
+    
+    // Generate 12 month labels
+    for (let i = 0; i < 12; i++) {
+      const monthDate = new Date(startDate);
+      monthDate.setMonth(startDate.getMonth() + i);
+      
+      const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
+      const year = monthDate.getFullYear().toString().slice(-2);
+      
+      months.push({ month: monthName, year });
+    }
+    
+    return months;
+  };
+
   const heatmapData = generateHeatmapData();
+  const monthLabels = generateMonthLabels();
   const totalActiveDays = heatmapData.filter(level => level > 0).length;
   const maxStreak = Math.max(...heatmapData.map((_, i) => {
     let streak = 0;
@@ -390,11 +428,11 @@ function ContributionHeatmap({ submissionActivity }: { submissionActivity: { dat
 
   const levelToClass = (n: number) =>
     [
-      "bg-slate-800", // 0
-      "bg-emerald-900", // 1
-      "bg-emerald-800", // 2
-      "bg-emerald-600", // 3
-      "bg-emerald-400", // 4
+      "bg-white dark:bg-black", // 0
+      "bg-gray-300 dark:bg-gray-700", // 1
+      "bg-gray-400 dark:bg-gray-600", // 2
+      "bg-gray-500 dark:bg-gray-500", // 3
+      "bg-gray-600 dark:bg-gray-400", // 4
     ][n];
 
   if (submissionActivity.length === 0) {
@@ -418,38 +456,64 @@ function ContributionHeatmap({ submissionActivity }: { submissionActivity: { dat
     <Card className="bg-slate-900 border-slate-800">
       <CardHeader className="pb-2">
         <CardTitle className="text-slate-100 flex items-center justify-between">
-          <span className="text-pretty">Submission activity in the past 30 days</span>
+          <span className="text-pretty">Submission activity in the past year</span>
           <div className="text-xs text-slate-400">
-            Total active days: {totalActiveDays} · Max streak: {maxStreak}
+            {totalActiveDays} submissions · {maxStreak} day streak
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <div
-            className="grid grid-rows-7 grid-flow-col auto-cols-max gap-1 p-2 rounded-md bg-slate-950"
-            role="grid"
-            aria-label="Submission heatmap"
-          >
-            {heatmapData.map((level, idx) => (
-              <div
-                key={idx}
-                role="gridcell"
-                aria-label={`Day ${idx + 1} activity level ${level}`}
-                className={cn("h-3 w-3 rounded-sm", levelToClass(level))}
-              />
-            ))}
+          <div className="flex items-start gap-2">
+                         {/* Month labels */}
+             <div className="flex flex-col gap-1 pt-2">
+               {monthLabels.map((month, idx) => {
+                 // Calculate position: each month is roughly 4.33 weeks
+                 const weekPosition = Math.floor(idx * 4.33);
+                 return (
+                   <div
+                     key={idx}
+                     className="text-xs text-black dark:text-white flex items-center justify-end pr-2 min-w-[40px]"
+                     style={{ 
+                       marginTop: `${weekPosition * 4}px` // 4px per week (3px square + 1px gap)
+                     }}
+                   >
+                     {month.month} '{month.year}
+                   </div>
+                 );
+               })}
+             </div>
+             
+             {/* Heatmap grid */}
+             <div className="flex-1">
+               <div
+                 className="grid grid-rows-7 grid-flow-col auto-cols-max gap-1 p-2 rounded-md bg-white dark:bg-black"
+                 role="grid"
+                 aria-label="Submission heatmap"
+               >
+                 {heatmapData.map((level, idx) => (
+                   <div
+                     key={idx}
+                     role="gridcell"
+                     aria-label={`Day ${idx + 1} activity level ${level}`}
+                     className={cn("h-3 w-3 rounded-sm transition-colors", levelToClass(level))}
+                   />
+                 ))}
+               </div>
+             </div>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-          Less
-          <div className="h-3 w-3 rounded-sm bg-slate-800" />
-          <div className="h-3 w-3 rounded-sm bg-emerald-900" />
-          <div className="h-3 w-3 rounded-sm bg-emerald-800" />
-          <div className="h-3 w-3 rounded-sm bg-emerald-600" />
-          <div className="h-3 w-3 rounded-sm bg-emerald-400" />
-          More
-        </div>
+        
+                 {/* Legend */}
+                   <div className="mt-4 flex items-center gap-2 text-xs text-black dark:text-white">
+            <span>Less</span>
+            <div className="h-3 w-3 rounded-sm bg-white dark:bg-black" />
+            <div className="h-3 w-3 rounded-sm bg-gray-300 dark:bg-gray-700" />
+            <div className="h-3 w-3 rounded-sm bg-gray-400 dark:bg-gray-600" />
+            <div className="h-3 w-3 rounded-sm bg-gray-500 dark:bg-gray-500" />
+            <div className="h-3 w-3 rounded-sm bg-gray-600 dark:bg-gray-400" />
+            <span>More</span>
+          </div>
       </CardContent>
     </Card>
   );
@@ -616,32 +680,32 @@ export default function LeetCodeStyleProfilePage() {
     return <ProfileSkeleton />;
   }
 
-  if (errors.profile) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-400 text-lg mb-2">{errors.profile}</div>
-          <button 
-            onClick={() => refreshSection('profile')} 
-            className="text-blue-400 hover:text-blue-300 underline"
-          >
-            Try again
-          </button>
-        </div>
-      </main>
-    );
-  }
+     if (errors.profile) {
+     return (
+       <main className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex items-center justify-center">
+         <div className="text-center">
+           <div className="text-red-600 dark:text-red-400 text-lg mb-2">{errors.profile}</div>
+           <button 
+             onClick={() => refreshSection('profile')} 
+             className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 underline"
+           >
+             Try again
+           </button>
+         </div>
+       </main>
+     );
+   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Top bar spacer (simulate app header space) */}
-        <div className="mb-4" />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Sidebar */}
-          <section className="lg:col-span-1 space-y-6">
-            <Card className="bg-slate-900 border-slate-800">
+         <main className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
+       <div className="max-w-7xl mx-auto px-4 py-6">
+         {/* Top bar spacer (simulate app header space) */}
+         <div className="mb-4" />
+ 
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           {/* Left Sidebar */}
+           <section className="lg:col-span-1 space-y-6">
+             <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
@@ -664,70 +728,70 @@ export default function LeetCodeStyleProfilePage() {
 
                   <div className="flex-1">
                     <div className="text-lg font-semibold">{profile.name}</div>
-                    <div className="text-xs text-slate-400">@{profile.username}</div>
-                    <div className="mt-2 text-sm">
-                      <span className="text-slate-400">Member since</span>{" "}
-                      <span className="font-semibold text-slate-100">{new Date(profile.joinDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="mt-2">
-                      <Badge className="bg-slate-800 text-slate-300">{profile.role}</Badge>
-                    </div>
-                    <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white">Edit Profile</Button>
+                                         <div className="text-xs text-gray-600 dark:text-gray-400">@{profile.username}</div>
+                     <div className="mt-2 text-sm">
+                       <span className="text-gray-600 dark:text-gray-400">Member since</span>{" "}
+                       <span className="font-semibold text-black dark:text-white">{new Date(profile.joinDate).toLocaleDateString()}</span>
+                     </div>
+                     <div className="mt-2">
+                       <Badge className="bg-gray-800 dark:bg-gray-200 text-white dark:text-black">{profile.role}</Badge>
+                     </div>
+                     <Button className="mt-4 bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">Edit Profile</Button>
                   </div>
                 </div>
 
-                <Separator className="my-5 bg-slate-800" />
-
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <MapPin className="h-4 w-4 text-slate-400" />
-                    {profile.country}
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Calendar className="h-4 w-4 text-slate-400" />
-                    Last active: {profile.lastActive}
-                  </div>
-                </div>
-
-                <Separator className="my-5 bg-slate-800" />
-
-                <div>
-                  <div className="text-sm font-medium mb-2 text-slate-300">Interview Stats</div>
-                  <div className="space-y-2 text-sm text-slate-400">
-                    <div className="flex items-center justify-between">
-                      <span>Total Interviews</span>
-                      <span>{profile.interviews.total}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Average Score</span>
-                      <span>{profile.interviews.averageScore}/10</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Current Streak</span>
-                      <span>{profile.interviews.streakDays} days</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="my-5 bg-slate-800" />
-
-                <div className="text-sm">
-                  <div className="font-medium mb-2 text-slate-300">Submission Stats</div>
-                  <div className="space-y-2 text-sm text-slate-400">
-                    <div className="flex items-center justify-between">
-                      <span>Total Submissions</span>
-                      <span>{profile.stats.totalSubmissions}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Accepted</span>
-                      <span>{profile.stats.acceptedSubmissions}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Success Rate</span>
-                      <span>{((profile.stats.acceptedSubmissions / profile.stats.totalSubmissions) * 100).toFixed(1)}%</span>
-                    </div>
-                  </div>
-                </div>
+                                 <Separator className="my-5 bg-gray-300 dark:bg-gray-700" />
+ 
+                 <div className="space-y-3 text-sm">
+                   <div className="flex items-center gap-2 text-black dark:text-white">
+                     <MapPin className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                     {profile.country}
+                   </div>
+                   <div className="flex items-center gap-2 text-black dark:text-white">
+                     <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                     Last active: {profile.lastActive}
+                   </div>
+                 </div>
+ 
+                 <Separator className="my-5 bg-gray-300 dark:bg-gray-700" />
+ 
+                 <div>
+                   <div className="text-sm font-medium mb-2 text-black dark:text-white">Interview Stats</div>
+                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                     <div className="flex items-center justify-between">
+                       <span>Total Interviews</span>
+                       <span>{profile.interviews.total}</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <span>Average Score</span>
+                       <span>{profile.interviews.averageScore}/10</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <span>Current Streak</span>
+                       <span>{profile.interviews.streakDays} days</span>
+                     </div>
+                   </div>
+                 </div>
+ 
+                 <Separator className="my-5 bg-gray-300 dark:bg-gray-700" />
+ 
+                 <div className="text-sm">
+                   <div className="font-medium mb-2 text-black dark:text-white">Submission Stats</div>
+                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                     <div className="flex items-center justify-between">
+                       <span>Total Submissions</span>
+                       <span>{profile.stats.totalSubmissions}</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <span>Accepted</span>
+                       <span>{profile.stats.acceptedSubmissions}</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <span>Success Rate</span>
+                       <span>{((profile.stats.acceptedSubmissions / profile.stats.totalSubmissions) * 100).toFixed(1)}%</span>
+                     </div>
+                   </div>
+                 </div>
               </CardContent>
             </Card>
           </section>
@@ -735,24 +799,24 @@ export default function LeetCodeStyleProfilePage() {
           {/* Main Column */}
           <section className="lg:col-span-2 space-y-6">
             {/* Stats */}
-            <Card className="bg-slate-900 border-slate-800">
-              <CardContent className="p-5">
-                {loadingStates.stats ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                  </div>
-                ) : errors.stats ? (
-                  <div className="text-center py-8">
-                    <div className="text-red-400 mb-2">{errors.stats}</div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => refreshSection('stats')}
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                ) : (
+                         <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+               <CardContent className="p-5">
+                 {loadingStates.stats ? (
+                   <div className="flex items-center justify-center py-8">
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black dark:border-white"></div>
+                   </div>
+                 ) : errors.stats ? (
+                   <div className="text-center py-8">
+                     <div className="text-red-600 dark:text-red-400 mb-2">{errors.stats}</div>
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       onClick={() => refreshSection('stats')}
+                     >
+                       Retry
+                     </Button>
+                   </div>
+                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Donut */}
                     <div className="flex items-center justify-center">
@@ -781,27 +845,27 @@ export default function LeetCodeStyleProfilePage() {
                         color="slate"
                       />
                       <div className="mt-2 grid grid-cols-3 gap-2">
-                        <Button
-                          variant="outline"
-                          className="border-slate-700 text-slate-300 hover:bg-slate-800 bg-transparent"
-                          onClick={() => router.push('/practice')}
-                        >
-                          <Target className="mr-2 h-4 w-4" /> Practice
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-slate-700 text-slate-300 hover:bg-slate-800 bg-transparent"
-                          onClick={() => router.push('/interviews')}
-                        >
-                          <MessageSquare className="mr-2 h-4 w-4" /> Interview
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-slate-700 text-slate-300 hover:bg-slate-800 bg-transparent"
-                          onClick={() => router.push('/problems')}
-                        >
-                          <BookOpen className="mr-2 h-4 w-4" /> Problems
-                        </Button>
+                                                 <Button
+                           variant="outline"
+                           className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
+                           onClick={() => router.push('/practice')}
+                         >
+                           <Target className="mr-2 h-4 w-4" /> Practice
+                         </Button>
+                         <Button
+                           variant="outline"
+                           className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
+                           onClick={() => router.push('/interviews')}
+                         >
+                           <MessageSquare className="mr-2 h-4 w-4" /> Interview
+                         </Button>
+                         <Button
+                           variant="outline"
+                           className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
+                           onClick={() => router.push('/problems')}
+                         >
+                           <BookOpen className="mr-2 h-4 w-4" /> Problems
+                         </Button>
                       </div>
                     </div>
                   </div>
@@ -810,79 +874,79 @@ export default function LeetCodeStyleProfilePage() {
             </Card>
 
             {/* Heatmap */}
-            {loadingStates.submissions ? (
-              <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : errors.submissions ? (
-              <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-5">
-                  <div className="text-center py-8">
-                    <div className="text-red-400 mb-2">{errors.submissions}</div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => refreshSection('submissions')}
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
+                         {loadingStates.submissions ? (
+               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                 <CardContent className="p-5">
+                   <div className="flex items-center justify-center py-8">
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black dark:border-white"></div>
+                   </div>
+                 </CardContent>
+               </Card>
+             ) : errors.submissions ? (
+               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                 <CardContent className="p-5">
+                   <div className="text-center py-8">
+                     <div className="text-red-600 dark:text-red-400 mb-2">{errors.submissions}</div>
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       onClick={() => refreshSection('submissions')}
+                     >
+                       Retry
+                     </Button>
+                   </div>
+                 </CardContent>
+               </Card>
+             ) : (
               <ContributionHeatmap submissionActivity={profile.submissionActivity} />
             )}
 
             {/* Recent Activity */}
-            {loadingStates.interviews || loadingStates.submissions ? (
-              <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (errors.interviews || errors.submissions) ? (
-              <Card className="bg-slate-900 border-slate-800">
-                <CardContent className="p-5">
-                  <div className="text-center py-8">
-                    <div className="text-red-400 mb-2">
-                      {errors.interviews || errors.submissions}
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => refreshSection(errors.interviews ? 'interviews' : 'submissions')}
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
+                         {loadingStates.interviews || loadingStates.submissions ? (
+               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                 <CardContent className="p-5">
+                   <div className="flex items-center justify-center py-8">
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black dark:border-white"></div>
+                   </div>
+                 </CardContent>
+               </Card>
+             ) : (errors.interviews || errors.submissions) ? (
+               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                 <CardContent className="p-5">
+                   <div className="text-center py-8">
+                     <div className="text-red-600 dark:text-red-400 mb-2">
+                       {errors.interviews || errors.submissions}
+                     </div>
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       onClick={() => refreshSection(errors.interviews ? 'interviews' : 'submissions')}
+                     >
+                       Retry
+                     </Button>
+                   </div>
+                 </CardContent>
+               </Card>
+             ) : (
               <RecentActivity interviews={profile.interviews.recent} submissions={profile.submissions} />
             )}
           </section>
         </div>
 
-        {/* Footer spacer */}
-        <div className="mt-10 flex items-center justify-end gap-3 text-xs text-slate-500">
-          <Calendar className="h-4 w-4" />
-          <span>Last updated: {new Date().toLocaleDateString()}</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-slate-400 hover:text-slate-300 h-6 px-2"
-            onClick={() => refreshSection('profile')}
-          >
-            <RefreshCw className="h-3 w-3 mr-1" />
-            Refresh
-          </Button>
-        </div>
+                 {/* Footer spacer */}
+         <div className="mt-10 flex items-center justify-end gap-3 text-xs text-gray-600 dark:text-gray-400">
+           <Calendar className="h-4 w-4" />
+           <span>Last updated: {new Date().toLocaleDateString()}</span>
+           <Button 
+             variant="ghost" 
+             size="sm" 
+             className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white h-6 px-2"
+             onClick={() => refreshSection('profile')}
+           >
+             <RefreshCw className="h-3 w-3 mr-1" />
+             Refresh
+           </Button>
+         </div>
       </div>
     </main>
   );
