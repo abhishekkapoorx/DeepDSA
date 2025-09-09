@@ -365,26 +365,10 @@ function ContributionHeatmap({ submissionActivity }: { submissionActivity: { dat
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const startDate = new Date(today);
-  startDate.setMonth(today.getMonth() - 11);
-  startDate.setDate(1);
+  startDate.setFullYear(today.getFullYear() - 1);
   startDate.setHours(0, 0, 0, 0);
 
-  // Transform to @uiw/react-heat-map expected format
-  const values = submissionActivity.map((s) => ({ date: new Date(s.date), count: Math.min(s.count, 4) }));
-
-  const getLevel = (count?: number) => {
-    const n = Math.min(Math.max(count || 0, 0), 4);
-    return n;
-  };
-
-  const levelToColor = (n: number) =>
-    [
-      "hsl(var(--background))", // 0
-      "hsl(var(--primary) / 0.25)",
-      "hsl(var(--primary) / 0.45)",
-      "hsl(var(--primary) / 0.65)",
-      "hsl(var(--primary) / 0.90)",
-    ][n];
+  const values = submissionActivity.map((s) => ({ date: new Date(s.date), count: s.count }));
 
   const totalActiveDays = submissionActivity.reduce((acc, v) => acc + (v.count > 0 ? 1 : 0), 0);
 
@@ -413,33 +397,31 @@ function ContributionHeatmap({ submissionActivity }: { submissionActivity: { dat
           <div className="text-xs text-muted-foreground">{totalActiveDays} active days</div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto w-full">
-          <div className="w-full">
-            <HeatMap
-              value={values}
-              startDate={startDate}
-              endDate={today}
-              rectSize={14}
-              space={4}
-              weekLabels={{ style: { fill: 'hsl(var(--foreground))', opacity: 0.6 } }}
-              monthLabels={{ style: { fill: 'hsl(var(--foreground))', opacity: 0.6 } }}
-              panelColors={{ 0: levelToColor(0), 1: levelToColor(1), 2: levelToColor(2), 3: levelToColor(3), 4: levelToColor(4) }}
-              rectProps={{ rx: 3, ry: 3 }}
-              style={{ color: 'hsl(var(--foreground))' }}
-              className="[&_.wui-heat-map-rect]:transition-colors"
-            />
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 text-xs text-foreground">
-          <span>Less</span>
-          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: levelToColor(0) }} />
-          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: levelToColor(1) }} />
-          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: levelToColor(2) }} />
-          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: levelToColor(3) }} />
-          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: levelToColor(4) }} />
-          <span>More</span>
+      <CardContent className="w-full">
+        <div className="w-full ">
+          <HeatMap
+            value={values}
+            startDate={startDate}
+            endDate={today}
+            className="w-full text-foreground"
+            rectProps={{
+              rx: 3,
+              style: {
+                color: "var(--foreground)",
+                fill: "var(--foreground)",
+                stroke: "var(--border)",
+                strokeWidth: 1,
+              },
+            }}
+            panelColors={{
+              11: "var(--color-green-900)",
+              9: "var(--color-green-800)",
+              7: "var(--color-green-600)",
+              5: "var(--color-green-400)",
+              3: "var(--color-green-200)",
+              0: "var(--color-gray-100)"
+            }}
+          />
         </div>
       </CardContent>
     </Card>
@@ -777,7 +759,7 @@ export default function LeetCodeStyleProfilePage() {
                       <div className="mt-2 grid grid-cols-3 gap-2">
                         <Button
                           variant="outline"
-                          className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
+                          className="border-border dark:border-border text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
                           onClick={() => router.push('/practice')}
                         >
                           <Target className="mr-2 h-4 w-4" /> Practice
