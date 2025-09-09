@@ -1,3 +1,12 @@
+
+
+
+Update the profile page color and the 
+
+
+
+
+
 🔴 HARDCODED FEATURES (Need to be made live):
 1. Solutions Component (/components/solutions/Solutions.tsx)
 Hardcoded: dummySolutions array with fake solution data
