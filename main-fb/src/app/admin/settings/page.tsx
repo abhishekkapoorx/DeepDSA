@@ -7,7 +7,7 @@ import { ArrowLeft, Save, Globe, Shield, Database, Bell, Palette, Server } from 
 const SettingsPage = () => {
   const [settings, setSettings] = useState({
     // Platform Settings
-    siteName: 'LeetCode Clone',
+    siteName: 'DeepDSA',
     siteDescription: 'Master coding interviews with our comprehensive problem set',
     allowRegistration: true,
     maintenanceMode: false,
