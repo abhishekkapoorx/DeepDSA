@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Calendar, CheckCircle2, ChevronRight, Crown, MapPin, MessageSquare, Star, Target, Zap, TrendingUp, Trophy, Award, Clock, Users, Code, BookOpen, RefreshCw } from "lucide-react";
+import { Calendar, ChevronRight, Crown, MapPin, MessageSquare, Target, Code, BookOpen, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // Helper function to format relative time
@@ -281,9 +282,9 @@ function DifficultyDonut({
   const segments = useMemo(() => {
     const sum = Math.max(easy + medium + hard, 1);
     return [
-      { value: easy / sum, color: "#22c55e" }, // emerald-500
-      { value: medium / sum, color: "#f59e0b" }, // amber-500
-      { value: hard / sum, color: "#94a3b8" }, // slate-400 as neutral for hard
+      { value: easy / sum, color: "hsl(var(--primary))" },
+      { value: medium / sum, color: "hsl(var(--secondary))" },
+      { value: hard / sum, color: "hsl(var(--accent))" },
     ];
   }, [easy, medium, hard]);
 
@@ -294,7 +295,7 @@ function DifficultyDonut({
   return (
     <div className="relative flex items-center justify-center">
       <svg width="160" height="160" viewBox="0 0 160 160" aria-label="Problem difficulty progress donut">
-        <circle cx="80" cy="80" r={r} stroke="#1f2937" strokeWidth="12" fill="none" />
+        <circle cx="80" cy="80" r={r} stroke="hsl(var(--muted))" strokeWidth="12" fill="none" />
         {segments.map((s, idx) => {
           const len = s.value * c;
           const strokeDasharray = `${len} ${c - len}`;
@@ -318,12 +319,12 @@ function DifficultyDonut({
         })}
       </svg>
       <div className="absolute text-center">
-        <div className="text-3xl font-semibold text-white">
+        <div className="text-3xl font-semibold text-foreground">
           {easy + medium + hard}
-          <span className="text-slate-400 text-base">/{total}</span>
+          <span className="text-muted-foreground text-base">/{total}</span>
         </div>
-        <div className="text-sm text-emerald-400">Solved</div>
-        <div className="text-xs text-slate-400">{total - (easy + medium + hard)} Remaining</div>
+        <div className="text-sm text-primary">Solved</div>
+        <div className="text-xs text-muted-foreground">{total - (easy + medium + hard)} Remaining</div>
       </div>
     </div>
   );
@@ -681,23 +682,23 @@ export default function LeetCodeStyleProfilePage() {
   }
 
      if (errors.profile) {
-     return (
-       <main className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex items-center justify-center">
-         <div className="text-center">
-           <div className="text-red-600 dark:text-red-400 text-lg mb-2">{errors.profile}</div>
-           <button 
-             onClick={() => refreshSection('profile')} 
-             className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 underline"
-           >
-             Try again
-           </button>
-         </div>
-       </main>
-     );
-   }
+      return (
+        <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-destructive text-lg mb-2">{errors.profile}</div>
+            <button 
+              onClick={() => refreshSection('profile')} 
+              className="underline hover:text-muted-foreground"
+            >
+              Try again
+            </button>
+          </div>
+        </main>
+      );
+    }
 
   return (
-         <main className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
+         <main className="min-h-screen bg-background text-foreground">
        <div className="max-w-7xl mx-auto px-4 py-6">
          {/* Top bar spacer (simulate app header space) */}
          <div className="mb-4" />
@@ -705,59 +706,52 @@ export default function LeetCodeStyleProfilePage() {
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
            {/* Left Sidebar */}
            <section className="lg:col-span-1 space-y-6">
-             <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+             <Card className="bg-card border-border">
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
                   <div className="relative">
-                    {profile.imageUrl ? (
-                      <img 
-                        src={profile.imageUrl} 
-                        alt={profile.name}
-                        className="h-20 w-20 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                        {profile.name.charAt(0)}
-                      </div>
-                    )}
-                    <div className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-emerald-600 flex items-center justify-center">
-                      <Crown className="h-4 w-4 text-white" />
+                    <Avatar className="h-20 w-20 rounded-xl">
+                      <AvatarImage src={profile.imageUrl} alt={profile.name} />
+                      <AvatarFallback className="rounded-xl">{profile.name?.charAt(0) || 'U'}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                      <Crown className="h-4 w-4" />
                     </div>
                   </div>
 
                   <div className="flex-1">
                     <div className="text-lg font-semibold">{profile.name}</div>
-                                         <div className="text-xs text-gray-600 dark:text-gray-400">@{profile.username}</div>
+                                         <div className="text-xs text-muted-foreground">@{profile.username}</div>
                      <div className="mt-2 text-sm">
-                       <span className="text-gray-600 dark:text-gray-400">Member since</span>{" "}
-                       <span className="font-semibold text-black dark:text-white">{new Date(profile.joinDate).toLocaleDateString()}</span>
+                       <span className="text-muted-foreground">Member since</span>{" "}
+                       <span className="font-semibold">{new Date(profile.joinDate).toLocaleDateString()}</span>
                      </div>
                      <div className="mt-2">
-                       <Badge className="bg-gray-800 dark:bg-gray-200 text-white dark:text-black">{profile.role}</Badge>
+                       <Badge variant="secondary">{profile.role}</Badge>
                      </div>
-                     <Button className="mt-4 bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">Edit Profile</Button>
+                     <Button className="mt-4">Edit Profile</Button>
                   </div>
                 </div>
 
-                                 <Separator className="my-5 bg-gray-300 dark:bg-gray-700" />
+                                 <Separator className="my-5" />
  
                  <div className="space-y-3 text-sm">
-                   <div className="flex items-center gap-2 text-black dark:text-white">
-                     <MapPin className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                   <div className="flex items-center gap-2">
+                     <MapPin className="h-4 w-4 text-muted-foreground" />
                      {profile.country}
                    </div>
-                   <div className="flex items-center gap-2 text-black dark:text-white">
-                     <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                   <div className="flex items-center gap-2">
+                     <Calendar className="h-4 w-4 text-muted-foreground" />
                      Last active: {profile.lastActive}
                    </div>
                  </div>
  
-                 <Separator className="my-5 bg-gray-300 dark:bg-gray-700" />
+                 <Separator className="my-5" />
  
                  <div>
-                   <div className="text-sm font-medium mb-2 text-black dark:text-white">Interview Stats</div>
-                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                   <div className="text-sm font-medium mb-2">Interview Stats</div>
+                   <div className="space-y-2 text-sm text-muted-foreground">
                      <div className="flex items-center justify-between">
                        <span>Total Interviews</span>
                        <span>{profile.interviews.total}</span>
@@ -773,11 +767,11 @@ export default function LeetCodeStyleProfilePage() {
                    </div>
                  </div>
  
-                 <Separator className="my-5 bg-gray-300 dark:bg-gray-700" />
+                 <Separator className="my-5" />
  
                  <div className="text-sm">
-                   <div className="font-medium mb-2 text-black dark:text-white">Submission Stats</div>
-                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                   <div className="font-medium mb-2">Submission Stats</div>
+                   <div className="space-y-2 text-sm text-muted-foreground">
                      <div className="flex items-center justify-between">
                        <span>Total Submissions</span>
                        <span>{profile.stats.totalSubmissions}</span>
@@ -799,15 +793,15 @@ export default function LeetCodeStyleProfilePage() {
           {/* Main Column */}
           <section className="lg:col-span-2 space-y-6">
             {/* Stats */}
-                         <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                         <Card className="bg-card border-border">
                <CardContent className="p-5">
                  {loadingStates.stats ? (
                    <div className="flex items-center justify-center py-8">
-                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black dark:border-white"></div>
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
                    </div>
                  ) : errors.stats ? (
                    <div className="text-center py-8">
-                     <div className="text-red-600 dark:text-red-400 mb-2">{errors.stats}</div>
+                     <div className="text-destructive mb-2">{errors.stats}</div>
                      <Button 
                        variant="outline" 
                        size="sm" 
@@ -875,18 +869,18 @@ export default function LeetCodeStyleProfilePage() {
 
             {/* Heatmap */}
                          {loadingStates.submissions ? (
-               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+               <Card className="bg-card border-border">
                  <CardContent className="p-5">
                    <div className="flex items-center justify-center py-8">
-                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black dark:border-white"></div>
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
                    </div>
                  </CardContent>
                </Card>
              ) : errors.submissions ? (
-               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+               <Card className="bg-card border-border">
                  <CardContent className="p-5">
                    <div className="text-center py-8">
-                     <div className="text-red-600 dark:text-red-400 mb-2">{errors.submissions}</div>
+                     <div className="text-destructive mb-2">{errors.submissions}</div>
                      <Button 
                        variant="outline" 
                        size="sm" 
@@ -903,18 +897,18 @@ export default function LeetCodeStyleProfilePage() {
 
             {/* Recent Activity */}
                          {loadingStates.interviews || loadingStates.submissions ? (
-               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+               <Card className="bg-card border-border">
                  <CardContent className="p-5">
                    <div className="flex items-center justify-center py-8">
-                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black dark:border-white"></div>
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
                    </div>
                  </CardContent>
                </Card>
              ) : (errors.interviews || errors.submissions) ? (
-               <Card className="bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+               <Card className="bg-card border-border">
                  <CardContent className="p-5">
                    <div className="text-center py-8">
-                     <div className="text-red-600 dark:text-red-400 mb-2">
+                     <div className="text-destructive mb-2">
                        {errors.interviews || errors.submissions}
                      </div>
                      <Button 
@@ -934,13 +928,13 @@ export default function LeetCodeStyleProfilePage() {
         </div>
 
                  {/* Footer spacer */}
-         <div className="mt-10 flex items-center justify-end gap-3 text-xs text-gray-600 dark:text-gray-400">
+         <div className="mt-10 flex items-center justify-end gap-3 text-xs text-muted-foreground">
            <Calendar className="h-4 w-4" />
            <span>Last updated: {new Date().toLocaleDateString()}</span>
            <Button 
              variant="ghost" 
              size="sm" 
-             className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white h-6 px-2"
+             className="h-6 px-2"
              onClick={() => refreshSection('profile')}
            >
              <RefreshCw className="h-3 w-3 mr-1" />
