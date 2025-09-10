@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import dynamic from "next/dynamic";
+const HeatMap = dynamic(() => import("@uiw/react-heat-map"), { ssr: false });
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Calendar, ChevronRight, Crown, MapPin, MessageSquare, Target, Code, BookOpen, RefreshCw } from "lucide-react";
@@ -15,7 +18,7 @@ import { useRouter } from "next/navigation";
 const formatRelativeTime = (date: Date): string => {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
@@ -61,7 +64,7 @@ const useProfileData = () => {
     interviews: true,
     submissions: true
   });
-  
+
   const [errors, setErrors] = useState({
     profile: null as string | null,
     stats: null as string | null,
@@ -72,28 +75,28 @@ const useProfileData = () => {
   // Calculate interview streak from recent interviews
   const calculateStreak = (interviews: any[]) => {
     if (interviews.length === 0) return 0;
-    
+
     let streak = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     for (let i = 0; i < 30; i++) { // Check last 30 days
       const checkDate = new Date(today);
       checkDate.setDate(today.getDate() - i);
-      
+
       const hasInterview = interviews.some(interview => {
         const interviewDate = new Date(interview.startedAt);
         interviewDate.setHours(0, 0, 0, 0);
         return interviewDate.getTime() === checkDate.getTime();
       });
-      
+
       if (hasInterview) {
         streak++;
       } else {
         break;
       }
     }
-    
+
     return streak;
   };
 
@@ -101,13 +104,13 @@ const useProfileData = () => {
   const generateSubmissionActivity = (submissions: any[]) => {
     const activityMap = new Map<string, number>();
     const today = new Date();
-    
+
     // Start from 12 months ago (not exactly 365 days)
     const startDate = new Date(today);
     startDate.setMonth(today.getMonth() - 11);
     startDate.setDate(1);
     startDate.setHours(0, 0, 0, 0);
-    
+
     submissions.forEach((submission) => {
       const date = new Date(submission.createdAt);
       if (date >= startDate) {
@@ -115,7 +118,7 @@ const useProfileData = () => {
         activityMap.set(dateStr, (activityMap.get(dateStr) || 0) + 1);
       }
     });
-    
+
     return Array.from(activityMap.entries()).map(([date, count]) => ({
       date,
       count
@@ -128,7 +131,7 @@ const useProfileData = () => {
       try {
         setLoadingStates(prev => ({ ...prev, profile: true }));
         setErrors(prev => ({ ...prev, profile: null }));
-        
+
         const response = await fetch('/api/profile');
         if (response.ok) {
           const data = await response.json();
@@ -153,7 +156,7 @@ const useProfileData = () => {
       try {
         setLoadingStates(prev => ({ ...prev, stats: true }));
         setErrors(prev => ({ ...prev, stats: null }));
-        
+
         const response = await fetch('/api/profile/stats');
         if (response.ok) {
           const data = await response.json();
@@ -178,7 +181,7 @@ const useProfileData = () => {
       try {
         setLoadingStates(prev => ({ ...prev, interviews: true }));
         setErrors(prev => ({ ...prev, interviews: null }));
-        
+
         const response = await fetch('/api/interviews');
         if (response.ok) {
           const data = await response.json();
@@ -189,11 +192,11 @@ const useProfileData = () => {
             date: formatRelativeTime(new Date(interview.startedAt)),
             startedAt: interview.startedAt
           }));
-          
+
           const streakDays = calculateStreak(data.interviews || []);
-          
-          setProfile(prev => ({ 
-            ...prev, 
+
+          setProfile(prev => ({
+            ...prev,
             interviews: {
               ...prev.interviews,
               total: data.pagination?.total || data.interviews?.length || 0,
@@ -221,7 +224,7 @@ const useProfileData = () => {
       try {
         setLoadingStates(prev => ({ ...prev, submissions: true }));
         setErrors(prev => ({ ...prev, submissions: null }));
-        
+
         const submissionsResponse = await fetch('/api/submissions');
         if (submissionsResponse.ok) {
           const data = await submissionsResponse.json();
@@ -233,11 +236,11 @@ const useProfileData = () => {
             date: formatRelativeTime(new Date(submission.createdAt)),
             createdAt: submission.createdAt
           }));
-          
+
           const submissionActivity = generateSubmissionActivity(data.submissions || []);
-          
-          setProfile(prev => ({ 
-            ...prev, 
+
+          setProfile(prev => ({
+            ...prev,
             submissions,
             submissionActivity
           }));
@@ -258,7 +261,7 @@ const useProfileData = () => {
   const refreshSection = async (section: keyof typeof loadingStates) => {
     setLoadingStates(prev => ({ ...prev, [section]: true }));
     setErrors(prev => ({ ...prev, [section]: null }));
-    
+
     // Re-trigger the specific useEffect
     const event = new CustomEvent(`refresh-${section}`);
     window.dispatchEvent(event);
@@ -344,13 +347,13 @@ function MiniStat({
   const colors = {
     emerald: "bg-emerald-900/40 text-emerald-300",
     amber: "bg-amber-900/40 text-amber-300",
-    slate: "bg-slate-800 text-slate-300",
+    slate: "bg-background text-foreground",
   } as const;
-  
+
   return (
     <div className={cn("rounded-md px-3 py-2 text-sm", colors[color])} aria-label={`${title} ${value}`}>
       <div className="font-medium">{title}</div>
-      <div className="text-xs text-slate-300/80">
+      <div className="text-xs text-foreground/80">
         {value}
         {hint ? ` ${hint}` : ""}
       </div>
@@ -359,91 +362,24 @@ function MiniStat({
 }
 
 function ContributionHeatmap({ submissionActivity }: { submissionActivity: { date: string; count: number }[] }) {
-  // Generate heatmap data for the past year (365 days)
-  const generateHeatmapData = () => {
-    const weeks = 53; // 53 weeks for a year
-    const days = weeks * 7;
-    const heatmapData = new Array(days).fill(0);
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Calculate the start date (12 months ago)
-    const startDate = new Date(today);
-    startDate.setMonth(today.getMonth() - 11);
-    startDate.setDate(1);
-    startDate.setHours(0, 0, 0, 0);
-    
-    // Fill in actual submission data
-    submissionActivity.forEach(({ date, count }) => {
-      const submissionDate = new Date(date);
-      submissionDate.setHours(0, 0, 0, 0);
-      
-      // Check if submission is within our range
-      if (submissionDate >= startDate && submissionDate <= today) {
-        const daysDiff = Math.floor((submissionDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (daysDiff >= 0 && daysDiff < days) {
-          heatmapData[daysDiff] = Math.min(count, 4); // Cap at level 4
-        }
-      }
-    });
-    
-    return heatmapData;
-  };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startDate = new Date(today);
+  startDate.setFullYear(today.getFullYear() - 1);
+  startDate.setHours(0, 0, 0, 0);
 
-  // Generate month labels
-  const generateMonthLabels = () => {
-    const months = [];
-    const today = new Date();
-    
-    // Start from 12 months ago
-    const startDate = new Date(today);
-    startDate.setMonth(today.getMonth() - 11);
-    startDate.setDate(1);
-    
-    // Generate 12 month labels
-    for (let i = 0; i < 12; i++) {
-      const monthDate = new Date(startDate);
-      monthDate.setMonth(startDate.getMonth() + i);
-      
-      const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
-      const year = monthDate.getFullYear().toString().slice(-2);
-      
-      months.push({ month: monthName, year });
-    }
-    
-    return months;
-  };
+  const values = submissionActivity.map((s) => ({ date: new Date(s.date), count: s.count }));
 
-  const heatmapData = generateHeatmapData();
-  const monthLabels = generateMonthLabels();
-  const totalActiveDays = heatmapData.filter(level => level > 0).length;
-  const maxStreak = Math.max(...heatmapData.map((_, i) => {
-    let streak = 0;
-    for (let j = i; j < heatmapData.length && heatmapData[j] > 0; j++) {
-      streak++;
-    }
-    return streak;
-  }));
-
-  const levelToClass = (n: number) =>
-    [
-      "bg-white dark:bg-black", // 0
-      "bg-gray-300 dark:bg-gray-700", // 1
-      "bg-gray-400 dark:bg-gray-600", // 2
-      "bg-gray-500 dark:bg-gray-500", // 3
-      "bg-gray-600 dark:bg-gray-400", // 4
-    ][n];
+  const totalActiveDays = submissionActivity.reduce((acc, v) => acc + (v.count > 0 ? 1 : 0), 0);
 
   if (submissionActivity.length === 0) {
     return (
-      <Card className="bg-slate-900 border-slate-800">
+      <Card className="bg-card border-border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-slate-100">Submission Activity</CardTitle>
+          <CardTitle className="text-foreground">Submission Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-slate-400">
+          <div className="text-center py-8 text-muted-foreground">
             <Code className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>No submission activity yet</p>
             <p className="text-sm">Start solving problems to see your activity here</p>
@@ -454,67 +390,39 @@ function ContributionHeatmap({ submissionActivity }: { submissionActivity: { dat
   }
 
   return (
-    <Card className="bg-slate-900 border-slate-800">
+    <Card className="bg-card border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-slate-100 flex items-center justify-between">
+        <CardTitle className="text-foreground flex items-center justify-between">
           <span className="text-pretty">Submission activity in the past year</span>
-          <div className="text-xs text-slate-400">
-            {totalActiveDays} submissions · {maxStreak} day streak
-          </div>
+          <div className="text-xs text-muted-foreground">{totalActiveDays} active days</div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <div className="flex items-start gap-2">
-                         {/* Month labels */}
-             <div className="flex flex-col gap-1 pt-2">
-               {monthLabels.map((month, idx) => {
-                 // Calculate position: each month is roughly 4.33 weeks
-                 const weekPosition = Math.floor(idx * 4.33);
-                 return (
-                   <div
-                     key={idx}
-                     className="text-xs text-black dark:text-white flex items-center justify-end pr-2 min-w-[40px]"
-                     style={{ 
-                       marginTop: `${weekPosition * 4}px` // 4px per week (3px square + 1px gap)
-                     }}
-                   >
-                     {month.month} '{month.year}
-                   </div>
-                 );
-               })}
-             </div>
-             
-             {/* Heatmap grid */}
-             <div className="flex-1">
-               <div
-                 className="grid grid-rows-7 grid-flow-col auto-cols-max gap-1 p-2 rounded-md bg-white dark:bg-black"
-                 role="grid"
-                 aria-label="Submission heatmap"
-               >
-                 {heatmapData.map((level, idx) => (
-                   <div
-                     key={idx}
-                     role="gridcell"
-                     aria-label={`Day ${idx + 1} activity level ${level}`}
-                     className={cn("h-3 w-3 rounded-sm transition-colors", levelToClass(level))}
-                   />
-                 ))}
-               </div>
-             </div>
-          </div>
+      <CardContent className="w-full">
+        <div className="w-full ">
+          <HeatMap
+            value={values}
+            startDate={startDate}
+            endDate={today}
+            className="w-full text-foreground"
+            rectProps={{
+              rx: 3,
+              style: {
+                color: "var(--foreground)",
+                fill: "var(--foreground)",
+                stroke: "var(--border)",
+                strokeWidth: 1,
+              },
+            }}
+            panelColors={{
+              11: "var(--color-green-900)",
+              9: "var(--color-green-800)",
+              7: "var(--color-green-600)",
+              5: "var(--color-green-400)",
+              3: "var(--color-green-200)",
+              0: "var(--color-gray-100)"
+            }}
+          />
         </div>
-        
-                 {/* Legend */}
-                   <div className="mt-4 flex items-center gap-2 text-xs text-black dark:text-white">
-            <span>Less</span>
-            <div className="h-3 w-3 rounded-sm bg-white dark:bg-black" />
-            <div className="h-3 w-3 rounded-sm bg-gray-300 dark:bg-gray-700" />
-            <div className="h-3 w-3 rounded-sm bg-gray-400 dark:bg-gray-600" />
-            <div className="h-3 w-3 rounded-sm bg-gray-500 dark:bg-gray-500" />
-            <div className="h-3 w-3 rounded-sm bg-gray-600 dark:bg-gray-400" />
-            <span>More</span>
-          </div>
       </CardContent>
     </Card>
   );
@@ -524,7 +432,7 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
   const [activeTab, setActiveTab] = useState("submissions");
 
   const renderEmptyState = (type: string) => (
-    <div className="text-slate-400 text-center py-8">
+    <div className="text-foreground text-center py-8">
       <div className="mb-3">
         {type === "submissions" && <Code className="h-12 w-12 mx-auto opacity-50" />}
         {type === "interviews" && <MessageSquare className="h-12 w-12 mx-auto opacity-50" />}
@@ -535,7 +443,7 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
         {type === "interviews" && "No interviews yet"}
         {type === "problems" && "No problems solved yet"}
       </p>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-muted">
         {type === "submissions" && "Start solving problems to see your submissions here"}
         {type === "interviews" && "Take your first AI interview to see results here"}
         {type === "problems" && "Solve problems to track your progress here"}
@@ -544,11 +452,11 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
   );
 
   return (
-    <Card className="bg-slate-900 border-slate-800">
+    <Card className="">
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-slate-100">Recent Activity</CardTitle>
-          <Button variant="ghost" className="text-slate-300 hover:text-white">
+          <CardTitle className="text-foreground">Recent Activity</CardTitle>
+          <Button variant="ghost" className="text-foreground hover:text-white">
             View all
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
@@ -556,7 +464,7 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
       </CardHeader>
       <CardContent className="pt-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-slate-800">
+          <TabsList className="bg-background">
             <TabsTrigger value="submissions">Submissions</TabsTrigger>
             <TabsTrigger value="interviews">Interviews</TabsTrigger>
             <TabsTrigger value="problems">Problems</TabsTrigger>
@@ -569,11 +477,11 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
               submissions.map((submission) => (
                 <div
                   key={submission.id}
-                  className="rounded-lg bg-slate-800 hover:bg-slate-750/50 border border-slate-700 px-4 py-3 flex items-center justify-between"
+                  className="rounded-lg bg-background hover:bg-background/50 border border-border px-4 py-3 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <Code className="h-4 w-4 text-green-400" />
-                    <div className="text-slate-200">{submission.problemTitle}</div>
+                    <div className="text-foreground">{submission.problemTitle}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className={cn(
@@ -581,10 +489,10 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
                     )}>
                       {submission.status}
                     </Badge>
-                    <Badge variant="outline" className="text-slate-400">
+                    <Badge variant="outline" className="text-foreground">
                       {submission.language}
                     </Badge>
-                    <div className="text-xs text-slate-400">{submission.date}</div>
+                    <div className="text-xs text-foreground">{submission.date}</div>
                   </div>
                 </div>
               ))
@@ -592,23 +500,23 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
               renderEmptyState("submissions")
             )
           )}
-          
+
           {activeTab === "interviews" && (
             interviews.length > 0 ? (
               interviews.map((interview) => (
                 <div
                   key={interview.id}
-                  className="rounded-lg bg-slate-800 hover:bg-slate-750/50 border border-slate-700 px-4 py-3 flex items-center justify-between"
+                  className="rounded-lg bg-background hover:bg-background/50 border border-border px-4 py-3 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <MessageSquare className="h-4 w-4 text-blue-400" />
-                    <div className="text-slate-200">{interview.title}</div>
+                    <div className="text-foreground">{interview.title}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-blue-900/40 text-blue-300">
                       {interview.score}/10
                     </Badge>
-                    <div className="text-xs text-slate-400">{interview.date}</div>
+                    <div className="text-xs text-foreground">{interview.date}</div>
                   </div>
                 </div>
               ))
@@ -627,22 +535,22 @@ function RecentActivity({ interviews, submissions }: { interviews: any[]; submis
 // Loading skeleton component
 function ProfileSkeleton() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200">
+    <main className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="mb-4" />
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Sidebar Skeleton */}
           <section className="lg:col-span-1 space-y-6">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-background border-border">
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
-                  <div className="h-20 w-20 rounded-xl bg-slate-700 animate-pulse" />
+                  <div className="h-20 w-20 rounded-xl bg-card animate-pulse" />
                   <div className="flex-1 space-y-3">
-                    <div className="h-6 bg-slate-700 rounded animate-pulse w-3/4" />
-                    <div className="h-4 bg-slate-700 rounded animate-pulse w-1/2" />
-                    <div className="h-4 bg-slate-700 rounded animate-pulse w-2/3" />
-                    <div className="h-8 bg-slate-700 rounded animate-pulse w-24" />
+                    <div className="h-6 bg-card rounded animate-pulse w-3/4" />
+                    <div className="h-4 bg-card rounded animate-pulse w-1/2" />
+                    <div className="h-4 bg-card rounded animate-pulse w-2/3" />
+                    <div className="h-8 bg-card rounded animate-pulse w-24" />
                   </div>
                 </div>
               </CardContent>
@@ -651,21 +559,21 @@ function ProfileSkeleton() {
 
           {/* Main Content Skeleton */}
           <section className="lg:col-span-2 space-y-6">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-background border-border">
               <CardContent className="p-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="h-40 bg-slate-700 rounded animate-pulse" />
+                  <div className="h-40 bg-card rounded animate-pulse" />
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-12 bg-slate-700 rounded animate-pulse" />
+                      <div key={i} className="h-12 bg-card rounded animate-pulse" />
                     ))}
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
-            <div className="h-32 bg-slate-700 rounded animate-pulse" />
-            <div className="h-64 bg-slate-700 rounded animate-pulse" />
+
+            <div className="h-32 bg-card rounded animate-pulse" />
+            <div className="h-64 bg-card rounded animate-pulse" />
           </section>
         </div>
       </div>
@@ -681,32 +589,32 @@ export default function LeetCodeStyleProfilePage() {
     return <ProfileSkeleton />;
   }
 
-     if (errors.profile) {
-      return (
-        <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-destructive text-lg mb-2">{errors.profile}</div>
-            <button 
-              onClick={() => refreshSection('profile')} 
-              className="underline hover:text-muted-foreground"
-            >
-              Try again
-            </button>
-          </div>
-        </main>
-      );
-    }
+  if (errors.profile) {
+    return (
+      <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-destructive text-lg mb-2">{errors.profile}</div>
+          <button
+            onClick={() => refreshSection('profile')}
+            className="underline hover:text-muted-foreground"
+          >
+            Try again
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
-         <main className="min-h-screen bg-background text-foreground">
-       <div className="max-w-7xl mx-auto px-4 py-6">
-         {/* Top bar spacer (simulate app header space) */}
-         <div className="mb-4" />
- 
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-           {/* Left Sidebar */}
-           <section className="lg:col-span-1 space-y-6">
-             <Card className="bg-card border-border">
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Top bar spacer (simulate app header space) */}
+        <div className="mb-4" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Sidebar */}
+          <section className="lg:col-span-1 space-y-6">
+            <Card className="bg-card border-border">
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
@@ -722,70 +630,70 @@ export default function LeetCodeStyleProfilePage() {
 
                   <div className="flex-1">
                     <div className="text-lg font-semibold">{profile.name}</div>
-                                         <div className="text-xs text-muted-foreground">@{profile.username}</div>
-                     <div className="mt-2 text-sm">
-                       <span className="text-muted-foreground">Member since</span>{" "}
-                       <span className="font-semibold">{new Date(profile.joinDate).toLocaleDateString()}</span>
-                     </div>
-                     <div className="mt-2">
-                       <Badge variant="secondary">{profile.role}</Badge>
-                     </div>
-                     <Button className="mt-4">Edit Profile</Button>
+                    <div className="text-xs text-muted-foreground">@{profile.username}</div>
+                    <div className="mt-2 text-sm">
+                      <span className="text-muted-foreground">Member since</span>{" "}
+                      <span className="font-semibold">{new Date(profile.joinDate).toLocaleDateString()}</span>
+                    </div>
+                    <div className="mt-2">
+                      <Badge variant="secondary">{profile.role}</Badge>
+                    </div>
+                    <Button className="mt-4">Edit Profile</Button>
                   </div>
                 </div>
 
-                                 <Separator className="my-5" />
- 
-                 <div className="space-y-3 text-sm">
-                   <div className="flex items-center gap-2">
-                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                     {profile.country}
-                   </div>
-                   <div className="flex items-center gap-2">
-                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                     Last active: {profile.lastActive}
-                   </div>
-                 </div>
- 
-                 <Separator className="my-5" />
- 
-                 <div>
-                   <div className="text-sm font-medium mb-2">Interview Stats</div>
-                   <div className="space-y-2 text-sm text-muted-foreground">
-                     <div className="flex items-center justify-between">
-                       <span>Total Interviews</span>
-                       <span>{profile.interviews.total}</span>
-                     </div>
-                     <div className="flex items-center justify-between">
-                       <span>Average Score</span>
-                       <span>{profile.interviews.averageScore}/10</span>
-                     </div>
-                     <div className="flex items-center justify-between">
-                       <span>Current Streak</span>
-                       <span>{profile.interviews.streakDays} days</span>
-                     </div>
-                   </div>
-                 </div>
- 
-                 <Separator className="my-5" />
- 
-                 <div className="text-sm">
-                   <div className="font-medium mb-2">Submission Stats</div>
-                   <div className="space-y-2 text-sm text-muted-foreground">
-                     <div className="flex items-center justify-between">
-                       <span>Total Submissions</span>
-                       <span>{profile.stats.totalSubmissions}</span>
-                     </div>
-                     <div className="flex items-center justify-between">
-                       <span>Accepted</span>
-                       <span>{profile.stats.acceptedSubmissions}</span>
-                     </div>
-                     <div className="flex items-center justify-between">
-                       <span>Success Rate</span>
-                       <span>{((profile.stats.acceptedSubmissions / profile.stats.totalSubmissions) * 100).toFixed(1)}%</span>
-                     </div>
-                   </div>
-                 </div>
+                <Separator className="my-5" />
+
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    {profile.country}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    Last active: {profile.lastActive}
+                  </div>
+                </div>
+
+                <Separator className="my-5" />
+
+                <div>
+                  <div className="text-sm font-medium mb-2">Interview Stats</div>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <span>Total Interviews</span>
+                      <span>{profile.interviews.total}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Average Score</span>
+                      <span>{profile.interviews.averageScore}/10</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Current Streak</span>
+                      <span>{profile.interviews.streakDays} days</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="my-5" />
+
+                <div className="text-sm">
+                  <div className="font-medium mb-2">Submission Stats</div>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <span>Total Submissions</span>
+                      <span>{profile.stats.totalSubmissions}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Accepted</span>
+                      <span>{profile.stats.acceptedSubmissions}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Success Rate</span>
+                      <span>{((profile.stats.acceptedSubmissions / profile.stats.totalSubmissions) * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </section>
@@ -793,24 +701,28 @@ export default function LeetCodeStyleProfilePage() {
           {/* Main Column */}
           <section className="lg:col-span-2 space-y-6">
             {/* Stats */}
-                         <Card className="bg-card border-border">
-               <CardContent className="p-5">
-                 {loadingStates.stats ? (
-                   <div className="flex items-center justify-center py-8">
-                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
-                   </div>
-                 ) : errors.stats ? (
-                   <div className="text-center py-8">
-                     <div className="text-destructive mb-2">{errors.stats}</div>
-                     <Button 
-                       variant="outline" 
-                       size="sm" 
-                       onClick={() => refreshSection('stats')}
-                     >
-                       Retry
-                     </Button>
-                   </div>
-                 ) : (
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-foreground">Problem Progress</CardTitle>
+                <CardDescription className="text-muted-foreground">Your solved problems breakdown and quick actions</CardDescription>
+              </CardHeader>
+              <CardContent className="p-5 pt-0">
+                {loadingStates.stats ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
+                  </div>
+                ) : errors.stats ? (
+                  <div className="text-center py-8">
+                    <div className="text-destructive mb-2">{errors.stats}</div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refreshSection('stats')}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Donut */}
                     <div className="flex items-center justify-center">
@@ -821,45 +733,51 @@ export default function LeetCodeStyleProfilePage() {
                         total={profile.stats.totalProblems}
                       />
                     </div>
-                    {/* Difficulty mini cards */}
-                    <div className="flex flex-col gap-3 justify-center">
-                      <MiniStat
-                        title="Easy"
-                        value={`${profile.stats.easy.solved}/${profile.stats.easy.total}`}
-                        color="emerald"
-                      />
-                      <MiniStat
-                        title="Medium"
-                        value={`${profile.stats.medium.solved}/${profile.stats.medium.total}`}
-                        color="amber"
-                      />
-                      <MiniStat
-                        title="Hard"
-                        value={`${profile.stats.hard.solved}/${profile.stats.hard.total}`}
-                        color="slate"
-                      />
+                    {/* Difficulty progress */}
+                    <div className="flex flex-col gap-4 justify-center">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-emerald-400">Easy</span>
+                          <span className="text-muted-foreground">{`${profile.stats.easy.solved}/${profile.stats.easy.total}`}</span>
+                        </div>
+                        <Progress value={(profile.stats.easy.solved / Math.max(profile.stats.easy.total, 1)) * 100} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-amber-400">Medium</span>
+                          <span className="text-muted-foreground">{`${profile.stats.medium.solved}/${profile.stats.medium.total}`}</span>
+                        </div>
+                        <Progress value={(profile.stats.medium.solved / Math.max(profile.stats.medium.total, 1)) * 100} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-foreground">Hard</span>
+                          <span className="text-muted-foreground">{`${profile.stats.hard.solved}/${profile.stats.hard.total}`}</span>
+                        </div>
+                        <Progress value={(profile.stats.hard.solved / Math.max(profile.stats.hard.total, 1)) * 100} className="h-2" />
+                      </div>
                       <div className="mt-2 grid grid-cols-3 gap-2">
-                                                 <Button
-                           variant="outline"
-                           className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
-                           onClick={() => router.push('/practice')}
-                         >
-                           <Target className="mr-2 h-4 w-4" /> Practice
-                         </Button>
-                         <Button
-                           variant="outline"
-                           className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
-                           onClick={() => router.push('/interviews')}
-                         >
-                           <MessageSquare className="mr-2 h-4 w-4" /> Interview
-                         </Button>
-                         <Button
-                           variant="outline"
-                           className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
-                           onClick={() => router.push('/problems')}
-                         >
-                           <BookOpen className="mr-2 h-4 w-4" /> Problems
-                         </Button>
+                        <Button
+                          variant="outline"
+                          className="border-border dark:border-border text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
+                          onClick={() => router.push('/practice')}
+                        >
+                          <Target className="mr-2 h-4 w-4" /> Practice
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
+                          onClick={() => router.push('/interviews')}
+                        >
+                          <MessageSquare className="mr-2 h-4 w-4" /> Interview
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-gray-400 dark:border-gray-600 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 bg-transparent"
+                          onClick={() => router.push('/problems')}
+                        >
+                          <BookOpen className="mr-2 h-4 w-4" /> Problems
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -868,79 +786,79 @@ export default function LeetCodeStyleProfilePage() {
             </Card>
 
             {/* Heatmap */}
-                         {loadingStates.submissions ? (
-               <Card className="bg-card border-border">
-                 <CardContent className="p-5">
-                   <div className="flex items-center justify-center py-8">
-                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
-                   </div>
-                 </CardContent>
-               </Card>
-             ) : errors.submissions ? (
-               <Card className="bg-card border-border">
-                 <CardContent className="p-5">
-                   <div className="text-center py-8">
-                     <div className="text-destructive mb-2">{errors.submissions}</div>
-                     <Button 
-                       variant="outline" 
-                       size="sm" 
-                       onClick={() => refreshSection('submissions')}
-                     >
-                       Retry
-                     </Button>
-                   </div>
-                 </CardContent>
-               </Card>
-             ) : (
+            {loadingStates.submissions ? (
+              <Card className="bg-card border-border">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : errors.submissions ? (
+              <Card className="bg-card border-border">
+                <CardContent className="p-5">
+                  <div className="text-center py-8">
+                    <div className="text-destructive mb-2">{errors.submissions}</div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refreshSection('submissions')}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
               <ContributionHeatmap submissionActivity={profile.submissionActivity} />
             )}
 
             {/* Recent Activity */}
-                         {loadingStates.interviews || loadingStates.submissions ? (
-               <Card className="bg-card border-border">
-                 <CardContent className="p-5">
-                   <div className="flex items-center justify-center py-8">
-                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
-                   </div>
-                 </CardContent>
-               </Card>
-             ) : (errors.interviews || errors.submissions) ? (
-               <Card className="bg-card border-border">
-                 <CardContent className="p-5">
-                   <div className="text-center py-8">
-                     <div className="text-destructive mb-2">
-                       {errors.interviews || errors.submissions}
-                     </div>
-                     <Button 
-                       variant="outline" 
-                       size="sm" 
-                       onClick={() => refreshSection(errors.interviews ? 'interviews' : 'submissions')}
-                     >
-                       Retry
-                     </Button>
-                   </div>
-                 </CardContent>
-               </Card>
-             ) : (
+            {loadingStates.interviews || loadingStates.submissions ? (
+              <Card className="bg-card border-border">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground/50"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (errors.interviews || errors.submissions) ? (
+              <Card className="bg-card border-border">
+                <CardContent className="p-5">
+                  <div className="text-center py-8">
+                    <div className="text-destructive mb-2">
+                      {errors.interviews || errors.submissions}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refreshSection(errors.interviews ? 'interviews' : 'submissions')}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
               <RecentActivity interviews={profile.interviews.recent} submissions={profile.submissions} />
             )}
           </section>
         </div>
 
-                 {/* Footer spacer */}
-         <div className="mt-10 flex items-center justify-end gap-3 text-xs text-muted-foreground">
-           <Calendar className="h-4 w-4" />
-           <span>Last updated: {new Date().toLocaleDateString()}</span>
-           <Button 
-             variant="ghost" 
-             size="sm" 
-             className="h-6 px-2"
-             onClick={() => refreshSection('profile')}
-           >
-             <RefreshCw className="h-3 w-3 mr-1" />
-             Refresh
-           </Button>
-         </div>
+        {/* Footer spacer */}
+        <div className="mt-10 flex items-center justify-end gap-3 text-xs text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>Last updated: {new Date().toLocaleDateString()}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2"
+            onClick={() => refreshSection('profile')}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Refresh
+          </Button>
+        </div>
       </div>
     </main>
   );

@@ -199,9 +199,6 @@ export default function ProblemDetailPage() {
     return (
       <div
         className="flex items-center justify-center h-screen"
-        style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        }}
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
@@ -215,9 +212,7 @@ export default function ProblemDetailPage() {
     return (
       <div
         className="flex items-center justify-center h-screen"
-        style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        }}
+        
       >
         <div className="text-center">
           <div className="text-white text-6xl mb-4">⚠️</div>

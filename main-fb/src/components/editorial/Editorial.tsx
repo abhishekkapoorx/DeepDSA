@@ -15,7 +15,7 @@ interface EditorialProps {
 export const Editorial: React.FC<EditorialProps> = ({ problemTitle, editorial, isProblemSolved = false }) => {
   if (!editorial) {
     return (
-      <div className="p-6 text-center">
+      <div className="p-6 text-center bg-background">
         <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">No Editorial Available</h3>
         <p className="text-muted-foreground">
@@ -28,7 +28,7 @@ export const Editorial: React.FC<EditorialProps> = ({ problemTitle, editorial, i
   const isHtmlContent = typeof editorial?.content === 'string' && /<\w|<p|<div|<ul|<ol|<h[1-6]|<pre|<code/.test(editorial.content);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-card h-full" >
       {/* Warning Banner for Unsolved Problems */}
       {/* {!isProblemSolved && (
         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
@@ -44,7 +44,7 @@ export const Editorial: React.FC<EditorialProps> = ({ problemTitle, editorial, i
       )} */}
 
       {/* Editorial Content */}
-      <Card>
+      <Card className='bg-muted'>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <BookOpen className="h-5 w-5 text-primary" />

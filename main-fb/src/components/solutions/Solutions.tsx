@@ -70,7 +70,7 @@ const dummySolutions: Solution[] = [
 
 export const Solutions: React.FC = () => {
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto bg-card">
       <div className="p-6 space-y-6">
         {/* Header with Search and Filters */}
         <div className="space-y-4">
@@ -109,7 +109,7 @@ export const Solutions: React.FC = () => {
         {/* Solutions List */}
         <div className="space-y-4">
           {dummySolutions.map((solution) => (
-            <Card key={solution.id} className="hover:shadow-md transition-shadow">
+            <Card key={solution.id} className="hover:shadow-md transition-shadow bg-muted">
               <CardContent className="p-4">
                 <div className="flex items-start space-x-3">
                   {/* Author Avatar */}
