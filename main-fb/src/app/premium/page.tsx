@@ -223,7 +223,7 @@ export default function PremiumPage() {
 
         {/* CTA Section */}
         <div className="mt-20 text-center">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+          <div className=" rounded-2xl p-8 text-white">
             <h2 className="text-3xl font-bold mb-4">Ready to Accelerate Your Learning?</h2>
             <p className="text-xl mb-6 opacity-90">
               Join thousands of developers who have improved their skills with unlimited AI interviews

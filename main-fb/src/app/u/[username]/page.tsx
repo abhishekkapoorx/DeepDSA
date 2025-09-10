@@ -336,7 +336,7 @@ export default function PublicProfilePage() {
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
                   <div className="relative">
-                    <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                    <div className="h-20 w-20 rounded-xl flex items-center justify-center text-white text-2xl font-bold">
                       {profile.name?.charAt(0) || username.charAt(0)}
                     </div>
                     <div className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-emerald-600 flex items-center justify-center">
