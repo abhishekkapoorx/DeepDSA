@@ -55,7 +55,7 @@ export const Submissions: React.FC = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto bg-background">
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -66,21 +66,25 @@ export const Submissions: React.FC = () => {
         </div>
 
         {/* Submissions Table */}
-        <div className="border rounded-lg">
+        <div className="border rounded-lg bg-card p-4">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="flex items-center space-x-1 cursor-pointer hover:bg-muted/50">
-                  <span>Status</span>
-                  <ChevronDown className="h-3 w-3" />
+            <TableHeader className='w-full'>
+              <TableRow className="bg-card">
+                <TableHead className="cursor-pointer hover:bg-muted/50">
+                  <div className="flex items-center space-x-1 w-fit">
+                    <span>Status & Time</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </div>
                 </TableHead>
-                <TableHead className="flex items-center space-x-1 cursor-pointer hover:bg-muted/50">
-                  <span>Language</span>
-                  <ChevronDown className="h-3 w-3" />
+                <TableHead className="cursor-pointer hover:bg-muted/50 ">
+                  <div className="flex items-center space-x-1 w-fit">
+                    <span>Language</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </div>
                 </TableHead>
                 <TableHead>Runtime</TableHead>
                 <TableHead>Memory</TableHead>
-                <TableHead>Notes</TableHead>
+                <TableHead>Test Results</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -88,8 +92,8 @@ export const Submissions: React.FC = () => {
                 <TableRow key={submission._id} className="hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={`${getStatusColor(submission.status)} border-0`}
                       >
                         {submission.status}
