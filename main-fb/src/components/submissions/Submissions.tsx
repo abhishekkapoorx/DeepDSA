@@ -55,7 +55,7 @@ export const Submissions: React.FC = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto bg-card">
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -66,10 +66,10 @@ export const Submissions: React.FC = () => {
         </div>
 
         {/* Submissions Table */}
-        <div className="border rounded-lg bg-card p-4">
+        <div className="border rounded-lg bg-muted p-4">
           <Table>
             <TableHeader className='w-full'>
-              <TableRow className="bg-card">
+              <TableRow className="bg-muted">
                 <TableHead className="cursor-pointer hover:bg-muted/50">
                   <div className="flex items-center space-x-1 w-fit">
                     <span>Status & Time</span>

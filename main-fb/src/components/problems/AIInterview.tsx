@@ -277,7 +277,7 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-card">
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between">
@@ -287,7 +287,7 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
           </div>
           
           {/* Timer and Controls */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 bg-card">
             {isInterviewActive && (
               <>
                 <div className="flex items-center space-x-1 text-sm">
@@ -311,7 +311,7 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
         
         {/* Problem Context */}
         {problem && (
-          <div className="mt-2 p-2 bg-muted rounded-md">
+          <div className="mt-2 p-2 bg-muted border border-border rounded-md">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">{problem.title}</h3>
               <Badge variant={problem.difficulty === 'HARD' ? 'destructive' : problem.difficulty === 'MEDIUM' ? 'default' : 'secondary'}>
@@ -347,22 +347,7 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
         )}
       </div>
 
-      {/* Start Interview Button */}
-      {!isInterviewActive && (
-        <div className="p-4 text-center">
-          <Button 
-            onClick={startInterview}
-            className="w-full"
-            disabled={loading}
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Start Interview
-          </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            You have 3 interviews per day. Each interview lasts 10 minutes.
-          </p>
-        </div>
-      )}
+      
 
       {/* Messages */}
       {isInterviewActive && (
@@ -393,6 +378,23 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
         </div>
       )}
 
+      {/* Start Interview Button */}
+      {!isInterviewActive && (
+        <div className="p-4 text-center justify-self-end mt-auto border-t">
+          <Button 
+            onClick={startInterview}
+            className="w-full"
+            disabled={loading}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Start Interview
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            You have 3 interviews per day. Each interview lasts 10 minutes.
+          </p>
+        </div>
+      )}
+
       {/* Input */}
       {isInterviewActive && (
         <div className="p-4 border-t">
@@ -400,7 +402,7 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder="Type your message..."
               className="flex-1"
             />

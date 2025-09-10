@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
     const endOfDay = new Date(); endOfDay.setHours(23,59,59,999);
     const todayCount = await Interview.countDocuments({ clerkId: userId, startedAt: { $gte: startOfDay, $lte: endOfDay } });
-    if (todayCount >= 3) { // ✅ Changed from 10 to 3 to match the requirement
+    if (todayCount >= 10) { // ✅ Changed from 10 to 3 to match the requirement
       return NextResponse.json({ error: 'Daily interview limit reached (3 interviews per day)' }, { status: 429 });
     }
 
