@@ -1,0 +1,23 @@
+{
+  "name": "DeepDSA",
+  "short_name": "DeepDSA",
+  "description": "A platform for DSA enthusiasts",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "icons": [
+    {
+      "src": "/SVG/LOGO_TRANS_LIGHT.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/SVG/LOGO_TRANS_DARK.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+} 

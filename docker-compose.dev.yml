@@ -1,0 +1,272 @@
+
+services:
+  # Backend API service (development)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile.dev
+  #   container_name: deepdsa-backend-dev
+  #   ports:
+  #     - "5373:5373"
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=5373
+  #     - MONGO_URI=mongodb://mongo:27017/deepdsa
+  #     - FRONTEND_URL=http://localhost:3000
+  #   depends_on:
+  #     - mongo
+  #     # - redis
+  #   networks:
+  #     - deepdsa-network
+  #   restart: unless-stopped
+  #   develop:
+  #     watch:
+  #       - action: sync
+  #         path: ./backend/src
+  #         target: /app/src
+  #         ignore:
+  #           - node_modules/
+  #           - dist/
+  #           - logs/
+  #       - action: rebuild
+  #         path: ./backend/package.json
+  #       - action: sync
+  #         path: ./backend/package-lock.json
+  #         target: /app/package-lock.json
+  #   command: npm run dev
+
+  # Frontend Next.js service (development)
+  frontend:
+    build:
+      context: ./main-fb
+      dockerfile: Dockerfile.dev
+    container_name: deepdsa-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017/deepdsa
+      - MONGO_URI=mongodb://mongo:27017/deepdsa
+      - JUDGE0_API_URL=http://judge0-server:2358
+    env_file:
+      - ./main-fb/.env
+    depends_on:
+      # - backend
+      - mongo
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./main-fb/src
+          target: /app/src
+          ignore:
+            - node_modules/
+            - .next/
+        - action: sync
+          path: ./main-fb/public
+          target: /app/public
+        - action: rebuild
+          path: ./main-fb/package.json
+        - action: sync
+          path: ./main-fb/package-lock.json
+          target: /app/package-lock.json
+        - action: sync
+          path: ./main-fb/next.config.ts
+          target: /app/next.config.ts
+        - action: sync
+          path: ./main-fb/tsconfig.json
+          target: /app/tsconfig.json
+        - action: sync
+          path: ./main-fb/postcss.config.mjs
+          target: /app/postcss.config.mjs
+    command: npm run dev
+
+  # Ngrok for all tunnels (single agent session)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: deepdsa-ngrok
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-}
+    env_file:
+      - ./.env
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    command: start --all --config=/etc/ngrok.yml --authtoken=${NGROK_AUTHTOKEN}
+    depends_on:
+      - frontend
+      - mongo
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    profiles:
+      - tunnel
+    
+
+  # MongoDB service
+  mongo:
+    image: mongo:8
+    container_name: deepdsa-mongo-dev
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=deepdsa
+    volumes:
+      - mongo_data_dev:/data/db
+      - ./backend/mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+
+
+
+  # MongoDB Express (for development)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: deepdsa-mongo-express-dev
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
+    depends_on:
+      - mongo
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+
+  # Judge0 Code Execution Service
+  judge0-server:
+    image: judge0/judge0:1.13.1
+    container_name: deepdsa-judge0-server-dev
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+      - type: tmpfs
+        target: /box
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    ports:
+      - "2358:2358"
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    init: true
+    cap_add:
+      - SYS_ADMIN
+      - SYSLOG
+      - SYS_PTRACE
+      - SYS_RESOURCE
+      - SYS_CHROOT
+      - SYS_PTRACE
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+  cgroup-init:
+    image: alpine:latest
+    container_name: deepdsa-cgroup-setup
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    command: >
+      sh -c "
+        apk add --no-cache util-linux procps &&
+        mkdir -p /sys/fs/cgroup/memory /sys/fs/cgroup/cpuset /sys/fs/cgroup/pids &&
+        mount -t cgroup -o memory cgroup /sys/fs/cgroup/memory 2>/dev/null || true &&
+        mount -t cgroup -o cpuset cgroup /sys/fs/cgroup/cpuset 2>/dev/null || true &&
+        mount -t cgroup -o pids cgroup /sys/fs/cgroup/pids 2>/dev/null || true &&
+        echo 'Cgroup setup completed' &&
+        tail -f /dev/null
+      "
+    restart: unless-stopped
+    networks:
+      - deepdsa-network
+  judge0-workers:
+    image: judge0/judge0:1.13.1
+    container_name: deepdsa-judge0-workers-dev
+    command: ["bash", "-c", "sleep 10 && ./scripts/workers"]
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+      - type: tmpfs
+        target: /box
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    init: true
+    cap_add:
+      - SYS_ADMIN
+      - SYSLOG
+      - SYS_PTRACE
+      - SYS_RESOURCE
+      - SYS_CHROOT
+      - SYS_PTRACE
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    depends_on:
+      # - db
+      # - redis
+      - judge0-server
+      - cgroup-init
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+
+  db:
+    image: postgres:16.2
+    container_name: deepdsa-judge0-db-dev
+    env_file: judge0.conf
+    volumes:
+      - judge0_data_dev:/var/lib/postgresql/data/
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+
+  redis:
+    image: redis:7.2.4
+    container_name: deepdsa-redis-dev
+    command: [
+      "bash", "-c",
+      'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD" && sleep 10',
+    ]
+    env_file: judge0.conf
+    networks:
+      - deepdsa-network
+    restart: unless-stopped
+    volumes:
+      - redis_data_dev:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: 100M
+
+volumes:
+  mongo_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+  next_cache:
+    driver: local
+  judge0_data_dev:
+    driver: local
+
+networks:
+  deepdsa-network:
+    driver: bridge

@@ -1,0 +1,55 @@
+import mongoose, { Document, Schema, Model } from "mongoose";
+
+export enum Role {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  USER = "USER",
+}
+
+export interface IUser extends Document {
+  clerkId: string;      
+  email: string;        
+  firstName?: string;   
+  lastName?: string;    
+  username?: string;    
+  imageUrl?: string;    
+  role: Role;
+  createdAt: Date;      
+  updatedAt: Date;   
+}
+
+const UserSchema = new Schema<IUser>(
+  {
+    clerkId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    role: {
+      type: String,
+      enum: Role,
+      default: Role.USER,
+    },
+    firstName: { type: String, default: "" },
+    lastName:  { type: String, default: "" },
+    username:  { type: String, default: "" },
+    imageUrl:  { type: String, default: "" },
+  },
+  {
+    timestamps: true, // auto-manages createdAt & updatedAt
+  }
+);
+
+const existingModels = (mongoose as any).models as Record<string, Model<any>> | undefined;
+
+const User: Model<IUser> =
+  (existingModels && existingModels.User) || mongoose.model<IUser>("User", UserSchema);
+
+export default User;
