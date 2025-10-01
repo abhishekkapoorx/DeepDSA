@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongoose';
 import { Problem, TestCase } from '@/models';
+import { FullBoilerplateGenerator, mergeBoilerplateCode } from '@/utils/CodeGenerator/generate-full-boilerplate';
 
 // Judge0 configuration (self-hosted default: http://localhost:2358)
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
@@ -44,26 +45,36 @@ export async function POST(
 
     // Language ID mapping for Judge0
     const LANGUAGE_IDS = {
-      'cpp': 54,
-      'java': 62,
-      'python': 71,
-      'javascript': 63
-    };
+      cpp: 54,
+      java: 62,
+      python: 71,
+      javascript: 63
+    } as const;
 
-    const languageId = (LANGUAGE_IDS as any)[language];
-    if (!languageId) {
+    if (!Object.keys(LANGUAGE_IDS).includes(language)) {
       return NextResponse.json(
-        { error: 'Unsupported language' },
+        { error: 'Invalid language. Supported languages: cpp, java, python, javascript' },
         { status: 400 }
       );
     }
 
-    // Encode code as base64 to avoid syntax and space issues
-    const encodedCode = Buffer.from(code, 'utf-8').toString('base64');
+    const languageId = (LANGUAGE_IDS as any)[language];
+
+    // Generate full boilerplate and merge with user code (same as submit route)
+    const fullGenerator = new FullBoilerplateGenerator(
+      problem.inputVariables,
+      problem.outputVariable,
+      problem.functionName
+    );
+    const fullBoilerplate = fullGenerator.generateAll()[language];
+    const completeCode = mergeBoilerplateCode(fullBoilerplate, code);
+
+    // Encode merged code as base64 to avoid syntax and space issues
+    const encodedCode = Buffer.from(completeCode, 'utf-8').toString('base64');
 
     console.log('Processing run request for problem:', slug);
     console.log('Language:', language, 'Language ID:', languageId);
-    console.log('Code length:', code.length, 'Encoded length:', encodedCode.length);
+    console.log('Code length:', completeCode.length, 'Encoded length:', encodedCode.length);
 
     // Create batch submission with all test cases (base64 for source/stdin/expected)
     const batchSubmissions = testCases.map((testCase, index) => ({
