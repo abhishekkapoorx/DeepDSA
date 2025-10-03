@@ -112,18 +112,42 @@ ${inputReadingCode}
   generatePython(): string {
     const mappedInputs = mapInputVariables(this.inputVariables, 'python');
     
-    const inputReadingCode = mappedInputs.map(input => {
-      if (input.type.includes('List')) {
-        return `# Read ${input.name} (${input.originalType})
-${input.name} = list(map(int, input().split()))`;
-      } else if (input.type === 'str') {
-        return `${input.name} = input()`;
-      } else {
-        return `${input.name} = ${input.type}(input())`;
-      }
-    }).join('\n');
+    // If there are multiple inputs, read them all from one line
+    if (mappedInputs.length > 1) {
+      const inputReadingCode = `# Read all input values from one line
+input_values = input().strip().split()
+${mappedInputs.map((input, index) => {
+        if (input.type.includes('List')) {
+          return `${input.name} = list(map(int, input_values[${index}].split()))`;
+        } else if (input.type === 'str') {
+          return `${input.name} = input_values[${index}]`;
+        } else {
+          return `${input.name} = ${input.type}(input_values[${index}])`;
+        }
+      }).join('\n')}`;
 
-    return `${HALF_BOILERPLATE_PLACEHOLDER}
+      return `${HALF_BOILERPLATE_PLACEHOLDER}
+
+${inputReadingCode}
+
+# Create solution instance and call method
+solution = Solution()
+result = solution.${this.functionName}(${mappedInputs.map(input => input.name).join(', ')})
+print(result)`;
+    } else {
+      // Single input - read normally
+      const inputReadingCode = mappedInputs.map(input => {
+        if (input.type.includes('List')) {
+          return `# Read ${input.name} (${input.originalType})
+${input.name} = list(map(int, input().split()))`;
+        } else if (input.type === 'str') {
+          return `${input.name} = input()`;
+        } else {
+          return `${input.name} = ${input.type}(input().strip())`;
+        }
+      }).join('\n');
+
+      return `${HALF_BOILERPLATE_PLACEHOLDER}
 
 # Read input
 ${inputReadingCode}
@@ -132,30 +156,70 @@ ${inputReadingCode}
 solution = Solution()
 result = solution.${this.functionName}(${mappedInputs.map(input => input.name).join(', ')})
 print(result)`;
+    }
   }
 
   generateJavaScript(): string {
     const mappedInputs = mapInputVariables(this.inputVariables, 'javascript');
     
-    const inputReadingCode = mappedInputs.map(input => {
-      if (input.type.includes('[]')) {
-        return `// Read ${input.name} (${input.originalType})
-const ${input.name} = readline().split(' ').map(x => parseInt(x));`;
-      } else if (input.type === 'string') {
-        return `const ${input.name} = readline();`;
-      } else {
-        return `const ${input.name} = parseInt(readline());`;
-      }
-    }).join('\n');
+    // If there are multiple inputs, read them all from one line
+    if (mappedInputs.length > 1) {
+      const inputReadingCode = `// Read all input values from one line
+const fs = require('fs');
+const inputLine = fs.readFileSync(0, 'utf8').trim();
+const inputValues = inputLine.split(' ');
 
-    return `${HALF_BOILERPLATE_PLACEHOLDER}
+${mappedInputs.map((input, index) => {
+        if (input.type.includes('[]')) {
+          return `const ${input.name} = inputValues[${index}].split(' ').map(x => parseInt(x));`;
+        } else if (input.type === 'string') {
+          return `const ${input.name} = inputValues[${index}];`;
+        } else {
+          return `const ${input.name} = parseInt(inputValues[${index}]);`;
+        }
+      }).join('\n')}`;
 
-// Read input
+      return `${HALF_BOILERPLATE_PLACEHOLDER}
+
 ${inputReadingCode}
 
 // Call function and print result
 const result = ${this.functionName}(${mappedInputs.map(input => input.name).join(', ')});
-print(result);`;
+console.log(result);`;
+    } else {
+      // Single input - use the original approach
+      const inputSetup = `// Read all input at once
+const fs = require('fs');
+const input = fs.readFileSync(0, 'utf8').trim().split('\\n');
+let inputIndex = 0;
+
+// Helper function to read next line
+function readline() {
+    return input[inputIndex++];
+}`;
+
+      const inputReadingCodeWithHelpers = mappedInputs.map(input => {
+        if (input.type.includes('[]')) {
+          return `// Read ${input.name} (${input.originalType})
+const ${input.name} = readline().split(' ').map(x => parseInt(x));`;
+        } else if (input.type === 'string') {
+          return `const ${input.name} = readline();`;
+        } else {
+          return `const ${input.name} = parseInt(readline());`;
+        }
+      }).join('\n');
+
+      return `${HALF_BOILERPLATE_PLACEHOLDER}
+
+${inputSetup}
+
+// Read input
+${inputReadingCodeWithHelpers}
+
+// Call function and print result
+const result = ${this.functionName}(${mappedInputs.map(input => input.name).join(', ')});
+console.log(result);`;
+    }
   }
 }
 
