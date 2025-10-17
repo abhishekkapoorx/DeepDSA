@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 
 // Judge0 configuration
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
-const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY;
+const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY; // RapidAPI key (optional)
+const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN; // Self-hosted Judge0 auth token (optional)
 
 // Language ID mapping for Judge0
 const LANGUAGE_IDS = {
@@ -121,12 +122,12 @@ export async function POST(
     const processedResults = [];
     const languageId = (LANGUAGE_IDS as any)[language];
 
-    // Create batch submission with all test cases
+    // Create batch submission with all test cases (base64 for source/stdin/expected)
     const batchSubmissions = testCases.map((testCase, index) => ({
-      source_code: completeCode,
+      source_code: encodedCode,
       language_id: LANGUAGE_IDS[language as keyof typeof LANGUAGE_IDS],
-      stdin: testCase.input,
-      expected_output: testCase.output,
+      stdin: Buffer.from(String(testCase.input ?? ''), 'utf-8').toString('base64'),
+      expected_output: Buffer.from(String(testCase.output ?? ''), 'utf-8').toString('base64'),
       cpu_time_limit: 5,
       memory_limit: 512000,
       enable_network: false,
@@ -135,12 +136,13 @@ export async function POST(
 
     console.log(`Submitting batch of ${batchSubmissions.length} test cases to Judge0`);
 
-    // Submit batch to Judge0 with base64_encoded=false since we're sending plain text
-    const batchResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?base64_encoded=false`, {
+    // Submit batch to Judge0 with base64_encoded=true since we're sending base64 code
+    const batchResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?base64_encoded=true&wait=false`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
+        ...(JUDGE0_AUTH_TOKEN && { 'X-Auth-Token': JUDGE0_AUTH_TOKEN }),
       },
       body: JSON.stringify({
         submissions: batchSubmissions
@@ -164,7 +166,12 @@ export async function POST(
 
     while (processedResults.length < testCases.length && (Date.now() - startTime) < maxWaitTime) {
       // Get batch results with base64_encoded=false to get readable output
-      const resultsResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?tokens=${tokens.join(',')}&base64_encoded=false&fields=token,stdout,stderr,status_id,status,time,memory,compile_output,message`);
+      const resultsResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?tokens=${tokens.join(',')}&base64_encoded=false&fields=token,stdout,stderr,status_id,status,time,memory,compile_output,message`, {
+        headers: {
+          ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
+          ...(JUDGE0_AUTH_TOKEN && { 'X-Auth-Token': JUDGE0_AUTH_TOKEN }),
+        }
+      });
       
       if (!resultsResponse.ok) {
         console.error('Failed to fetch batch results:', resultsResponse.status);
@@ -185,12 +192,13 @@ export async function POST(
 
         // Check if processing is complete (status_id > 2 means completed)
         if (submission.status_id && submission.status_id > 2) {
-          const passed = submission.status === 'Accepted' && submission.stdout?.trim() === testCase.output?.trim();
+          const judgeStatus = submission.status?.description || submission.status;
+          const passed = judgeStatus === 'Accepted' && submission.stdout?.trim() === testCase.output?.trim();
           
           processedResults[i] = {
             testCaseId: testCase._id,
             testCaseNumber: i + 1,
-            status: submission.status || 'Unknown',
+            status: passed ? 'passed' : 'failed',
             time: submission.time,
             memory: submission.memory,
             stdout: submission.stdout,
@@ -201,7 +209,7 @@ export async function POST(
             passed,
           };
           
-          console.log(`Test case ${i + 1} result:`, { passed, status: submission.status });
+          console.log(`Test case ${i + 1} result:`, { passed, status: judgeStatus });
         }
       }
 

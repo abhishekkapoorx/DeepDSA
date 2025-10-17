@@ -23,17 +23,31 @@ export async function GET(
     }
 
     const results = await TestResult.find({ submissionId: params.id })
-      .populate('testCaseId', 'input output')
+      .populate('testCaseId', 'input output index order')
       .lean();
+
+    // Normalize results for UI consumption
+    const normalizedResults = results.map((r: any, i: number) => ({
+      testCaseId: String(r.testCaseId?._id || r.testCaseId),
+      testCaseNumber: (r.testCaseId?.index ?? r.testCaseId?.order ?? i) + 1,
+      status: r.passed ? 'passed' : 'failed',
+      time: r.runtime,
+      memory: r.memory,
+      stdout: r.stdout,
+      stderr: r.stderr,
+      compile_output: r.compile_output,
+      expectedOutput: r.testCaseId?.output ?? '',
+      actualOutput: r.actualOutput ?? r.stdout ?? '',
+      passed: !!r.passed,
+    }));
 
     return NextResponse.json({
       submission,
-      results,
+      results: normalizedResults,
     });
   } catch (error) {
     console.error('Error fetching submission:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
 
