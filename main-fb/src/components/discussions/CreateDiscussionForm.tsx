@@ -88,7 +88,7 @@ export const CreateDiscussionForm: React.FC<CreateDiscussionFormProps> = ({
     const problem = availableProblems.find(p => p._id === problemId);
     setFormData(prev => ({
       ...prev,
-      selectedProblemId: problemId,
+      selectedProblemId: problemId === 'none' ? '' : problemId,
       selectedProblemTitle: problem?.title || ''
     }));
   };
@@ -119,8 +119,8 @@ export const CreateDiscussionForm: React.FC<CreateDiscussionFormProps> = ({
           title: formData.title.trim(),
           content: formData.content.trim(),
           tags: formData.tags,
-          problemId: formData.selectedProblemId || null,
-          problemSlug: formData.selectedProblemId || null
+          problemId: formData.selectedProblemId === 'none' || formData.selectedProblemId === '' ? null : formData.selectedProblemId,
+          problemSlug: formData.selectedProblemId === 'none' || formData.selectedProblemId === '' ? null : formData.selectedProblemId
         }),
       });
 
@@ -202,9 +202,9 @@ export const CreateDiscussionForm: React.FC<CreateDiscussionFormProps> = ({
                   <SelectValue placeholder="Select a problem to link this discussion to" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No problem linked</SelectItem>
+                  <SelectItem value="none">No problem linked</SelectItem>
                   {loadingProblems ? (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="loading" disabled>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Loading problems...
                     </SelectItem>

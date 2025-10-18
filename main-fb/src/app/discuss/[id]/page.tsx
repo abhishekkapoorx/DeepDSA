@@ -15,7 +15,10 @@ import {
   ExternalLink,
   ArrowLeft,
   Edit,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentCard, CommentForm } from '@/components/discussions';
@@ -73,6 +76,7 @@ export default function DiscussionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
+  const [commentDisplayMode, setCommentDisplayMode] = useState<'expanded' | 'collapsed' | 'mixed'>('mixed');
 
   // Fetch discussion details
   const fetchDiscussion = async () => {
@@ -97,6 +101,8 @@ export default function DiscussionDetailPage() {
       setDiscussion(discussionData.discussion);
       setComments(commentsData.comments);
       setUserVote(voteData.voteType);
+
+      console.log("commentsData", commentsData);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch discussion');
@@ -387,35 +393,82 @@ export default function DiscussionDetailPage() {
         </Card>
 
         {/* Comments Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Comments ({discussion.commentCount})
-            </CardTitle>
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Comments ({discussion.commentCount})
+              </CardTitle>
+              
+              {/* Comment Display Controls */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCommentDisplayMode(commentDisplayMode === 'expanded' ? 'mixed' : 'expanded')}
+                  className="h-8 px-3 text-xs"
+                >
+                  {commentDisplayMode === 'expanded' ? (
+                    <>
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      Expanded
+                    </>
+                  ) : (
+                    <>
+                      <ChevronRight className="h-3 w-3 mr-1" />
+                      Expand All
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCommentDisplayMode(commentDisplayMode === 'collapsed' ? 'mixed' : 'collapsed')}
+                  className="h-8 px-3 text-xs"
+                >
+                  {commentDisplayMode === 'collapsed' ? (
+                    <>
+                      <ChevronRight className="h-3 w-3 mr-1" />
+                      Collapsed
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      Collapse All
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {/* Comment Form */}
             {!showCommentForm ? (
-              <Button 
-                variant="outline" 
-                onClick={() => setShowCommentForm(true)}
-                className="w-full"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Add a comment
-              </Button>
+              <div className="bg-muted/30 rounded-lg p-4 border border-dashed border-border/50">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowCommentForm(true)}
+                  className="w-full h-12 text-muted-foreground hover:text-foreground hover:bg-background"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Add a comment
+                </Button>
+              </div>
             ) : (
-              <CommentForm
-                discussionId={discussionId}
-                onSubmit={(content) => handleCommentSubmit(null, content)}
-                onCancel={() => setShowCommentForm(false)}
-              />
+              <div className="bg-muted/20 rounded-lg p-4 border">
+                <CommentForm
+                  discussionId={discussionId}
+                  onSubmit={(content) => handleCommentSubmit(null, content)}
+                  onCancel={() => setShowCommentForm(false)}
+                />
+              </div>
             )}
 
             {/* Comments List */}
             {comments.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {comments.map((comment) => (
                   <CommentCard
                     key={comment._id}
@@ -425,12 +478,22 @@ export default function DiscussionDetailPage() {
                     onReply={(parentCommentId, content) => 
                       handleCommentSubmit(parentCommentId, content)
                     }
+                    defaultExpanded={commentDisplayMode === 'expanded'}
+                    defaultCollapsed={commentDisplayMode === 'collapsed'}
                   />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No comments yet. Be the first to comment!
+              <div className="text-center py-12">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+                    <MessageCircle className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-lg font-medium text-muted-foreground">No comments yet</p>
+                    <p className="text-sm text-muted-foreground">Be the first to share your thoughts!</p>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>

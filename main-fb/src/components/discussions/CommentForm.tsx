@@ -24,9 +24,17 @@ export const CommentForm: React.FC<CommentFormProps> = ({
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent duplicate submissions
+    const now = Date.now();
+    if (isSubmitting || (now - lastSubmissionTime < 2000)) {
+      console.log('Preventing duplicate submission:', { isSubmitting, timeSinceLastSubmission: now - lastSubmissionTime });
+      return;
+    }
     
     if (!content.trim()) {
       setError('Comment cannot be empty');
@@ -39,7 +47,10 @@ export const CommentForm: React.FC<CommentFormProps> = ({
     }
 
     setIsSubmitting(true);
+    setLastSubmissionTime(now);
     setError(null);
+    
+    console.log('Submitting comment:', { content: content.trim(), parentCommentId, timestamp: now });
 
     try {
       const response = await fetch(`/api/discussions/${discussionId}/comments`, {
@@ -109,10 +120,10 @@ export const CommentForm: React.FC<CommentFormProps> = ({
           <Button
             type="submit"
             size="sm"
-            disabled={isSubmitting || !content.trim()}
+            disabled={isSubmitting || !content.trim() || (Date.now() - lastSubmissionTime < 2000)}
           >
             {isSubmitting && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-            {parentCommentId ? 'Reply' : 'Comment'}
+            {isSubmitting ? 'Posting...' : (parentCommentId ? 'Reply' : 'Comment')}
           </Button>
         </div>
       </div>

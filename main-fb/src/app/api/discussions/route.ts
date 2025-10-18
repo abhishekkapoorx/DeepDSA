@@ -94,14 +94,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
-    
+
+    console.log("==============================================")
+    console.log("==============================================")
+    console.log("In create discussion route")
+    console.log("==============================================")
+    console.log("==============================================")
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await dbConnect();
 
+    console.log("CLERK ID "+ userId)
+
     const user = await User.findOne({ clerkId: userId });
+    console.log("user", user)
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }

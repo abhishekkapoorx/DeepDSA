@@ -55,6 +55,9 @@ export async function GET(
       })
     ]);
 
+    // Debug: Log comment structure
+    // console.log('Raw comments from DB:', comments.length, 'comments');
+
     // Build comment tree structure
     const commentMap = new Map();
     const rootComments: any[] = [];
@@ -74,11 +77,13 @@ export async function GET(
       const commentObj = commentMap.get((comment._id as mongoose.Types.ObjectId).toString());
       
       if (comment.parentComment) {
+        // This is a reply - add it to parent's replies
         const parent = commentMap.get(comment.parentComment.toString());
         if (parent) {
           parent.replies.push(commentObj);
         }
       } else {
+        // This is a root comment - add it to root comments
         rootComments.push(commentObj);
       }
     });
@@ -188,6 +193,33 @@ export async function POST(
       }
     }
 
+    // Check for duplicate comments in the last 30 seconds
+    const thirtySecondsAgo = new Date(Date.now() - 30000);
+    const duplicateCheck = await Comment.findOne({
+      content: content.trim(),
+      author: user._id,
+      discussion: id,
+      parentComment: parentCommentId || null,
+      createdAt: { $gte: thirtySecondsAgo }
+    });
+
+    if (duplicateCheck) {
+      console.log('Duplicate comment detected, returning existing comment:', duplicateCheck._id);
+      await duplicateCheck.populate('author', 'firstName lastName username imageUrl');
+      return NextResponse.json({
+        comment: duplicateCheck,
+        message: 'Comment already exists'
+      }, { status: 200 });
+    }
+
+    console.log('Creating comment:', { 
+      content: content.trim(), 
+      author: user._id, 
+      discussion: id, 
+      parentCommentId, 
+      depth 
+    });
+
     const comment = new Comment({
       content: content.trim(),
       author: user._id,
@@ -198,6 +230,7 @@ export async function POST(
     });
 
     await comment.save();
+    console.log('Comment created with ID:', comment._id);
 
     // Update comment count on discussion
     await Discussion.findByIdAndUpdate(id, {
