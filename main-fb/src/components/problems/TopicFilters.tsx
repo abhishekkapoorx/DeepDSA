@@ -3,10 +3,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, ChevronDown, ArrowUpDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@clerk/nextjs';
 
 interface TopicCount {
   name: string;
   count: number;
+}
+
+interface UserProgress {
+  totalSolved: number;
+  easySolved: number;
+  mediumSolved: number;
+  hardSolved: number;
+  totalSubmissions: number;
+  acceptanceRate: number;
+  currentStreak: number;
+  maxStreak: number;
+  lastSolvedAt?: string;
+  ranking?: number;
 }
 
 // Exhaustive default topics (kept in sync with admin create page suggestions)
@@ -42,6 +56,49 @@ export default function TopicFilters({
   const [topics, setTopics] = useState<TopicCount[]>(DEFAULT_TOPICS);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
+  const [totalProblems, setTotalProblems] = useState(0);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const { user, isLoaded } = useUser();
+
+  // Fetch user progress
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchUserProgress();
+    }
+  }, [isLoaded, user]);
+
+  // Fetch total problems count
+  useEffect(() => {
+    fetchTotalProblems();
+  }, []);
+
+  const fetchUserProgress = async () => {
+    try {
+      setProgressLoading(true);
+      const response = await fetch('/api/user-progress');
+      if (response.ok) {
+        const data = await response.json();
+        setUserProgress(data.userProgress);
+      }
+    } catch (err) {
+      console.error('Error fetching user progress:', err);
+    } finally {
+      setProgressLoading(false);
+    }
+  };
+
+  const fetchTotalProblems = async () => {
+    try {
+      const response = await fetch('/api/problems?limit=1');
+      if (response.ok) {
+        const data = await response.json();
+        setTotalProblems(data.pagination?.total || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching total problems:', err);
+    }
+  };
 
   useEffect(() => {
     // If problems are provided from parent, aggregate client-side and skip fetching
@@ -119,6 +176,18 @@ export default function TopicFilters({
     onTopicChange(name);
   };
 
+  // Calculate progress percentage for the circle
+  const progressPercentage = useMemo(() => {
+    if (!userProgress || totalProblems === 0) return 0;
+    return Math.round((userProgress.totalSolved / totalProblems) * 100);
+  }, [userProgress, totalProblems]);
+
+  // Calculate stroke dash offset for the progress circle
+  const strokeDashOffset = useMemo(() => {
+    const circumference = 88; // 2 * π * 14
+    return circumference - (circumference * progressPercentage) / 100;
+  }, [progressPercentage]);
+
   return (
     <div className="space-y-4">
       {/* Topic Tags */}
@@ -179,7 +248,13 @@ export default function TopicFilters({
 
         {/* Progress */}
         <div className="flex items-center gap-2">
-          <div className="text-sm text-muted-foreground">181/3631 Solved</div>
+          {progressLoading ? (
+            <div className="text-sm text-muted-foreground">Loading...</div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              {userProgress?.totalSolved || 0}/{totalProblems} Solved
+            </div>
+          )}
           <div className="relative w-8 h-8">
             <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
               <circle
@@ -199,12 +274,8 @@ export default function TopicFilters({
                 strokeWidth="2"
                 fill="none"
                 strokeDasharray="88"
-                strokeDashoffset="26.4"
+                strokeDashoffset={strokeDashOffset}
                 className="text-primary"
-                style={{
-                  strokeDasharray: 88,
-                  strokeDashoffset: 88 - (88 * 181) / 3631
-                }}
               />
             </svg>
             <button className="absolute inset-0 flex items-center justify-center">

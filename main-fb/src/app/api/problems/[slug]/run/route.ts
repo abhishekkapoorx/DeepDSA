@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongoose';
 import { Problem, TestCase } from '@/models';
+import { FullBoilerplateGenerator, mergeBoilerplateCode } from '@/utils/CodeGenerator/generate-full-boilerplate';
+
+// Judge0 configuration (self-hosted default: http://localhost:2358)
+const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
+const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY; // RapidAPI key (optional)
+const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN; // Self-hosted Judge0 auth token (optional)
 
 export async function POST(
   req: NextRequest,
@@ -39,33 +45,43 @@ export async function POST(
 
     // Language ID mapping for Judge0
     const LANGUAGE_IDS = {
-      'cpp': 54,
-      'java': 62,
-      'python': 71,
-      'javascript': 63
-    };
+      cpp: 54,
+      java: 62,
+      python: 71,
+      javascript: 63
+    } as const;
 
-    const languageId = (LANGUAGE_IDS as any)[language];
-    if (!languageId) {
+    if (!Object.keys(LANGUAGE_IDS).includes(language)) {
       return NextResponse.json(
-        { error: 'Unsupported language' },
+        { error: 'Invalid language. Supported languages: cpp, java, python, javascript' },
         { status: 400 }
       );
     }
 
-    // Encode code as base64 to avoid syntax and space issues
-    const encodedCode = Buffer.from(code, 'utf-8').toString('base64');
+    const languageId = (LANGUAGE_IDS as any)[language];
+
+    // Generate full boilerplate and merge with user code (same as submit route)
+    const fullGenerator = new FullBoilerplateGenerator(
+      problem.inputVariables,
+      problem.outputVariable,
+      problem.functionName
+    );
+    const fullBoilerplate = fullGenerator.generateAll()[language];
+    const completeCode = mergeBoilerplateCode(fullBoilerplate, code);
+
+    // Encode merged code as base64 to avoid syntax and space issues
+    const encodedCode = Buffer.from(completeCode, 'utf-8').toString('base64');
 
     console.log('Processing run request for problem:', slug);
     console.log('Language:', language, 'Language ID:', languageId);
-    console.log('Code length:', code.length, 'Encoded length:', encodedCode.length);
+    console.log('Code length:', completeCode.length, 'Encoded length:', encodedCode.length);
 
-    // Create batch submission with all test cases
+    // Create batch submission with all test cases (base64 for source/stdin/expected)
     const batchSubmissions = testCases.map((testCase, index) => ({
       source_code: encodedCode,
       language_id: languageId,
-      stdin: testCase.input,
-      expected_output: testCase.output,
+      stdin: Buffer.from(String(testCase.input ?? ''), 'utf-8').toString('base64'),
+      expected_output: Buffer.from(String(testCase.output ?? ''), 'utf-8').toString('base64'),
       cpu_time_limit: 5,
       memory_limit: 128000,
       enable_network: false,
@@ -75,10 +91,12 @@ export async function POST(
     console.log(`Submitting batch of ${batchSubmissions.length} test cases to Judge0`);
 
     // Submit batch to Judge0 with base64_encoded=true since we're sending base64 code
-    const batchResponse = await fetch(`${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=true`, {
+    const batchResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?base64_encoded=true&wait=false`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
+        ...(JUDGE0_AUTH_TOKEN && { 'X-Auth-Token': JUDGE0_AUTH_TOKEN }),
       },
       body: JSON.stringify({
         submissions: batchSubmissions
@@ -108,7 +126,12 @@ export async function POST(
 
     while (results.length < testCases.length && (Date.now() - startTime) < maxWaitTime) {
       // Get batch results with base64_encoded=false to get readable output
-      const resultsResponse = await fetch(`${process.env.JUDGE0_API_URL}/submissions/batch?tokens=${tokens.join(',')}&base64_encoded=false&fields=token,stdout,stderr,status_id,status,time,memory,compile_output,message`);
+      const resultsResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?tokens=${tokens.join(',')}&base64_encoded=false&fields=token,stdout,stderr,status_id,status,time,memory,compile_output,message`, {
+        headers: {
+          ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
+          ...(JUDGE0_AUTH_TOKEN && { 'X-Auth-Token': JUDGE0_AUTH_TOKEN }),
+        }
+      });
       
       if (!resultsResponse.ok) {
         console.error('Failed to fetch batch results:', resultsResponse.status);
@@ -130,30 +153,16 @@ export async function POST(
         // Check if processing is complete (status_id > 2 means completed)
         if (submission.status_id && submission.status_id > 2) {
           // Determine if test passed
-          const passed = submission.status === 'Accepted' && 
+          const judgeStatus = submission.status?.description || submission.status;
+          const passed = judgeStatus === 'Accepted' && 
                         submission.stdout?.trim() === testCase.output?.trim();
 
           if (passed) {
             passedTests++;
           }
 
-          // Map Judge0 status to our status
-          let status = 'Unknown';
-          if (submission.status === 'Accepted') {
-            status = 'Accepted';
-          } else if (submission.status === 'Wrong Answer') {
-            status = 'Wrong Answer';
-          } else if (submission.status === 'Time Limit Exceeded') {
-            status = 'Time Limit Exceeded';
-          } else if (submission.status === 'Compilation Error') {
-            status = 'Compilation Error';
-          } else if (submission.status === 'Runtime Error') {
-            status = 'Runtime Error';
-          } else if (submission.status === 'Internal Error') {
-            status = 'Internal Error';
-          } else {
-            status = submission.status || 'Unknown';
-          }
+          // Normalize to UI-friendly status tokens
+          const status = passed ? 'passed' : 'failed';
 
           results[i] = {
             testCaseId: testCase._id.toString(),
@@ -233,5 +242,4 @@ export async function POST(
     );
   }
 }
-
 

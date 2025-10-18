@@ -20,11 +20,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get('limit');
+    const limit = Math.min(Math.max(Number(limitParam ?? 100) || 100, 1), 200);
+
     // Get user submissions with problem details
     const submissions = await Submission.find({ userId: user._id })
       .populate('problemId', 'title difficulty')
       .sort({ createdAt: -1 })
-      .limit(100); // Limit to recent submissions
+      .limit(limit); // Limit to recent submissions
 
     // Format submissions for response
     const formattedSubmissions = submissions.map(submission => ({
@@ -37,7 +41,9 @@ export async function GET(request: NextRequest) {
       language: submission.language || 'Unknown',
       createdAt: submission.createdAt,
       runtime: submission.runtime,
-      memory: submission.memory
+      memory: submission.memory,
+      testsPassed: submission.testsPassed ?? 0,
+      totalTests: submission.totalTests ?? 0
     }));
 
     return NextResponse.json({

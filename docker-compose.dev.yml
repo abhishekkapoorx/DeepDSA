@@ -45,6 +45,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/deepdsa
+      - MONGO_URI=mongodb://mongo:27017/deepdsa
       - JUDGE0_API_URL=http://judge0-server:2358
     env_file:
       - ./main-fb/.env
@@ -89,6 +90,8 @@ services:
       - "4040:4040"
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-}
+    env_file:
+      - ./.env
     volumes:
       - ./ngrok.yml:/etc/ngrok.yml
     command: start --all --config=/etc/ngrok.yml --authtoken=${NGROK_AUTHTOKEN}

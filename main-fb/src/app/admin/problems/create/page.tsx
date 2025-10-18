@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import MarkdownEditor from '@/components/ui/MarkdownEditor'
@@ -119,6 +119,7 @@ This is a basic implementation problem designed for beginners to get familiar wi
   const [selectedTags, setSelectedTags] = useState<string[]>(() => formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [])
   const [tagQuery, setTagQuery] = useState('')
   const [tagInputFocused, setTagInputFocused] = useState(false)
+  const [selectedTagIndex, setSelectedTagIndex] = useState(-1)
   const filteredSuggestions = useMemo(() => {
     const q = tagQuery.trim().toLowerCase()
     if (!q) return TAG_SUGGESTIONS.filter(t => !selectedTags.includes(t)).slice(0, 12)
@@ -131,12 +132,22 @@ This is a basic implementation problem designed for beginners to get familiar wi
   const [companyQuery, setCompanyQuery] = useState('')
   const [companyInputFocused, setCompanyInputFocused] = useState(false)
   const [companyTags, setCompanyTags] = useState<string[]>([])
+  const [selectedCompanyIndex, setSelectedCompanyIndex] = useState(-1)
   const filteredCompanySuggestions = useMemo(() => {
     const q = companyQuery.trim().toLowerCase()
     const source = COMPANY_SUGGESTIONS
     if (!q) return source.filter(c => !companyTags.includes(c)).slice(0, 12)
     return source.filter(c => c.toLowerCase().includes(q) && !companyTags.includes(c)).slice(0, 12)
   }, [companyQuery, companyTags])
+
+  // Reset selected indices when query changes
+  useEffect(() => {
+    setSelectedTagIndex(-1)
+  }, [tagQuery])
+
+  useEffect(() => {
+    setSelectedCompanyIndex(-1)
+  }, [companyQuery])
 
   const addTag = (tag: string) => {
     if (!tag) return
@@ -145,6 +156,7 @@ This is a basic implementation problem designed for beginners to get familiar wi
     setSelectedTags(next)
     setFormData({ ...formData, tags: next.join(', ') })
     setTagQuery('')
+    setSelectedTagIndex(-1)
   }
 
   const removeTag = (tag: string) => {
@@ -156,11 +168,27 @@ This is a basic implementation problem designed for beginners to get familiar wi
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      const candidate = tagQuery.trim()
-      if (candidate.length === 0) return
-      // Prefer exact suggestion case if exists
-      const matched = TAG_SUGGESTIONS.find(t => t.toLowerCase() === candidate.toLowerCase()) || candidate
-      addTag(matched)
+      if (selectedTagIndex >= 0 && selectedTagIndex < filteredSuggestions.length) {
+        // Select highlighted suggestion
+        addTag(filteredSuggestions[selectedTagIndex])
+      } else {
+        // Add typed text
+        const candidate = tagQuery.trim()
+        if (candidate.length === 0) return
+        const matched = TAG_SUGGESTIONS.find(t => t.toLowerCase() === candidate.toLowerCase()) || candidate
+        addTag(matched)
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedTagIndex(prev => 
+        prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+      )
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedTagIndex(prev => prev > 0 ? prev - 1 : -1)
+    } else if (e.key === 'Escape') {
+      setSelectedTagIndex(-1)
+      setTagInputFocused(false)
     } else if (e.key === 'Backspace' && tagQuery.length === 0 && selectedTags.length > 0) {
       // Backspace to remove last tag when query empty
       removeTag(selectedTags[selectedTags.length - 1])
@@ -173,6 +201,7 @@ This is a basic implementation problem designed for beginners to get familiar wi
     const next = [...companyTags, tag]
     setCompanyTags(next)
     setCompanyQuery('')
+    setSelectedCompanyIndex(-1)
   }
 
   const removeCompanyTag = (tag: string) => {
@@ -183,10 +212,27 @@ This is a basic implementation problem designed for beginners to get familiar wi
   const handleCompanyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      const candidate = companyQuery.trim()
-      if (candidate.length === 0) return
-      const matched = COMPANY_SUGGESTIONS.find(t => t.toLowerCase() === candidate.toLowerCase()) || candidate
-      addCompanyTag(matched)
+      if (selectedCompanyIndex >= 0 && selectedCompanyIndex < filteredCompanySuggestions.length) {
+        // Select highlighted suggestion
+        addCompanyTag(filteredCompanySuggestions[selectedCompanyIndex])
+      } else {
+        // Add typed text
+        const candidate = companyQuery.trim()
+        if (candidate.length === 0) return
+        const matched = COMPANY_SUGGESTIONS.find(t => t.toLowerCase() === candidate.toLowerCase()) || candidate
+        addCompanyTag(matched)
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedCompanyIndex(prev => 
+        prev < filteredCompanySuggestions.length - 1 ? prev + 1 : prev
+      )
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedCompanyIndex(prev => prev > 0 ? prev - 1 : -1)
+    } else if (e.key === 'Escape') {
+      setSelectedCompanyIndex(-1)
+      setCompanyInputFocused(false)
     } else if (e.key === 'Backspace' && companyQuery.length === 0 && companyTags.length > 0) {
       removeCompanyTag(companyTags[companyTags.length - 1])
     }
@@ -458,12 +504,16 @@ This is a basic implementation problem designed for beginners to get familiar wi
                   />
                   {tagInputFocused && filteredSuggestions.length > 0 && (
                     <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-sm max-h-56 overflow-auto">
-                      {filteredSuggestions.map(s => (
+                      {filteredSuggestions.map((s, index) => (
                         <button
                           key={s}
                           type="button"
                           onClick={() => { addTag(s) }}
-                          className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+                          className={`w-full text-left px-3 py-2 text-sm ${
+                            index === selectedTagIndex 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'hover:bg-muted'
+                          }`}
                         >
                           {s}
                         </button>
@@ -513,12 +563,16 @@ This is a basic implementation problem designed for beginners to get familiar wi
                 />
                 {companyInputFocused && filteredCompanySuggestions.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-sm max-h-56 overflow-auto">
-                    {filteredCompanySuggestions.map(s => (
+                    {filteredCompanySuggestions.map((s, index) => (
                       <button
                         key={s}
                         type="button"
                         onClick={() => { addCompanyTag(s) }}
-                        className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+                        className={`w-full text-left px-3 py-2 text-sm ${
+                          index === selectedCompanyIndex 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'hover:bg-muted'
+                        }`}
                       >
                         {s}
                       </button>
