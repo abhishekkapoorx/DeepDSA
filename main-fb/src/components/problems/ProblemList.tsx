@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useUser } from '@clerk/nextjs';
 
 interface Problem {
   _id: string;
@@ -11,10 +12,23 @@ interface Problem {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   tags: string[];
   createdAt: string;
-  // Mock data for now - these would come from user progress tracking
+  // Real data from user progress tracking
   successRate?: number;
   isSolved?: boolean;
   progress?: number;
+}
+
+interface UserProgress {
+  totalSolved: number;
+  easySolved: number;
+  mediumSolved: number;
+  hardSolved: number;
+  totalSubmissions: number;
+  acceptanceRate: number;
+  currentStreak: number;
+  maxStreak: number;
+  lastSolvedAt?: string;
+  ranking?: number;
 }
 
 interface ProblemListProps {
@@ -27,18 +41,56 @@ export default function ProblemList({ selectedTopic, searchQuery, problemsFromPa
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
+  const [solvedProblems, setSolvedProblems] = useState<Set<string>>(new Set());
+  const { user, isLoaded } = useUser();
+
+  // Fetch user progress
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchUserProgress();
+    }
+  }, [isLoaded, user]);
+
+  const fetchUserProgress = async () => {
+    try {
+      const response = await fetch('/api/user-progress');
+      if (response.ok) {
+        const data = await response.json();
+        setUserProgress(data.userProgress);
+        
+        // Fetch solved problems to determine which problems are solved
+        await fetchSolvedProblems();
+      }
+    } catch (err) {
+      console.error('Error fetching user progress:', err);
+    }
+  };
+
+  const fetchSolvedProblems = async () => {
+    try {
+      const response = await fetch('/api/submissions?status=accepted&limit=1000');
+      if (response.ok) {
+        const data = await response.json();
+        const solvedSet = new Set(data.submissions.map((submission: any) => submission.problemId));
+        setSolvedProblems(solvedSet);
+      }
+    } catch (err) {
+      console.error('Error fetching solved problems:', err);
+    }
+  };
 
   // Fetch problems from API
   useEffect(() => {
     // If parent provides the problems list, use it and skip fetching
     if (Array.isArray(problemsFromParent)) {
-      const withMock = problemsFromParent.map((problem: Problem) => ({
+      const withRealData = problemsFromParent.map((problem: Problem) => ({
         ...problem,
-        successRate: Math.floor(Math.random() * 60) + 20,
-        isSolved: Math.random() > 0.7,
-        progress: Math.random() > 0.7 ? 100 : Math.floor(Math.random() * 100)
+        successRate: calculateSuccessRate(problem),
+        isSolved: solvedProblems.has(problem._id),
+        progress: solvedProblems.has(problem._id) ? 100 : 0
       }));
-      setProblems(withMock);
+      setProblems(withRealData);
       setLoading(false);
       setError(null);
       return;
@@ -62,14 +114,14 @@ export default function ProblemList({ selectedTopic, searchQuery, problemsFromPa
         if (response.ok) {
           const data = await response.json();
           console.log('Problems API response:', data);
-          // Add mock data for success rate, isSolved, and progress
-          const problemsWithMockData = data.problems.map((problem: Problem) => ({
+          // Add real data for success rate, isSolved, and progress
+          const problemsWithRealData = data.problems.map((problem: Problem) => ({
             ...problem,
-            successRate: Math.floor(Math.random() * 60) + 20, // Random success rate 20-80%
-            isSolved: Math.random() > 0.7, // 30% chance of being solved
-            progress: Math.random() > 0.7 ? 100 : Math.floor(Math.random() * 100) // Random progress
+            successRate: calculateSuccessRate(problem),
+            isSolved: solvedProblems.has(problem._id),
+            progress: solvedProblems.has(problem._id) ? 100 : 0
           }));
-          setProblems(problemsWithMockData);
+          setProblems(problemsWithRealData);
         } else {
           const errorData = await response.json();
           console.error('Failed to load problems:', errorData);
@@ -84,7 +136,18 @@ export default function ProblemList({ selectedTopic, searchQuery, problemsFromPa
     };
 
     fetchProblems();
-  }, [selectedTopic, searchQuery, problemsFromParent]);
+  }, [selectedTopic, searchQuery, problemsFromParent, solvedProblems]);
+
+  const calculateSuccessRate = (problem: Problem): number => {
+    // This would ideally come from a separate API endpoint that calculates
+    // success rate based on actual submission data
+    // For now, we'll use a placeholder calculation
+    if (!userProgress) return 0;
+    
+    // Simple calculation based on user's overall acceptance rate
+    // In a real implementation, this would be problem-specific
+    return Math.round(userProgress.acceptanceRate);
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
