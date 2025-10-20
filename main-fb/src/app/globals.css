@@ -225,6 +225,42 @@
   pre::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
   }
+
+  /* Section separators */
+  .section-divider {
+    position: relative;
+  }
+
+  .section-divider::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  /* Enhanced shadows and borders */
+  .card-enhanced {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-enhanced:hover {
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+  }
+
+  /* Dark mode card enhancements */
+  .dark .card-enhanced {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .card-enhanced:hover {
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  }
   
   /* 3D Effects */
   .perspective-1000 {
