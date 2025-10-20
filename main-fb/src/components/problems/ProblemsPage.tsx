@@ -3,14 +3,31 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Sidebar, ProblemList, RightSidebar, FeaturedCourses, TopicFilters } from './index';
 import { Button } from '../ui/button';
+import { useSearchParams } from 'next/navigation';
 
 export default function ProblemsPage() {
+  const searchParams = useSearchParams();
   const [selectedTopic, setSelectedTopic] = useState('All Topics');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [collectionFilter, setCollectionFilter] = useState<string | null>(null);
+
+  // Handle URL parameters
+  useEffect(() => {
+    const collection = searchParams.get('collection');
+    const tags = searchParams.get('tags');
+    
+    if (collection) {
+      setCollectionFilter(collection);
+    }
+    
+    if (tags) {
+      setSelectedTopic(tags);
+    }
+  }, [searchParams]);
 
   // Keyboard shortcut for sidebar toggle (Ctrl/Cmd + B)
   useEffect(() => {
@@ -25,6 +42,26 @@ export default function ProblemsPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSidebarOpen]);
 
+  // Filter problems based on collection
+  const filterProblemsByCollection = (allProblems: any[], collection: string) => {
+    switch (collection) {
+      case 'beginner':
+        return allProblems.filter(p => p.difficulty === 'EASY');
+      case 'arrays':
+        return allProblems.filter(p => p.tags.includes('Array'));
+      case 'dynamic-programming':
+        return allProblems.filter(p => p.tags.some((tag: string) => tag.includes('DP') || tag.includes('Dynamic')));
+      case 'graph-algorithms':
+        return allProblems.filter(p => p.tags.some((tag: string) => tag.includes('Graph') || tag.includes('Tree')));
+      case 'two-pointers':
+        return allProblems.filter(p => p.tags.includes('Two Pointers'));
+      case 'company-prep':
+        return allProblems.filter(p => p.companyTags.length > 0);
+      default:
+        return allProblems;
+    }
+  };
+
   // Fetch once at page level and share
   useEffect(() => {
     const fetchOnce = async () => {
@@ -33,7 +70,15 @@ export default function ProblemsPage() {
         const res = await fetch('/api/problems?limit=500', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch problems');
         const data = await res.json();
-        setProblems(data?.problems || []);
+        const allProblems = data?.problems || [];
+        
+        // Apply collection filter if specified
+        if (collectionFilter) {
+          const filteredProblems = filterProblemsByCollection(allProblems, collectionFilter);
+          setProblems(filteredProblems);
+        } else {
+          setProblems(allProblems);
+        }
       } catch (e) {
         setProblems([]);
       } finally {
@@ -41,7 +86,7 @@ export default function ProblemsPage() {
       }
     };
     fetchOnce();
-  }, []);
+  }, [collectionFilter]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -87,6 +132,31 @@ export default function ProblemsPage() {
         <div className="p-6 border-b border-border">
           <FeaturedCourses />
         </div>
+        
+        {/* Collection Filter Indicator */}
+        {collectionFilter && (
+          <div className="p-6 border-b border-border bg-primary/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <span className="text-sm font-medium text-primary">
+                  Viewing: {collectionFilter.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} Collection
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setCollectionFilter(null);
+                  setSelectedTopic('All Topics');
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Clear Filter
+              </Button>
+            </div>
+          </div>
+        )}
         
         {/* Topic Filters and Search */}
         <div className="p-6 border-b border-border">
