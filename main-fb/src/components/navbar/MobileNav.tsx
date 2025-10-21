@@ -12,7 +12,7 @@ export const MobileNav: React.FC = () => {
   const navigationItems = [
     { href: '/explore', label: 'Explore' },
     { href: '/problems', label: 'Problems' },
-    { href: '/contest', label: 'Contest' },
+    { href: '/contests', label: 'Contest' },
     { href: '/discuss', label: 'Discuss' },
     { href: '/interview', label: 'Interview' },
     { href: '/store', label: 'Store' },
