@@ -4,13 +4,15 @@ import { Editorial, Problem } from '@/models'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { problemSlug: string } }
+  { params }: { params: Promise<{ problemSlug: string }> }
 ) {
   try {
     await dbConnect()
 
+    const { problemSlug } = await params
+
     // Find the problem by slug
-    const problem = await Problem.findOne({ slug: params.problemSlug })
+    const problem = await Problem.findOne({ slug: problemSlug })
     if (!problem) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 })
     }

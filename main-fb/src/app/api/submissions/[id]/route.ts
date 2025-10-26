@@ -5,16 +5,18 @@ import mongoose from 'mongoose';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDB();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid submission id' }, { status: 400 });
     }
 
-    const submission = await Submission.findById(params.id)
+    const submission = await Submission.findById(id)
       .populate('problemId', 'title slug difficulty')
       .lean();
 
@@ -22,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
 
-    const results = await TestResult.find({ submissionId: params.id })
+    const results = await TestResult.find({ submissionId: id })
       .populate('testCaseId', 'input output index order')
       .lean();
 

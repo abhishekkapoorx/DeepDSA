@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Code, Users, BarChart3, Settings, TrendingUp, Calendar, Tag } from 'lucide-react'
+import { Plus, Code, Users, BarChart3, Settings, TrendingUp, Calendar, Tag, Trophy } from 'lucide-react'
 
 interface Analytics {
   overview: {
@@ -109,7 +109,8 @@ const AdminDashboard = () => {
   const quickActions = [
     { title: 'Create Problem', href: '/admin/problems/create', icon: Plus, color: 'bg-green-500 hover:bg-green-600' },
     { title: 'Manage Problems', href: '/admin/problems', icon: Code, color: 'bg-blue-500 hover:bg-blue-600' },
-    { title: 'View Users', href: '/admin/users', icon: Users, color: 'bg-purple-500 hover:bg-purple-600' },
+    { title: 'Manage Contests', href: '/admin/contests', icon: Trophy, color: 'bg-purple-500 hover:bg-purple-600' },
+    { title: 'View Users', href: '/admin/users', icon: Users, color: 'bg-indigo-500 hover:bg-indigo-600' },
     { title: 'Analytics', href: '/admin/analytics', icon: BarChart3, color: 'bg-orange-500 hover:bg-orange-600' },
   ]
 

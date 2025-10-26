@@ -16,7 +16,7 @@ interface Editorial {
     questionNumber: number
     difficulty: string
     slug: string
-  }
+  } | null
 }
 
 const EditorialsPage = () => {
@@ -97,7 +97,7 @@ const EditorialsPage = () => {
 
   const filteredEditorials = editorials.filter(editorial => {
     const matchesSearch = editorial.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         editorial.problemId.title.toLowerCase().includes(searchQuery.toLowerCase())
+                         (editorial.problemId && editorial.problemId.title.toLowerCase().includes(searchQuery.toLowerCase()))
     
     const matchesFilter = filterPublished === 'all' ||
                          (filterPublished === 'published' && editorial.isPublished) ||
@@ -205,11 +205,17 @@ const EditorialsPage = () => {
                     </div>
                     
                     <div className="text-sm text-muted-foreground mb-3">
-                      Problem: #{editorial.problemId.questionNumber} - {editorial.problemId.title}
+                      {editorial.problemId ? (
+                        <>Problem: #{editorial.problemId.questionNumber} - {editorial.problemId.title}</>
+                      ) : (
+                        <span className="text-destructive">Problem not found (may have been deleted)</span>
+                      )}
                     </div>
                     
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Difficulty: <span className={getDifficultyColor(editorial.problemId.difficulty)}>{editorial.problemId.difficulty}</span></span>
+                      {editorial.problemId && (
+                        <span>Difficulty: <span className={getDifficultyColor(editorial.problemId.difficulty)}>{editorial.problemId.difficulty}</span></span>
+                      )}
                       <span>Created: {new Date(editorial.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
@@ -223,12 +229,14 @@ const EditorialsPage = () => {
                       {editorial.isPublished ? 'Unpublish' : 'Publish'}
                     </Button>
                     
-                    <Link href={`/problems/${editorial.problemId.slug}`}>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                    </Link>
+                    {editorial.problemId && (
+                      <Link href={`/problems/${editorial.problemId.slug}`}>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                      </Link>
+                    )}
                     
                     <Link href={`/admin/editorials/${editorial._id}/edit`}>
                       <Button variant="outline" size="sm">

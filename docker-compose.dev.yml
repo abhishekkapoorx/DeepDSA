@@ -173,25 +173,25 @@ services:
       driver: json-file
       options:
         max-size: 100M
-  cgroup-init:
-    image: alpine:latest
-    container_name: deepdsa-cgroup-setup
-    privileged: true
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
-    command: >
-      sh -c "
-        apk add --no-cache util-linux procps &&
-        mkdir -p /sys/fs/cgroup/memory /sys/fs/cgroup/cpuset /sys/fs/cgroup/pids &&
-        mount -t cgroup -o memory cgroup /sys/fs/cgroup/memory 2>/dev/null || true &&
-        mount -t cgroup -o cpuset cgroup /sys/fs/cgroup/cpuset 2>/dev/null || true &&
-        mount -t cgroup -o pids cgroup /sys/fs/cgroup/pids 2>/dev/null || true &&
-        echo 'Cgroup setup completed' &&
-        tail -f /dev/null
-      "
-    restart: unless-stopped
-    networks:
-      - deepdsa-network
+  # cgroup-init:
+  #   image: alpine:latest
+  #   container_name: deepdsa-cgroup-setup
+  #   privileged: true
+  #   volumes:
+  #     - /sys/fs/cgroup:/sys/fs/cgroup:rw
+  #   command: >
+  #     sh -c "
+  #       apk add --no-cache util-linux procps &&
+  #       mkdir -p /sys/fs/cgroup/memory /sys/fs/cgroup/cpuset /sys/fs/cgroup/pids &&
+  #       mount -t cgroup -o memory cgroup /sys/fs/cgroup/memory 2>/dev/null || true &&
+  #       mount -t cgroup -o cpuset cgroup /sys/fs/cgroup/cpuset 2>/dev/null || true &&
+  #       mount -t cgroup -o pids cgroup /sys/fs/cgroup/pids 2>/dev/null || true &&
+  #       echo 'Cgroup setup completed' &&
+  #       tail -f /dev/null
+  #     "
+  #   restart: unless-stopped
+  #   networks:
+  #     - deepdsa-network
   judge0-workers:
     image: judge0/judge0:1.13.1
     container_name: deepdsa-judge0-workers-dev
@@ -219,7 +219,7 @@ services:
       # - db
       # - redis
       - judge0-server
-      - cgroup-init
+      # - cgroup-init
     logging:
       driver: json-file
       options:

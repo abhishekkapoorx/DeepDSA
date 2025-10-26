@@ -12,6 +12,8 @@ export { Discussion } from './discussion.model';
 export { Comment } from './comment.model';
 export { Vote } from './vote.model';
 export { VoteType } from './vote.model';
+export { Contest } from './contest.model';
+export { ContestTemplate } from './contestTemplate.model';
 
 // Export types
 export type { IUser } from './user.model';
@@ -26,3 +28,5 @@ export type { ISolution } from './solution.model';
 export type { IDiscussion } from './discussion.model';
 export type { IComment } from './comment.model';
 export type { IVote } from './vote.model';
+export type { IContest, IContestProblem, IContestRegistration } from './contest.model';
+export type { IContestTemplate } from './contestTemplate.model';
