@@ -183,7 +183,13 @@ export default function ProblemDetailPage() {
           />
         );
       case "code-visualization":
-        return <CodeVisualization />;
+        return (
+          <CodeVisualization 
+            code={currentCode}
+            language={currentLanguage}
+            problem={problem}
+          />
+        );
       case "test-results":
         return <TestResults testResults={testResults} isRunning={false} />;
       default:
