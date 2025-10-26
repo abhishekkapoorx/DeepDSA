@@ -1,18 +1,20 @@
 "use client"
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
-import { ArrowLeft, Clock, Play, Send } from 'lucide-react'
+import { ArrowLeft, Clock, Play, Send, CheckCircle, Circle } from 'lucide-react'
 import MonacoEditor from '@monaco-editor/react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
+import { useToast } from '@/components/ui/toast'
 import type { Problem } from '@/components/problems'
 
 const ContestProblemPage = () => {
   const params = useParams()
   const slug = params.slug as string
   const problemSlug = params.problemSlug as string
+  const { showToast } = useToast()
   
   const [contest, setContest] = useState<any>(null)
   const [problem, setProblem] = useState<Problem | null>(null)
@@ -28,6 +30,8 @@ const ContestProblemPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [results, setResults] = useState<any>(null)
   const [testResults, setTestResults] = useState<any[]>([])
+  const [problemStatus, setProblemStatus] = useState<'pending' | 'attempted' | 'solved'>('pending')
+  const [submissionHistory, setSubmissionHistory] = useState<any[]>([])
   const editorRef = useRef<any>(null)
 
   useEffect(() => {
@@ -90,6 +94,37 @@ const ContestProblemPage = () => {
     fetchBoilerplate()
   }, [language, problemSlug])
 
+  // Fetch submission history
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      if (!slug || !problemSlug) return
+      
+      try {
+        const response = await fetch(`/api/contests/${slug}/problems/${problemSlug}/submissions`)
+        if (response.ok) {
+          const data = await response.json()
+          setSubmissionHistory(data.submissions || [])
+          
+          // Determine problem status
+          if (data.submissions && data.submissions.length > 0) {
+            const hasSolved = data.submissions.some((s: any) => s.status === 'accepted')
+            const hasAttempted = data.submissions.some((s: any) => s.status !== 'accepted')
+            
+            if (hasSolved) {
+              setProblemStatus('solved')
+            } else if (hasAttempted) {
+              setProblemStatus('attempted')
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching submissions:', err)
+      }
+    }
+
+    fetchSubmissions()
+  }, [slug, problemSlug])
+
   // Update time every second
   useEffect(() => {
     const timer = setInterval(() => {
@@ -131,12 +166,13 @@ const ContestProblemPage = () => {
         if (data.results && Array.isArray(data.results)) {
           setTestResults(data.results)
         }
+        showToast('success', 'Code executed successfully!')
       } else {
         const errorData = await response.json()
-        alert(errorData.error || 'Failed to run code')
+        showToast('error', errorData.error || 'Failed to run code')
       }
     } catch (err) {
-      alert('Failed to run code')
+      showToast('error', 'Failed to run code')
     } finally {
       setIsRunning(false)
     }
@@ -157,13 +193,28 @@ const ContestProblemPage = () => {
       if (response.ok) {
         const data = await response.json()
         setResults(data)
-        alert(`Submitted! Score: ${data.score || 0}/${contestProblem.points} points`)
+        
+        // Update problem status
+        if (data.passed) {
+          setProblemStatus('solved')
+          showToast('success', `🎉 All tests passed! Score: ${data.score || 0}/${contestProblem.points} points`)
+        } else {
+          setProblemStatus('attempted')
+          showToast('warning', `Some tests failed. Score: ${data.score || 0}/${contestProblem.points} points`)
+        }
+        
+        // Refresh submission history
+        const submissionsResponse = await fetch(`/api/contests/${slug}/problems/${problemSlug}/submissions`)
+        if (submissionsResponse.ok) {
+          const submissionsData = await submissionsResponse.json()
+          setSubmissionHistory(submissionsData.submissions || [])
+        }
       } else {
         const errorData = await response.json()
-        alert(errorData.error || 'Failed to submit')
+        showToast('error', errorData.error || 'Failed to submit')
       }
     } catch (err) {
-      alert('Failed to submit solution')
+      showToast('error', 'Failed to submit solution')
     } finally {
       setIsSubmitting(false)
     }
@@ -217,6 +268,18 @@ const ContestProblemPage = () => {
             <span className="text-sm px-2 py-1 bg-primary/10 text-primary rounded">
               {contestProblem.points} pts
             </span>
+            {problemStatus === 'solved' && (
+              <span className="text-sm px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Solved
+              </span>
+            )}
+            {problemStatus === 'attempted' && (
+              <span className="text-sm px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded flex items-center gap-1">
+                <Circle className="h-3 w-3" />
+                Attempted
+              </span>
+            )}
           </div>
           
           <div className="flex items-center gap-4">
@@ -383,6 +446,34 @@ const ContestProblemPage = () => {
                     {results.results.filter((r: any) => r.passed).length} / {results.results.length} test cases passed
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Submission History */}
+            {submissionHistory.length > 0 && (
+              <div className="p-4 border-t border-border bg-muted/50 max-h-40 overflow-y-auto">
+                <h3 className="font-semibold text-foreground text-sm mb-2">Submission History</h3>
+                <div className="space-y-1">
+                  {submissionHistory.slice(0, 5).map((submission: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${
+                          submission.status === 'accepted' ? 'bg-green-500' : 'bg-red-500'
+                        }`}></span>
+                        <span className="text-muted-foreground">
+                          {new Date(submission.createdAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-xs ${
+                        submission.status === 'accepted' 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {submission.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

@@ -201,11 +201,23 @@ const ContestDetailPage = () => {
                 ) : (
                   <p className="text-sm text-muted-foreground">You must be registered to participate</p>
                 )}
+                <a
+                  href={`/contests/${slug}/standings`}
+                  className="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 mt-2"
+                >
+                  View Standings
+                </a>
               </div>
             ) : (
               <div className="text-center">
                 <div className="text-lg font-semibold text-muted-foreground mb-2">Contest Ended</div>
                 <p className="text-sm text-muted-foreground">This contest has concluded.</p>
+                <a
+                  href={`/contests/${slug}/standings`}
+                  className="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 mt-4"
+                >
+                  View Standings
+                </a>
               </div>
             )}
           </div>

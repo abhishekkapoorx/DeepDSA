@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import type { IContest } from '@/models'
-import { Clock, Trophy, ArrowLeft } from 'lucide-react'
+import { Clock, Trophy, ArrowLeft, CheckCircle, Circle, Award } from 'lucide-react'
 
 const ContestTestPage = () => {
   const params = useParams()
@@ -12,6 +12,7 @@ const ContestTestPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [now, setNow] = useState<Date>(new Date())
   const [startTime, setStartTime] = useState<Date | null>(null)
+  const [problemStatuses, setProblemStatuses] = useState<Record<string, 'pending' | 'attempted' | 'solved'>>({})
 
   useEffect(() => {
     const fetchContest = async () => {
@@ -43,6 +44,46 @@ const ContestTestPage = () => {
 
     return () => clearInterval(timer)
   }, [])
+
+  // Fetch problem statuses
+  useEffect(() => {
+    const fetchProblemStatuses = async () => {
+      if (!contest?.problems) return
+      
+      const statuses: Record<string, 'pending' | 'attempted' | 'solved'> = {}
+      
+      for (const problem of contest.problems) {
+        try {
+          const response = await fetch(`/api/contests/${slug}/problems/${problem.problemSlug}/submissions`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.submissions && data.submissions.length > 0) {
+              const hasSolved = data.submissions.some((s: any) => s.status === 'accepted')
+              const hasAttempted = data.submissions.some((s: any) => s.status !== 'accepted')
+              
+              if (hasSolved) {
+                statuses[problem.problemSlug] = 'solved'
+              } else if (hasAttempted) {
+                statuses[problem.problemSlug] = 'attempted'
+              } else {
+                statuses[problem.problemSlug] = 'pending'
+              }
+            } else {
+              statuses[problem.problemSlug] = 'pending'
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching problem status:', err)
+        }
+      }
+      
+      setProblemStatuses(statuses)
+    }
+
+    if (contest) {
+      fetchProblemStatuses()
+    }
+  }, [contest, slug])
 
   const getTimeRemaining = () => {
     if (!contest || !startTime) return { hours: 0, minutes: 0, seconds: 0 }
@@ -156,7 +197,16 @@ const ContestTestPage = () => {
 
         {/* Problems List */}
         <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Problems</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Problems</h2>
+            <a
+              href={`/contests/${slug}/standings`}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <Award className="h-4 w-4" />
+              View Standings
+            </a>
+          </div>
           <div className="space-y-4">
             {contest.problems.map((problem, index) => (
               <a
@@ -178,9 +228,23 @@ const ContestTestPage = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-primary">{problem.points}</div>
-                    <div className="text-xs text-muted-foreground">points</div>
+                  <div className="flex items-center gap-4">
+                    {problemStatuses[problem.problemSlug] === 'solved' && (
+                      <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="text-sm font-medium">Solved</span>
+                      </span>
+                    )}
+                    {problemStatuses[problem.problemSlug] === 'attempted' && (
+                      <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                        <Circle className="h-5 w-5" />
+                        <span className="text-sm font-medium">Attempted</span>
+                      </span>
+                    )}
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">{problem.points}</div>
+                      <div className="text-xs text-muted-foreground">points</div>
+                    </div>
                   </div>
                 </div>
               </a>

@@ -5,6 +5,7 @@ import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { ConditionalNavbar } from '@/components/navbar'
 import { ThemeProvider } from '@/components/theme'
+import { ToastProvider } from '@/components/ui/toast'
 import { shadcn } from "@clerk/themes";import Link from "next/link";
 
 const geistSans = Geist({
@@ -51,8 +52,10 @@ export default function RootLayout({
               baseTheme: [shadcn],
             }}
           >
-            <ConditionalNavbar />
-            {children}
+            <ToastProvider>
+              <ConditionalNavbar />
+              {children}
+            </ToastProvider>
           </ClerkProvider>
         </ThemeProvider>
       </body>
