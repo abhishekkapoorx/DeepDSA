@@ -9,4 +9,6 @@ export { default as TopicFilters } from './TopicFilters';
 export { ProblemDescription, type Problem, type TestCase } from './ProblemDescription';
 export { CodeEditor } from './CodeEditor';
 export { TestcasePanel } from './TestcasePanel';
-export { ProblemNavbar } from './ProblemNavbar'; 
+export { ProblemNavbar } from './ProblemNavbar';
+export { CodeVisualization } from './CodeVisualization';
+export * from './VisualizationComponents'; 
