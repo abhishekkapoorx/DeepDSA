@@ -22,6 +22,7 @@ const ContestDetailPage = () => {
         }
         const data = await response.json()
         setContest(data)
+        setIsRegistered(data.isRegistered || false)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch contest')
       } finally {
@@ -188,9 +189,18 @@ const ContestDetailPage = () => {
                 </button>
               </div>
             ) : status === 'running' ? (
-              <div className="text-center">
+              <div className="text-center space-y-4">
                 <div className="text-lg font-semibold text-green-600 mb-2">Contest is Live!</div>
-                <p className="text-sm text-muted-foreground">Good luck with the contest!</p>
+                {isRegistered ? (
+                  <a
+                    href={`/contests/${slug}/test`}
+                    className="block w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  >
+                    Start Solving Problems
+                  </a>
+                ) : (
+                  <p className="text-sm text-muted-foreground">You must be registered to participate</p>
+                )}
               </div>
             ) : (
               <div className="text-center">
@@ -201,13 +211,17 @@ const ContestDetailPage = () => {
           </div>
         </div>
 
-        {/* Problems */}
-        {contest.problems && contest.problems.length > 0 && (
+        {/* Problems - Only show if contest is running or ended */}
+        {contest.problems && contest.problems.length > 0 && status !== 'upcoming' && (
           <div className="border border-border rounded-lg p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">Problems</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {contest.problems.map((problem, i) => (
-                <div key={i} className="border border-border rounded-lg p-4">
+                <a
+                  key={i}
+                  href={`/contests/${slug}/problems/${problem.problemSlug}`}
+                  className="border border-border rounded-lg p-4 hover:bg-accent transition-colors"
+                >
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-semibold text-foreground">
                       {(problem.problemId as any)?.title || `Problem ${i + 1}`}
@@ -217,9 +231,18 @@ const ContestDetailPage = () => {
                   <p className="text-sm text-muted-foreground">
                     Difficulty: {(problem.problemId as any)?.difficulty || 'Mixed'}
                   </p>
-                </div>
+                </a>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Info message for upcoming contests */}
+        {status === 'upcoming' && (
+          <div className="border border-border rounded-lg p-6 bg-muted/50">
+            <p className="text-center text-muted-foreground">
+              🔒 Problems will be available when the contest starts
+            </p>
           </div>
         )}
 

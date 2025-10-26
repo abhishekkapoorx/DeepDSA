@@ -40,8 +40,14 @@ export async function GET(request: NextRequest) {
     
     const total = await Contest.countDocuments(filter);
     
+    // Add registration count to each contest
+    const contestsWithCount = contests.map(contest => ({
+      ...contest,
+      registrationCount: contest.registrations ? contest.registrations.length : 0
+    }));
+    
     return NextResponse.json({
-      contests,
+      contests: contestsWithCount,
       pagination: {
         page,
         limit,

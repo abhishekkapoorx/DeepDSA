@@ -13,6 +13,17 @@ const AdminContestsPage = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'running' | 'ended' | 'draft'>('all')
   const [selectedContests, setSelectedContests] = useState<string[]>([])
   const [showBulkActions, setShowBulkActions] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [contestForm, setContestForm] = useState({
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: '',
+    maxParticipants: '',
+    difficulty: 'mixed',
+    tags: ''
+  })
 
   useEffect(() => {
     if (activeTab === 'contests') {
@@ -125,6 +136,66 @@ const AdminContestsPage = () => {
     }
   }
 
+  const handleCreateContest = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!contestForm.title || !contestForm.description || !contestForm.startTime || !contestForm.endTime) {
+      setMessage('Please fill in all required fields')
+      return
+    }
+
+    setCreating(true)
+    try {
+      const response = await fetch('/api/contests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: contestForm.title,
+          description: contestForm.description,
+          startTime: contestForm.startTime,
+          endTime: contestForm.endTime,
+          duration: (new Date(contestForm.endTime).getTime() - new Date(contestForm.startTime).getTime()) / 60000,
+          maxParticipants: contestForm.maxParticipants ? parseInt(contestForm.maxParticipants) : undefined,
+          problems: [],
+          rules: [],
+          prizes: [],
+          difficulty: contestForm.difficulty,
+          tags: contestForm.tags ? contestForm.tags.split(',').map(t => t.trim()) : []
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create contest')
+      }
+
+      const data = await response.json()
+      setMessage('Contest created successfully!')
+      setShowCreateModal(false)
+      setContestForm({
+        title: '',
+        description: '',
+        startTime: '',
+        endTime: '',
+        maxParticipants: '',
+        difficulty: 'mixed',
+        tags: ''
+      })
+      
+      // Refresh contests list
+      fetchContests()
+      
+      // Redirect to the new contest after a short delay
+      setTimeout(() => {
+        window.location.href = `/admin/contests/${data.slug}`
+      }, 1000)
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to create contest')
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const getFilteredContests = () => {
     return contests.filter(contest => {
       const matchesSearch = contest.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -180,7 +251,7 @@ const AdminContestsPage = () => {
               Import
             </button>
             <button 
-              onClick={() => setActiveTab('contests')}
+              onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -275,7 +346,7 @@ const AdminContestsPage = () => {
               <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button 
-                  onClick={() => setActiveTab('contests')}
+                  onClick={() => setShowCreateModal(true)}
                   className="p-4 border border-border rounded-lg hover:bg-accent text-left"
                 >
                   <Plus className="w-6 h-6 text-primary mb-2" />
@@ -550,6 +621,160 @@ const AdminContestsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Create Contest Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-border">
+              <h2 className="text-2xl font-bold text-foreground">Create New Contest</h2>
+              <p className="text-sm text-muted-foreground mt-1">Fill in the contest details below</p>
+            </div>
+
+            <form onSubmit={handleCreateContest} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Contest Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={contestForm.title}
+                  onChange={(e) => setContestForm({...contestForm, title: e.target.value})}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="e.g., Weekly Coding Challenge"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Description *
+                </label>
+                <textarea
+                  required
+                  value={contestForm.description}
+                  onChange={(e) => setContestForm({...contestForm, description: e.target.value})}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Describe what this contest is about..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Start Time *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={contestForm.startTime}
+                    onChange={(e) => setContestForm({...contestForm, startTime: e.target.value})}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    End Time *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={contestForm.endTime}
+                    onChange={(e) => setContestForm({...contestForm, endTime: e.target.value})}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Max Participants
+                  </label>
+                  <input
+                    type="number"
+                    value={contestForm.maxParticipants}
+                    onChange={(e) => setContestForm({...contestForm, maxParticipants: e.target.value})}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Leave empty for unlimited"
+                    min="1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Difficulty
+                  </label>
+                  <select
+                    value={contestForm.difficulty}
+                    onChange={(e) => setContestForm({...contestForm, difficulty: e.target.value})}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="mixed">Mixed</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  value={contestForm.tags}
+                  onChange={(e) => setContestForm({...contestForm, tags: e.target.value})}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Comma-separated tags (e.g., arrays, dynamic-programming)"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateModal(false)
+                    setContestForm({
+                      title: '',
+                      description: '',
+                      startTime: '',
+                      endTime: '',
+                      maxParticipants: '',
+                      difficulty: 'mixed',
+                      tags: ''
+                    })
+                  }}
+                  className="px-4 py-2 border border-border rounded-md hover:bg-accent"
+                  disabled={creating}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 flex items-center gap-2"
+                  disabled={creating}
+                >
+                  {creating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Create Contest
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

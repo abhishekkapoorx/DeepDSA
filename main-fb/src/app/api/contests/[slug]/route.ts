@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 
 // GET /api/contests/[slug] - Get a specific contest by slug
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
@@ -23,7 +23,20 @@ export async function GET(
       );
     }
     
-    return NextResponse.json(contest);
+    // Add registration count
+    const registrationCount = contest.registrations ? contest.registrations.length : 0;
+    
+    // Check if user is registered (if auth provided)
+    const { userId } = await auth();
+    const isRegistered = userId && contest.registrations 
+      ? contest.registrations.some((reg: any) => reg.clerkId === userId)
+      : false;
+    
+    return NextResponse.json({
+      ...contest,
+      registrationCount,
+      isRegistered
+    });
   } catch (error) {
     console.error('Error fetching contest:', error);
     return NextResponse.json(
