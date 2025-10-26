@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import type { IContest } from '@/models'
 import { Search, Filter, Plus, Eye, Edit, Trash2, Users, Calendar, Trophy, MoreHorizontal, Download, Upload } from 'lucide-react'
+import ContestTemplates from '@/components/admin/ContestTemplates'
 
 const AdminContestsPage = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'contests' | 'templates'>('overview')
@@ -540,10 +541,12 @@ const AdminContestsPage = () => {
 
         {/* Templates Tab */}
         {activeTab === 'templates' && (
-          <div className="text-center text-muted-foreground py-12">
-            <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">Contest Templates</h3>
-            <p>Coming soon! Save and reuse contest configurations.</p>
+          <div className="space-y-6">
+            <ContestTemplates onApplyTemplate={() => {
+              // Refresh contests after applying template
+              fetchContests()
+              setActiveTab('contests')
+            }} />
           </div>
         )}
       </div>

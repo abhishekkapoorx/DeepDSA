@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -23,7 +23,8 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
-    const editorial = await Editorial.findById(params.id)
+    const { id } = await params
+    const editorial = await Editorial.findById(id)
       .populate('problemId', 'title slug questionNumber difficulty')
       .lean()
 
@@ -40,7 +41,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -66,8 +67,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    const { id } = await params
     const editorial = await Editorial.findByIdAndUpdate(
-      params.id,
+      id,
       {
         title,
         overview,
@@ -92,7 +94,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -110,7 +112,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
-    const editorial = await Editorial.findByIdAndDelete(params.id)
+    const { id } = await params
+    const editorial = await Editorial.findByIdAndDelete(id)
 
     if (!editorial) {
       return NextResponse.json({ error: 'Editorial not found' }, { status: 404 })

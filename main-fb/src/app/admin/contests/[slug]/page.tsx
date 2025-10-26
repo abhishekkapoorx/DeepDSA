@@ -2,7 +2,11 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import type { IContest } from '@/models'
-import { ArrowLeft, Edit, Save, X, Plus, Trash2, Users, Trophy, Calendar, Settings, BarChart3, Download } from 'lucide-react'
+import { ArrowLeft, Edit, Save, X, Plus, Trash2, Users, Trophy, Calendar, Settings, BarChart3, Download, BookOpen, Copy, AlertTriangle } from 'lucide-react'
+import DragDropProblemList from '@/components/admin/DragDropProblemList'
+import ProblemSearchModal from '@/components/admin/ProblemSearchModal'
+import ContestAnalytics from '@/components/admin/ContestAnalytics'
+import BulkParticipantManager from '@/components/admin/BulkParticipantManager'
 
 const ContestDetailManagement = () => {
   const params = useParams()
@@ -11,9 +15,11 @@ const ContestDetailManagement = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState<'overview' | 'problems' | 'participants' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'problems' | 'participants' | 'analytics' | 'settings'>('overview')
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState<any>({})
+  const [showProblemModal, setShowProblemModal] = useState(false)
+  const [editingProblem, setEditingProblem] = useState<{slug: string, points: number} | null>(null)
 
   useEffect(() => {
     if (slug) {
@@ -63,18 +69,12 @@ const ContestDetailManagement = () => {
     setIsEditing(false)
   }
 
-  const handleAddProblem = async () => {
-    const problemSlug = prompt('Enter problem slug to add:')
-    if (!problemSlug) return
-    
-    const points = prompt('Enter points for this problem (default: 100):')
-    const pointsValue = points ? parseInt(points) : 100
-    
+  const handleAddProblem = async (problemSlug: string, points: number) => {
     try {
       const response = await fetch(`/api/admin/contests/${contest.slug}/problems`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemSlug, points: pointsValue })
+        body: JSON.stringify({ problemSlug, points })
       })
       
       if (!response.ok) {
@@ -86,6 +86,46 @@ const ContestDetailManagement = () => {
       fetchContestDetails()
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Failed to add problem')
+    }
+  }
+
+  const handleReorderProblems = async (reorderedProblems: any[]) => {
+    try {
+      const response = await fetch(`/api/admin/contests/${contest.slug}/problems/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problems: reorderedProblems })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to reorder problems')
+      }
+      
+      setMessage('Problems reordered successfully')
+      fetchContestDetails()
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to reorder problems')
+    }
+  }
+
+  const handleEditProblemPoints = async (problemSlug: string, points: number) => {
+    try {
+      const response = await fetch(`/api/admin/contests/${contest.slug}/problems`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemSlug, points })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update problem')
+      }
+      
+      setMessage('Problem updated successfully')
+      fetchContestDetails()
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to update problem')
     }
   }
 
@@ -133,17 +173,44 @@ const ContestDetailManagement = () => {
     }
   }
 
-  const exportParticipants = () => {
+  const handleBulkRemoveParticipants = async (clerkIds: string[]) => {
+    if (!confirm(`Are you sure you want to remove ${clerkIds.length} participant(s)?`)) return
+    
+    try {
+      const response = await fetch(`/api/admin/contests/${contest.slug}/participants/bulk`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clerkIds })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to remove participants')
+      }
+      
+      const data = await response.json()
+      setMessage(data.message)
+      fetchContestDetails()
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to remove participants')
+    }
+  }
+
+  const handleExportParticipants = (clerkIds?: string[]) => {
     if (!contest) return
     
+    const participantsToExport = clerkIds 
+      ? contest.registrations.filter(reg => clerkIds.includes(reg.clerkId))
+      : contest.registrations
+    
     const csvContent = [
-      ['Name', 'Email', 'Registration Date', 'Score', 'Problems Solved'],
-      ...contest.registrations.map(reg => [
-        reg.clerkId, // TODO: Get actual user name
-        '', // TODO: Get actual user email
-        new Date(reg.registeredAt).toLocaleDateString(),
+      ['User ID', 'Registration Date', 'Score', 'Problems Solved', 'Total Time'],
+      ...participantsToExport.map(reg => [
+        reg.clerkId,
+        new Date(reg.registeredAt).toLocaleString(),
         reg.score || 0,
-        reg.problemsSolved || 0
+        reg.problemsSolved || 0,
+        reg.totalTime || 0
       ])
     ].map(row => row.join(',')).join('\n')
     
@@ -151,9 +218,123 @@ const ContestDetailManagement = () => {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${contest.slug}-participants.csv`
+    a.download = `${contest.slug}-participants${clerkIds ? '-selected' : ''}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
+    
+    setMessage(`Exported ${participantsToExport.length} participant(s)`)
+  }
+
+  const handleSaveAsTemplate = async () => {
+    const name = prompt('Template name:', `${contest.title} Template`)
+    if (!name) return
+
+    const description = prompt('Template description:', contest.description)
+    if (!description) return
+
+    const category = prompt('Category (beginner/intermediate/advanced/custom):', 'custom')
+    if (!category) return
+
+    const isPublic = confirm('Make this template public?')
+
+    try {
+      const response = await fetch(`/api/admin/contests/${contest.slug}/save-as-template`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description,
+          category,
+          difficulty: contest.difficulty,
+          isPublic,
+          tags: contest.tags
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to save template')
+      }
+
+      setMessage('Template saved successfully!')
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to save template')
+    }
+  }
+
+  const handleCloneContest = async () => {
+    const title = prompt('Enter new contest title:', `${contest.title} (Copy)`)
+    if (!title) return
+
+    const description = prompt('Enter contest description:', contest.description)
+    if (!description) return
+
+    const startTime = prompt('Enter start time (YYYY-MM-DDTHH:MM):', new Date().toISOString().slice(0, 16))
+    if (!startTime) return
+
+    const endTime = prompt('Enter end time (YYYY-MM-DDTHH:MM):', new Date(Date.now() + contest.duration * 60000).toISOString().slice(0, 16))
+    if (!endTime) return
+
+    const maxParticipants = prompt('Max participants (leave empty for no limit):', contest.maxParticipants?.toString() || '')
+
+    try {
+      const response = await fetch(`/api/admin/contests/${contest.slug}/clone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          startTime,
+          endTime,
+          maxParticipants: maxParticipants ? parseInt(maxParticipants) : undefined
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to clone contest')
+      }
+
+      const data = await response.json()
+      setMessage('Contest cloned successfully!')
+      
+      // Redirect to the new contest after a short delay
+      setTimeout(() => {
+        window.location.href = `/admin/contests/${data.contest.slug}`
+      }, 2000)
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to clone contest')
+    }
+  }
+
+  const handlePermanentDelete = async () => {
+    const confirmMessage = `Are you sure you want to PERMANENTLY DELETE "${contest.title}"?\n\nThis action cannot be undone and will:\n- Delete all contest data\n- Remove all problems and settings\n- Cannot be recovered\n\nType "DELETE" to confirm:`
+    
+    const confirmation = prompt(confirmMessage)
+    if (confirmation !== 'DELETE') {
+      setMessage('Permanent deletion cancelled')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/admin/contests/${contest.slug}/permanent-delete`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to permanently delete contest')
+      }
+
+      setMessage('Contest permanently deleted successfully!')
+      
+      // Redirect to contests list after a short delay
+      setTimeout(() => {
+        window.location.href = '/admin/contests'
+      }, 2000)
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to permanently delete contest')
+    }
   }
 
   if (loading) {
@@ -200,6 +381,20 @@ const ContestDetailManagement = () => {
             </div>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={handleSaveAsTemplate}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+            >
+              <BookOpen className="w-4 h-4" />
+              Save as Template
+            </button>
+            <button
+              onClick={handleCloneContest}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
+            >
+              <Copy className="w-4 h-4" />
+              Clone Contest
+            </button>
             {isEditing ? (
               <>
                 <button
@@ -283,6 +478,12 @@ const ContestDetailManagement = () => {
             className={`px-4 py-2 rounded-md border ${activeTab === 'participants' ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-accent'}`}
           >
             Participants
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-4 py-2 rounded-md border ${activeTab === 'analytics' ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-accent'}`}
+          >
+            Analytics
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -408,7 +609,7 @@ const ContestDetailManagement = () => {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-foreground">Contest Problems</h3>
               <button
-                onClick={handleAddProblem}
+                onClick={() => setShowProblemModal(true)}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -416,53 +617,35 @@ const ContestDetailManagement = () => {
               </button>
             </div>
             
-            <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="bg-card border border-border rounded-lg p-6">
               {contest.problems.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <p>No problems added to this contest yet.</p>
+                  <p className="text-sm mt-1">Click "Add Problem" to get started.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-accent">
-                      <tr>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Order</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Title</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Points</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Difficulty</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {contest.problems.map((problem, i) => (
-                        <tr key={problem.problemSlug} className="border-t border-border">
-                          <td className="p-4 text-muted-foreground">{problem.order}</td>
-                          <td className="p-4">
-                            <div className="font-medium text-foreground">
-                              {(problem.problemId as any)?.title || `Problem ${i + 1}`}
-                            </div>
-                            <div className="text-sm text-muted-foreground">{problem.problemSlug}</div>
-                          </td>
-                          <td className="p-4 text-muted-foreground">{problem.points}</td>
-                          <td className="p-4 text-muted-foreground">
-                            {(problem.problemId as any)?.difficulty || 'Mixed'}
-                          </td>
-                          <td className="p-4">
-                            <button
-                              onClick={() => handleRemoveProblem(problem.problemSlug)}
-                              className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <DragDropProblemList
+                  problems={contest.problems}
+                  onReorder={handleReorderProblems}
+                  onEdit={(problemSlug, points) => {
+                    const newPoints = prompt(`Enter new points for this problem (current: ${points}):`, points.toString())
+                    if (newPoints && !isNaN(parseInt(newPoints))) {
+                      handleEditProblemPoints(problemSlug, parseInt(newPoints))
+                    }
+                  }}
+                  onRemove={handleRemoveProblem}
+                />
               )}
             </div>
+
+            {/* Problem Search Modal */}
+            <ProblemSearchModal
+              isOpen={showProblemModal}
+              onClose={() => setShowProblemModal(false)}
+              onAddProblem={handleAddProblem}
+              existingProblems={contest.problems.map(p => p.problemSlug)}
+            />
           </div>
         )}
 
@@ -472,58 +655,37 @@ const ContestDetailManagement = () => {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-foreground">Contest Participants</h3>
               <button
-                onClick={exportParticipants}
+                onClick={() => handleExportParticipants()}
                 className="px-4 py-2 border border-border rounded-md hover:bg-accent flex items-center gap-2"
               >
                 <Download className="w-4 h-4" />
-                Export CSV
+                Export All
               </button>
             </div>
             
-            <div className="bg-card border border-border rounded-lg overflow-hidden">
-              {contest.registrations.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p>No participants registered yet.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-accent">
-                      <tr>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">User ID</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Registration Date</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Score</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Problems Solved</th>
-                        <th className="text-left p-4 text-sm font-medium text-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {contest.registrations.map((registration, i) => (
-                        <tr key={registration.clerkId} className="border-t border-border">
-                          <td className="p-4">
-                            <div className="font-medium text-foreground">{registration.clerkId}</div>
-                          </td>
-                          <td className="p-4 text-muted-foreground">
-                            {new Date(registration.registeredAt).toLocaleString()}
-                          </td>
-                          <td className="p-4 text-muted-foreground">{registration.score || 0}</td>
-                          <td className="p-4 text-muted-foreground">{registration.problemsSolved || 0}</td>
-                          <td className="p-4">
-                            <button
-                              onClick={() => handleRemoveParticipant(registration.clerkId)}
-                              className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            <BulkParticipantManager
+              participants={contest.registrations}
+              onRemoveParticipants={handleBulkRemoveParticipants}
+              onExportParticipants={handleExportParticipants}
+            />
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-foreground">Contest Analytics</h3>
+              <button
+                onClick={fetchContestDetails}
+                className="px-4 py-2 border border-border rounded-md hover:bg-accent flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Refresh
+              </button>
             </div>
+            
+            <ContestAnalytics contestSlug={contest.slug} />
           </div>
         )}
 
@@ -606,6 +768,41 @@ const ContestDetailManagement = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Published</label>
                   <p className="text-muted-foreground">{contest.isPublished ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <h4 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Danger Zone
+              </h4>
+              <p className="text-red-700 mb-4">
+                These actions are irreversible. Please be careful.
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 bg-white border border-red-200 rounded-md">
+                  <div>
+                    <h5 className="font-medium text-red-800">Permanently Delete Contest</h5>
+                    <p className="text-sm text-red-600">
+                      This will permanently delete the contest and all its data. This action cannot be undone.
+                    </p>
+                    {contest.registrations.length > 0 && (
+                      <p className="text-sm text-red-600 mt-1">
+                        ⚠️ Contest has {contest.registrations.length} participants. Remove all participants first.
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handlePermanentDelete}
+                    disabled={contest.registrations.length > 0}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Forever
+                  </button>
                 </div>
               </div>
             </div>
