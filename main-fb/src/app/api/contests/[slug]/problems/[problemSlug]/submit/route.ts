@@ -73,7 +73,7 @@ export async function POST(
     await submission.save()
 
     // Calculate score based on test cases passed
-    const totalTests = problem.testcases?.length || 0
+    const totalTests = (problem as any).testcases?.length || 0
     const passedTests = submitData.data?.results?.filter((r: any) => r.passed).length || 0
     const score = totalTests > 0 ? Math.floor((passedTests / totalTests) * contestProblem.points) : 0
 

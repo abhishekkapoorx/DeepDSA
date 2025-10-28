@@ -24,12 +24,13 @@ export async function GET(
     }
     
     // Add registration count
-    const registrationCount = contest.registrations ? contest.registrations.length : 0;
+    const contestWithRegistrations = contest as any;
+    const registrationCount = contestWithRegistrations.registrations ? contestWithRegistrations.registrations.length : 0;
     
     // Check if user is registered (if auth provided)
     const { userId } = await auth();
-    const isRegistered = userId && contest.registrations 
-      ? contest.registrations.some((reg: any) => reg.clerkId === userId)
+    const isRegistered = userId && contestWithRegistrations.registrations 
+      ? contestWithRegistrations.registrations.some((reg: any) => reg.clerkId === userId)
       : false;
     
     return NextResponse.json({
