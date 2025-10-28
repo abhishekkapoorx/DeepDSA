@@ -12,6 +12,10 @@ interface ProblemContextType {
   setExecutionTime: (duration: number) => void;
   handleRun: () => void;
   handleSubmit: () => void;
+  acceptedSubmission: any;
+  setAcceptedSubmission: (submission: any) => void;
+  addAcceptedTab: (() => void) | null;
+  setAddAcceptedTab: (callback: (() => void) | null) => void;
 }
 
 const ProblemContext = createContext<ProblemContextType | undefined>(undefined);
@@ -21,6 +25,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [executionTime, setExecutionTime] = useState(0);
+  const [acceptedSubmission, setAcceptedSubmission] = useState<any>(null);
+  const [addAcceptedTab, setAddAcceptedTab] = useState<(() => void) | null>(null);
 
   const handleRun = () => {
     if (codeEditorRef.current) {
@@ -44,6 +50,10 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     setExecutionTime,
     handleRun,
     handleSubmit,
+    acceptedSubmission,
+    setAcceptedSubmission,
+    addAcceptedTab,
+    setAddAcceptedTab,
   };
 
   return (

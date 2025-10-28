@@ -9,6 +9,7 @@ import { Submissions } from "@/components/submissions";
 import { AIInterview } from "@/components/problems/AIInterview";
 import { CodeVisualization } from "@/components/problems/CodeVisualization";
 import { TestResults } from "@/components/problems/TestResults";
+import { Accepted } from "@/components/problems/Accepted";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { desktopLayoutConfig, mobileLayoutConfig } from "@/config/layoutConfigs";
 import { useParams } from "next/navigation";
@@ -34,7 +35,10 @@ export default function ProblemDetailPage() {
     codeEditorRef, 
     setIsRunning, 
     setIsSubmitting, 
-    setExecutionTime 
+    setExecutionTime,
+    acceptedSubmission,
+    setAcceptedSubmission,
+    setAddAcceptedTab
   } = useProblem();
   
   const [problem, setProblem] = useState<Problem | null>(null);
@@ -45,6 +49,7 @@ export default function ProblemDetailPage() {
   const [currentCode, setCurrentCode] = useState<string>('');
   const [currentLanguage, setCurrentLanguage] = useState<string>('java');
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [layoutModelRef, setLayoutModelRef] = useState<FlexLayout.Model | null>(null);
 
   // Fetch problem data by slug
   useEffect(() => {
@@ -108,6 +113,27 @@ export default function ProblemDetailPage() {
       setExecutionTime(duration);
       setStartTime(null);
     }
+
+    // Always update the persistent My Submission tab with latest status
+    const submissionData = {
+      _id: results.submissionId || 'unknown',
+      status: results.summary?.passed === results.summary?.total ? 'Accepted' : 'Submitted',
+      testsPassed: results.summary?.passed ?? 0,
+      totalTests: results.summary?.total ?? 0,
+      createdAt: new Date().toISOString(),
+      language: results.language,
+      runtime: results.results?.reduce((sum: number, r: any) => sum + (r.runtime || 0), 0) || 0,
+      memory: results.results?.reduce((sum: number, r: any) => sum + (r.memory || 0), 0) || 0,
+    };
+    setAcceptedSubmission(submissionData);
+    
+    // Auto-select My Submission tab on submit
+    if (layoutModelRef) {
+      const acceptedNode = layoutModelRef.getNodeById('accepted');
+      if (acceptedNode) {
+        layoutModelRef.doAction(FlexLayout.Actions.selectTab('accepted'));
+      }
+    }
   };
 
   // Handle run/submit start
@@ -130,11 +156,46 @@ export default function ProblemDetailPage() {
   // Create the layout model with useMemo to ensure it updates when isMobile changes
   const layoutModel = useMemo(() => {
     const config = isMobile ? mobileLayoutConfig : desktopLayoutConfig;
-    return FlexLayout.Model.fromJson(config);
+    const model = FlexLayout.Model.fromJson(config);
+    
+    // Ensure persistent "My Submission" tab exists beside Description
+    const descriptionNode = model.getNodeById('description') as FlexLayout.TabNode | undefined;
+    const parentTabset = descriptionNode?.getParent() as FlexLayout.TabSetNode | undefined;
+    if (descriptionNode && parentTabset) {
+      const children = parentTabset.getChildren();
+      const existing = children.find((n) => n.getId() === 'accepted');
+      if (!existing) {
+        const descIndex = children.findIndex((n) => n.getId() === 'description');
+        const addedTab = model.doAction(
+          FlexLayout.Actions.addNode(
+            {
+              type: 'tab',
+              name: 'My Submission',
+              component: 'accepted',
+              id: 'accepted',
+              enableClose: true,
+            },
+            parentTabset.getId(),
+            FlexLayout.DockLocation.CENTER,
+            Math.max(0, descIndex + 1)
+          )
+        );
+        // Ensure Description tab stays selected
+        model.doAction(FlexLayout.Actions.selectTab('description'));
+      }
+    }
+    
+    // Store reference to layout model for later actions
+    setLayoutModelRef(model);
+    // no-op
+    
+    return model;
   }, [isMobile]);
 
   const factory = (node: FlexLayout.TabNode) => {
     const component = node.getComponent();
+    
+    console.log('[Factory] Rendering component:', component, 'for tab:', node.getId());
 
     if (loading) {
       return <div className="flex items-center justify-center h-full">Loading...</div>;
@@ -172,6 +233,9 @@ export default function ProblemDetailPage() {
         return <Solutions />;
       case "submissions":
         return <Submissions />;
+      case "accepted":
+        console.log('[Factory] Rendering Accepted component with submission:', acceptedSubmission);
+        return <Accepted submission={acceptedSubmission} />;
       case "ai-interview":
         return (
           <AIInterview 
@@ -235,6 +299,10 @@ export default function ProblemDetailPage() {
         model={layoutModel}
         factory={factory}
         onRenderTabSet={onRenderTabSet}
+        onModelChange={() => {
+          // This callback is called when the layout changes
+          // We can use it to sync the model state if needed
+        }}
       />
     </div>
   );
