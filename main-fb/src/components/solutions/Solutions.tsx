@@ -102,7 +102,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ problemSlug }) => {
 
       const response = await fetch(`/api/solutions?${params}`);
       const data = await response.json();
-      
+      console.log(data);
       if (!response.ok) {
         throw new Error(data?.error || 'Failed to fetch solutions');
       }

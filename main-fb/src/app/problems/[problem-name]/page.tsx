@@ -230,7 +230,7 @@ export default function ProblemDetailPage() {
       case "editorial":
         return <Editorial problemTitle={problem.title} editorial={editorial} />;
       case "solutions":
-        return <Solutions />;
+        return <Solutions problemSlug={slug} />;
       case "submissions":
         return <Submissions />;
       case "accepted":

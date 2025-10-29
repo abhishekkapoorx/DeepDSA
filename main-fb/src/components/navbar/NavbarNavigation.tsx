@@ -11,7 +11,7 @@ export const NavbarNavigation: React.FC = () => {
     { href: '/problems', label: 'Problems' },
     { href: '/contests', label: 'Contest' },
     { href: '/discuss', label: 'Discuss' },
-    { href: '/interview', label: 'Interview' },
+    { href: '/interviews', label: 'Interview' },
     { href: '/premium', label: 'Premium' },
   ]
 
