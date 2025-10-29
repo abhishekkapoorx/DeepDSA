@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 
     const [items, total] = await Promise.all([
       Interview.find({ clerkId: userId })
-        .select('startedAt endedAt problemSlug score dailySequence createdAt')
+        .select('startedAt endedAt problemSlug score dailySequence createdAt scoreBreakdown suggestions improvements mistakes summary')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

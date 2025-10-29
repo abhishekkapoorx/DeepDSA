@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Search, Edit, Trash2, Eye } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, Upload } from 'lucide-react'
 
 interface Problem {
   _id: string
@@ -192,12 +192,20 @@ const ProblemsPage = () => {
               <h1 className="text-3xl font-bold text-foreground">Manage Problems</h1>
               <p className="text-muted-foreground mt-2">View and manage all coding problems</p>
             </div>
-            <Link href="/admin/problems/create">
-              <button className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Problem
-              </button>
-            </Link>
+            <div className="flex gap-3">
+              <Link href="/admin/import">
+                <button className="inline-flex items-center px-4 py-2 border border-border bg-background text-foreground rounded-md hover:bg-muted">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Problems
+                </button>
+              </Link>
+              <Link href="/admin/problems/create">
+                <button className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Problem
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
 

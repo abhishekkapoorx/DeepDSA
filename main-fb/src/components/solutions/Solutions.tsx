@@ -101,14 +101,15 @@ export const Solutions: React.FC<SolutionsProps> = ({ problemSlug }) => {
       }
 
       const response = await fetch(`/api/solutions?${params}`);
-      const data: SolutionsResponse = await response.json();
-
+      const data = await response.json();
+      console.log(data);
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch solutions');
+        throw new Error(data?.error || 'Failed to fetch solutions');
       }
+      const typed: SolutionsResponse = data;
 
-      setSolutions(data.solutions);
-      setPagination(data.pagination);
+      setSolutions(typed.solutions);
+      setPagination(typed.pagination);
 
     } catch (err) {
       console.error('Error fetching solutions:', err);
@@ -121,6 +122,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ problemSlug }) => {
   useEffect(() => {
     fetchSolutions();
   }, [problemSlug, languageFilter, sortBy, pagination.page]);
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,6 +139,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ problemSlug }) => {
     setSortBy(value);
     setPagination(prev => ({ ...prev, page: 1 }));
   };
+
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -225,6 +228,7 @@ export const Solutions: React.FC<SolutionsProps> = ({ problemSlug }) => {
             </div>
           </div>
         </div>
+
 
         {/* Error State */}
         {error && (

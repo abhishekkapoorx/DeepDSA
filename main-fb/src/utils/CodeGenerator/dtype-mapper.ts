@@ -20,6 +20,13 @@ export type JavaStyleType =
   | 'char[]' 
   | 'boolean[]' 
   | 'String[]'
+  // Multi-dimensional arrays
+  | 'int[][]'
+  | 'long[][]'
+  | 'double[][]'
+  | 'String[][]'
+  | 'number[][]'
+  // List types
   | 'List<Integer>'
   | 'List<Long>'
   | 'List<Float>'
@@ -146,6 +153,38 @@ const TYPE_MAPPINGS: Record<JavaStyleType, TypeMapping> = {
     java: 'String[]',
     python: 'List[str]',
     javascript: 'string[]'
+  },
+
+  // Multi-dimensional arrays
+  'int[][]': {
+    cpp: 'vector<vector<int>>',
+    java: 'int[][]',
+    python: 'List[List[int]]',
+    javascript: 'number[][]'
+  },
+  'long[][]': {
+    cpp: 'vector<vector<long long>>',
+    java: 'long[][]',
+    python: 'List[List[int]]',
+    javascript: 'number[][]'
+  },
+  'double[][]': {
+    cpp: 'vector<vector<double>>',
+    java: 'double[][]',
+    python: 'List[List[float]]',
+    javascript: 'number[][]'
+  },
+  'String[][]': {
+    cpp: 'vector<vector<string>>',
+    java: 'String[][]',
+    python: 'List[List[str]]',
+    javascript: 'string[][]'
+  },
+  'number[][]': {
+    cpp: 'vector<vector<int>>',
+    java: 'List<List<Integer>>',
+    python: 'List[List[int]]',
+    javascript: 'number[][]'
   },
 
   // List types

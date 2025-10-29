@@ -1,0 +1,1706 @@
+[
+    {
+        "title": "Best Time to Buy and Sell Stock",
+        "description": "You are given an array prices where prices[i] is the price of a given stock on the ith day.\n\nYou want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.\n\nReturn the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.",
+        "difficulty": "EASY",
+        "tags": [
+            "array",
+            "dynamic-programming"
+        ],
+        "starterCode": "function maxProfit(prices) {\n  // Your code here\n  return 0;\n}",
+        "functionName": "maxProfit",
+        "hints": [
+            "Keep track of the minimum price seen so far",
+            "For each price, calculate potential profit if sold at current price",
+            "Track the maximum profit throughout the iteration"
+        ],
+        "inputVariables": [
+            {
+                "name": "prices",
+                "type": "number[]",
+                "description": "Array of stock prices"
+            }
+        ],
+        "outputVariable": {
+            "type": "number",
+            "description": "Maximum profit achievable"
+        },
+        "companyTags": [
+            "Amazon",
+            "Microsoft",
+            "Facebook",
+            "Bloomberg"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Standard case with profit",
+                "input": "[7,1,5,3,6,4]",
+                "output": "5",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "No profit possible",
+                "input": "[7,6,4,3,1]",
+                "output": "0",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Single element",
+                "input": "[5]",
+                "output": "0",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Two elements with profit",
+                "input": "[1,2]",
+                "output": "1",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "All same prices",
+                "input": "[5,5,5,5,5]",
+                "output": "0",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Large profit at end",
+                "input": "[2,4,1,7,5,11]",
+                "output": "10",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Find First and Last Position in Sorted Array",
+        "description": "Given an array of integers nums sorted in non-decreasing order, find the starting and ending position of a given target value.\n\nIf target is not found in the array, return [-1, -1].\n\nYou must write an algorithm with O(log n) runtime complexity.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "binary-search"
+        ],
+        "starterCode": "function searchRange(nums, target) {\n  // Your code here\n  return [-1, -1];\n}",
+        "functionName": "searchRange",
+        "hints": [
+            "Use binary search twice - once to find the leftmost position, once for rightmost",
+            "Modify binary search to continue searching even after finding target",
+            "For leftmost: if nums[mid] >= target, search left; for rightmost: if nums[mid] <= target, search right"
+        ],
+        "inputVariables": [
+            {
+                "name": "nums",
+                "type": "number[]",
+                "description": "Sorted array of integers"
+            },
+            {
+                "name": "target",
+                "type": "number",
+                "description": "Target value to find"
+            }
+        ],
+        "outputVariable": {
+            "type": "number[]",
+            "description": "Array containing [start, end] positions"
+        },
+        "companyTags": [
+            "Facebook",
+            "Amazon",
+            "Google",
+            "LinkedIn"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Multiple occurrences",
+                "input": "[5,7,7,8,8,10]\n8",
+                "output": "[3,4]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Target not found",
+                "input": "[5,7,7,8,8,10]\n6",
+                "output": "[-1,-1]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Empty array",
+                "input": "[]\n0",
+                "output": "[-1,-1]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Single occurrence",
+                "input": "[1,2,3,4,5]\n3",
+                "output": "[2,2]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "All elements same as target",
+                "input": "[2,2,2,2,2]\n2",
+                "output": "[0,4]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Target at boundaries",
+                "input": "[1,1,2,3,4,4]\n1",
+                "output": "[0,1]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Single element array - match",
+                "input": "[1]\n1",
+                "output": "[0,0]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Climbing Stairs",
+        "description": "You are climbing a staircase. It takes n steps to reach the top.\n\nEach time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?",
+        "difficulty": "EASY",
+        "tags": [
+            "math",
+            "dynamic-programming",
+            "memoization"
+        ],
+        "starterCode": "function climbStairs(n) {\n  // Your code here\n  return 0;\n}",
+        "functionName": "climbStairs",
+        "hints": [
+            "This is a Fibonacci sequence problem",
+            "Number of ways to reach step n = ways to reach (n-1) + ways to reach (n-2)",
+            "Can be solved with dynamic programming or space-optimized approach"
+        ],
+        "inputVariables": [
+            {
+                "name": "n",
+                "type": "number",
+                "description": "Number of steps"
+            }
+        ],
+        "outputVariable": {
+            "type": "number",
+            "description": "Number of distinct ways to climb"
+        },
+        "companyTags": [
+            "Amazon",
+            "Google",
+            "Adobe",
+            "Apple"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Two steps",
+                "input": "2",
+                "output": "2",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Three steps",
+                "input": "3",
+                "output": "3",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Single step",
+                "input": "1",
+                "output": "1",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Five steps",
+                "input": "5",
+                "output": "8",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Ten steps",
+                "input": "10",
+                "output": "89",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Large input",
+                "input": "20",
+                "output": "10946",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Product of Array Except Self",
+        "description": "Given an integer array nums, return an array answer such that answer[i] is equal to the product of all the elements of nums except nums[i].\n\nThe product of any prefix or suffix of nums is guaranteed to fit in a 32-bit integer.\n\nYou must write an algorithm that runs in O(n) time and without using the division operation.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "prefix-sum"
+        ],
+        "starterCode": "function productExceptSelf(nums) {\n  // Your code here\n  return [];\n}",
+        "functionName": "productExceptSelf",
+        "hints": [
+            "Use left and right product arrays",
+            "Left product at index i = product of all elements to the left of i",
+            "Right product at index i = product of all elements to the right of i",
+            "Result[i] = leftProduct[i] * rightProduct[i]"
+        ],
+        "inputVariables": [
+            {
+                "name": "nums",
+                "type": "number[]",
+                "description": "Array of integers"
+            }
+        ],
+        "outputVariable": {
+            "type": "number[]",
+            "description": "Array of products"
+        },
+        "companyTags": [
+            "Amazon",
+            "Microsoft",
+            "Facebook",
+            "Apple"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Standard case",
+                "input": "[1,2,3,4]",
+                "output": "[24,12,8,6]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Array with zeros",
+                "input": "[-1,1,0,-3,3]",
+                "output": "[0,0,9,0,0]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Two elements",
+                "input": "[1,2]",
+                "output": "[2,1]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "All ones",
+                "input": "[1,1,1,1]",
+                "output": "[1,1,1,1]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "With negative numbers",
+                "input": "[-1,-2,-3,-4]",
+                "output": "[-24,-12,-8,-6]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Single zero",
+                "input": "[0,1,2,3]",
+                "output": "[6,0,0,0]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Multiple zeros",
+                "input": "[0,0,1,2]",
+                "output": "[0,0,0,0]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Rotate Image",
+        "description": "You are given an n x n 2D matrix representing an image, rotate the image by 90 degrees (clockwise).\n\nYou have to rotate the image in-place, which means you have to modify the input 2D matrix directly. DO NOT allocate another 2D matrix and do the rotation.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "math",
+            "matrix"
+        ],
+        "starterCode": "function rotate(matrix) {\n  // Your code here\n  // Modify matrix in-place\n}",
+        "functionName": "rotate",
+        "hints": [
+            "Transpose the matrix (swap matrix[i][j] with matrix[j][i])",
+            "Then reverse each row",
+            "Can also rotate layer by layer from outside to inside"
+        ],
+        "inputVariables": [
+            {
+                "name": "matrix",
+                "type": "number[][]",
+                "description": "n x n 2D matrix"
+            }
+        ],
+        "outputVariable": {
+            "type": "void",
+            "description": "Matrix is modified in-place"
+        },
+        "companyTags": [
+            "Amazon",
+            "Microsoft",
+            "Apple",
+            "Facebook"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "3x3 matrix",
+                "input": "[[1,2,3],[4,5,6],[7,8,9]]",
+                "output": "[[7,4,1],[8,5,2],[9,6,3]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "4x4 matrix",
+                "input": "[[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]",
+                "output": "[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "1x1 matrix",
+                "input": "[[1]]",
+                "output": "[[1]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "2x2 matrix",
+                "input": "[[1,2],[3,4]]",
+                "output": "[[3,1],[4,2]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "5x5 matrix",
+                "input": "[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19,20],[21,22,23,24,25]]",
+                "output": "[[21,16,11,6,1],[22,17,12,7,2],[23,18,13,8,3],[24,19,14,9,4],[25,20,15,10,5]]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Group Anagrams",
+        "description": "Given an array of strings strs, group the anagrams together. You can return the answer in any order.\n\nAn Anagram is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "hash-table",
+            "string",
+            "sorting"
+        ],
+        "starterCode": "function groupAnagrams(strs) {\n  // Your code here\n  return [];\n}",
+        "functionName": "groupAnagrams",
+        "hints": [
+            "Use a hash map where key is sorted string or character frequency",
+            "All anagrams will have the same sorted string as key",
+            "Group strings with the same key together"
+        ],
+        "inputVariables": [
+            {
+                "name": "strs",
+                "type": "string[]",
+                "description": "Array of strings"
+            }
+        ],
+        "outputVariable": {
+            "type": "string[][]",
+            "description": "Grouped anagrams"
+        },
+        "companyTags": [
+            "Amazon",
+            "Facebook",
+            "Bloomberg",
+            "Uber"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Multiple groups",
+                "input": "[\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]",
+                "output": "[[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Empty string",
+                "input": "[\"\"]",
+                "output": "[[\"\"]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Single character",
+                "input": "[\"a\"]",
+                "output": "[[\"a\"]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "No anagrams",
+                "input": "[\"abc\",\"def\",\"ghi\"]",
+                "output": "[[\"abc\"],[\"def\"],[\"ghi\"]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "All anagrams",
+                "input": "[\"abc\",\"bca\",\"cab\"]",
+                "output": "[[\"abc\",\"bca\",\"cab\"]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Mixed lengths",
+                "input": "[\"a\",\"b\",\"ab\",\"ba\",\"abc\",\"bca\"]",
+                "output": "[[\"a\"],[\"b\"],[\"ab\",\"ba\"],[\"abc\",\"bca\"]]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Implement Trie (Prefix Tree)",
+        "description": "A trie (pronounced as \"try\") or prefix tree is a tree data structure used to efficiently store and retrieve keys in a dataset of strings. There are various applications of this data structure, such as autocomplete and spellchecker.\n\nImplement the Trie class:\n- Trie() Initializes the trie object.\n- void insert(String word) Inserts the string word into the trie.\n- boolean search(String word) Returns true if the string word is in the trie (i.e., was inserted before), and false otherwise.\n- boolean startsWith(String prefix) Returns true if there is a previously inserted string word that has the prefix prefix, and false otherwise.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "hash-table",
+            "string",
+            "design",
+            "trie"
+        ],
+        "starterCode": "class Trie {\n  constructor() {\n    // Your code here\n  }\n\n  insert(word) {\n    // Your code here\n  }\n\n  search(word) {\n    // Your code here\n    return false;\n  }\n\n  startsWith(prefix) {\n    // Your code here\n    return false;\n  }\n}",
+        "functionName": "Trie",
+        "hints": [
+            "Use a nested object/map structure where each node contains children and an isEndOfWord flag",
+            "For insert: traverse/create nodes for each character",
+            "For search: traverse nodes and check if the last node has isEndOfWord = true",
+            "For startsWith: just check if you can traverse all characters of the prefix"
+        ],
+        "inputVariables": [
+            {
+                "name": "operations",
+                "type": "string[]",
+                "description": "Array of operations to perform"
+            },
+            {
+                "name": "arguments",
+                "type": "string[][]",
+                "description": "Arguments for each operation"
+            }
+        ],
+        "outputVariable": {
+            "type": "any[]",
+            "description": "Results of operations"
+        },
+        "companyTags": [
+            "Google",
+            "Amazon",
+            "Microsoft",
+            "Facebook"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Basic operations",
+                "input": "[\"Trie\",\"insert\",\"search\",\"search\",\"startsWith\",\"insert\",\"search\"]\n[[],[\"apple\"],[\"apple\"],[\"app\"],[\"app\"],[\"app\"],[\"app\"]]",
+                "output": "[null,null,true,false,true,null,true]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Multiple words",
+                "input": "[\"Trie\",\"insert\",\"insert\",\"search\",\"search\",\"startsWith\",\"startsWith\"]\n[[],[\"hello\"],[\"world\"],[\"hello\"],[\"hell\"],[\"hel\"],[\"wor\"]]",
+                "output": "[null,null,null,true,false,true,true]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Overlapping prefixes",
+                "input": "[\"Trie\",\"insert\",\"insert\",\"search\",\"search\",\"search\"]\n[[],[\"app\"],[\"apple\"],[\"app\"],[\"apple\"],[\"appl\"]]",
+                "output": "[null,null,null,true,true,false]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Empty prefix",
+                "input": "[\"Trie\",\"insert\",\"startsWith\"]\n[[],[\"test\"],[\"\"]]",
+                "output": "[null,null,true]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Single character words",
+                "input": "[\"Trie\",\"insert\",\"insert\",\"search\",\"search\",\"startsWith\"]\n[[],[\"a\"],[\"b\"],[\"a\"],[\"c\"],[\"a\"]]",
+                "output": "[null,null,null,true,false,true]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Number of Islands",
+        "description": "Given an m x n 2D binary grid grid which represents a map of '1's (land) and '0's (water), return the number of islands.\n\nAn island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically. You may assume all four edges of the grid are all surrounded by water.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "depth-first-search",
+            "breadth-first-search",
+            "union-find",
+            "matrix"
+        ],
+        "starterCode": "function numIslands(grid) {\n  // Your code here\n  return 0;\n}",
+        "functionName": "numIslands",
+        "hints": [
+            "Use DFS or BFS to explore each island",
+            "When you find a '1', increment island count and mark all connected land as visited",
+            "You can modify the grid in-place to mark visited cells"
+        ],
+        "inputVariables": [
+            {
+                "name": "grid",
+                "type": "string[][]",
+                "description": "2D grid of '1's and '0's"
+            }
+        ],
+        "outputVariable": {
+            "type": "number",
+            "description": "Number of islands"
+        },
+        "companyTags": [
+            "Amazon",
+            "Facebook",
+            "Google",
+            "Microsoft"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Single island",
+                "input": "[[\"1\",\"1\",\"1\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"0\",\"0\"]]",
+                "output": "1",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Three islands",
+                "input": "[[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"1\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"1\",\"1\"]]",
+                "output": "3",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "No islands",
+                "input": "[[\"0\",\"0\",\"0\"],[\"0\",\"0\",\"0\"]]",
+                "output": "0",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "All islands",
+                "input": "[[\"1\",\"1\",\"1\"],[\"1\",\"1\",\"1\"]]",
+                "output": "1",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Single cell island",
+                "input": "[[\"1\"]]",
+                "output": "1",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Diagonal pattern",
+                "input": "[[\"1\",\"0\",\"1\"],[\"0\",\"1\",\"0\"],[\"1\",\"0\",\"1\"]]",
+                "output": "5",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "LRU Cache",
+        "description": "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.\n\nImplement the LRUCache class:\n- LRUCache(int capacity) Initialize the LRU cache with positive size capacity.\n- int get(int key) Return the value of the key if the key exists, otherwise return -1.\n- void put(int key, int value) Update the value of the key if the key exists. Otherwise, add the key-value pair to the cache. If the number of keys exceeds the capacity from this operation, evict the least recently used key.\n\nThe functions get and put must each run in O(1) average time complexity.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "hash-table",
+            "linked-list",
+            "design"
+        ],
+        "starterCode": "class LRUCache {\n  constructor(capacity) {\n    // Your code here\n  }\n\n  get(key) {\n    // Your code here\n    return -1;\n  }\n\n  put(key, value) {\n    // Your code here\n  }\n}",
+        "functionName": "LRUCache",
+        "hints": [
+            "Use a combination of hash map and doubly linked list",
+            "Hash map provides O(1) lookup, doubly linked list maintains order",
+            "Most recently used items should be at the front, least recently used at the back",
+            "When capacity is exceeded, remove the node at the back"
+        ],
+        "inputVariables": [
+            {
+                "name": "operations",
+                "type": "string[]",
+                "description": "Array of operations"
+            },
+            {
+                "name": "arguments",
+                "type": "number[][]",
+                "description": "Arguments for each operation"
+            }
+        ],
+        "outputVariable": {
+            "type": "any[]",
+            "description": "Results of operations"
+        },
+        "companyTags": [
+            "Amazon",
+            "Microsoft",
+            "Facebook",
+            "Google"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Basic operations",
+                "input": "[\"LRUCache\",\"put\",\"put\",\"get\",\"put\",\"get\",\"put\",\"get\",\"get\",\"get\"]\n[[2],[1,1],[2,2],[1],[3,3],[2],[4,4],[1],[3],[4]]",
+                "output": "[null,null,null,1,null,-1,null,-1,3,4]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Single capacity",
+                "input": "[\"LRUCache\",\"put\",\"get\",\"put\",\"get\",\"get\"]\n[[1],[1,1],[1],[2,2],[1],[2]]",
+                "output": "[null,null,1,null,-1,2]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Update existing key",
+                "input": "[\"LRUCache\",\"put\",\"put\",\"get\",\"put\",\"get\",\"get\"]\n[[2],[1,1],[2,2],[1],[1,10],[1],[2]]",
+                "output": "[null,null,null,1,null,10,2]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Get non-existent key",
+                "input": "[\"LRUCache\",\"put\",\"get\",\"get\"]\n[[2],[1,1],[2],[1]]",
+                "output": "[null,null,-1,1]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Large capacity",
+                "input": "[\"LRUCache\",\"put\",\"put\",\"put\",\"put\",\"get\",\"get\"]\n[[3],[1,1],[2,2],[3,3],[4,4],[1],[2]]",
+                "output": "[null,null,null,null,null,1,2]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Longest Consecutive Sequence",
+        "description": "Given an unsorted array of integers nums, return the length of the longest consecutive elements sequence.\n\nYou must write an algorithm that runs in O(n) time.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "hash-table",
+            "union-find"
+        ],
+        "starterCode": "function longestConsecutive(nums) {\n  // Your code here\n  return 0;\n}",
+        "functionName": "longestConsecutive",
+        "hints": [
+            "Use a hash set",
+            "Only start counting when you find the start of a sequence (num-1 not in set)",
+            "For each sequence start, count consecutive numbers"
+        ],
+        "inputVariables": [
+            {
+                "name": "nums",
+                "type": "number[]",
+                "description": "Array of integers"
+            }
+        ],
+        "outputVariable": {
+            "type": "number",
+            "description": "Length of longest consecutive sequence"
+        },
+        "companyTags": [
+            "Google",
+            "Facebook",
+            "Amazon",
+            "LinkedIn"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Multiple sequences",
+                "input": "[100,4,200,1,3,2]",
+                "output": "4",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Duplicates",
+                "input": "[0,3,7,2,5,8,4,6,0,1]",
+                "output": "9",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Empty array",
+                "input": "[]",
+                "output": "0",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Single element",
+                "input": "[1]",
+                "output": "1",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "No consecutive",
+                "input": "[1,3,5,7,9]",
+                "output": "1",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "All consecutive",
+                "input": "[5,6,7,8,9,10]",
+                "output": "6",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 5",
+                "description": "Negative numbers",
+                "input": "[-1,-2,0,1,2,3]",
+                "output": "6",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Word Search",
+        "description": "Given an m x n grid of characters board and a string word, return true if word exists in the grid.\n\nThe word can be constructed from letters of sequentially adjacent cells, where adjacent cells are horizontally or vertically neighboring. The same letter cell may not be used more than once.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "backtracking",
+            "matrix"
+        ],
+        "starterCode": "function exist(board, word) {\n  // Your code here\n  return false;\n}",
+        "functionName": "exist",
+        "hints": [
+            "Use backtracking (DFS) to explore all possible paths",
+            "Mark visited cells temporarily and unmark when backtracking",
+            "Check bounds and character match before recursing"
+        ],
+        "inputVariables": [
+            {
+                "name": "board",
+                "type": "string[][]",
+                "description": "2D grid of characters"
+            },
+            {
+                "name": "word",
+                "type": "string",
+                "description": "Word to search for"
+            }
+        ],
+        "outputVariable": {
+            "type": "boolean",
+            "description": "True if word exists, false otherwise"
+        },
+        "companyTags": [
+            "Microsoft",
+            "Amazon",
+            "Facebook",
+            "Bloomberg"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Word exists",
+                "input": "[[\"A\",\"B\",\"C\",\"E\"],[\"S\",\"F\",\"C\",\"S\"],[\"A\",\"D\",\"E\",\"E\"]]\n\"ABCCED\"",
+                "output": "true",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Word exists with turns",
+                "input": "[[\"A\",\"B\",\"C\",\"E\"],[\"S\",\"F\",\"C\",\"S\"],[\"A\",\"D\",\"E\",\"E\"]]\n\"SEE\"",
+                "output": "true",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Word does not exist",
+                "input": "[[\"A\",\"B\",\"C\",\"E\"],[\"S\",\"F\",\"C\",\"S\"],[\"A\",\"D\",\"E\",\"E\"]]\n\"ABCB\"",
+                "output": "false",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Single character word",
+                "input": "[[\"A\",\"B\"],[\"C\",\"D\"]]\n\"A\"",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Word longer than board",
+                "input": "[[\"A\"]]\n\"AB\"",
+                "output": "false",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Complex path",
+                "input": "[[\"A\",\"B\",\"C\"],[\"D\",\"E\",\"F\"],[\"G\",\"H\",\"I\"]]\n\"ABCFIHG\"",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Palindrome Number",
+        "description": "Given an integer x, return true if x is a palindrome, and false otherwise.\n\nAn integer is a palindrome when it reads the same backward as forward.",
+        "difficulty": "EASY",
+        "tags": [
+            "math"
+        ],
+        "starterCode": "function isPalindrome(x) {\n  // Your code here\n  return false;\n}",
+        "functionName": "isPalindrome",
+        "hints": [
+            "Negative numbers are not palindromes",
+            "Can reverse the number and compare with original",
+            "Alternatively, reverse only half and compare"
+        ],
+        "inputVariables": [
+            {
+                "name": "x",
+                "type": "number",
+                "description": "Integer to check"
+            }
+        ],
+        "outputVariable": {
+            "type": "boolean",
+            "description": "True if palindrome, false otherwise"
+        },
+        "companyTags": [
+            "Amazon",
+            "Bloomberg",
+            "Adobe",
+            "Apple"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Positive palindrome",
+                "input": "121",
+                "output": "true",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Negative number",
+                "input": "-121",
+                "output": "false",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Not palindrome",
+                "input": "10",
+                "output": "false",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Single digit",
+                "input": "5",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Zero",
+                "input": "0",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Large palindrome",
+                "input": "12321",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Even length palindrome",
+                "input": "1221",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "3Sum",
+        "description": "Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.\n\nNotice that the solution set must not contain duplicate triplets.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "two-pointer",
+            "sorting"
+        ],
+        "starterCode": "function threeSum(nums) {\n  // Your code here\n  return [];\n}",
+        "functionName": "threeSum",
+        "hints": [
+            "Sort the array first",
+            "Fix one element and use two pointers for the remaining two",
+            "Skip duplicates to avoid duplicate triplets"
+        ],
+        "inputVariables": [
+            {
+                "name": "nums",
+                "type": "number[]",
+                "description": "Array of integers"
+            }
+        ],
+        "outputVariable": {
+            "type": "number[][]",
+            "description": "Array of triplets that sum to zero"
+        },
+        "companyTags": [
+            "Amazon",
+            "Facebook",
+            "Microsoft",
+            "Bloomberg"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Multiple triplets",
+                "input": "[-1,0,1,2,-1,-4]",
+                "output": "[[-1,-1,2],[-1,0,1]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Empty result",
+                "input": "[0,1,1]",
+                "output": "[]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "All zeros",
+                "input": "[0,0,0]",
+                "output": "[[0,0,0]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "No solution",
+                "input": "[1,2,3]",
+                "output": "[]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Single triplet",
+                "input": "[-2,0,1,1,2]",
+                "output": "[[-2,0,2],[-2,1,1]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Array with duplicates",
+                "input": "[-1,0,1,0]",
+                "output": "[[-1,0,1]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Small array",
+                "input": "[0,0]",
+                "output": "[]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Minimum Window Substring",
+        "description": "Given two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t (including duplicates) is included in the window. If there is no such substring, return the empty string \"\".\n\nThe testcases will be generated such that the answer is unique.",
+        "difficulty": "HARD",
+        "tags": [
+            "hash-table",
+            "string",
+            "sliding-window"
+        ],
+        "starterCode": "function minWindow(s, t) {\n  // Your code here\n  return \"\";\n}",
+        "functionName": "minWindow",
+        "hints": [
+            "Use sliding window technique with two pointers",
+            "Use hash maps to track character frequencies",
+            "Expand window until all characters are included, then shrink from left"
+        ],
+        "inputVariables": [
+            {
+                "name": "s",
+                "type": "string",
+                "description": "Source string"
+            },
+            {
+                "name": "t",
+                "type": "string",
+                "description": "Target string"
+            }
+        ],
+        "outputVariable": {
+            "type": "string",
+            "description": "Minimum window substring"
+        },
+        "companyTags": [
+            "Amazon",
+            "Facebook",
+            "LinkedIn",
+            "Uber"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Standard case",
+                "input": "\"ADOBECODEBANC\"\n\"ABC\"",
+                "output": "\"BANC\"",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Single character",
+                "input": "\"a\"\n\"a\"",
+                "output": "\"a\"",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "No solution",
+                "input": "\"a\"\n\"aa\"",
+                "output": "\"\"",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Entire string is minimum",
+                "input": "\"abc\"\n\"cba\"",
+                "output": "\"abc\"",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Duplicates in target",
+                "input": "\"aaabbbccc\"\n\"abc\"",
+                "output": "\"abbc\"",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Multiple occurrences",
+                "input": "\"abcabdebac\"\n\"cda\"",
+                "output": "\"cabd\"",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Spiral Matrix",
+        "description": "Given an m x n matrix, return all elements of the matrix in spiral order.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "matrix",
+            "simulation"
+        ],
+        "starterCode": "function spiralOrder(matrix) {\n  // Your code here\n  return [];\n}",
+        "functionName": "spiralOrder",
+        "hints": [
+            "Use four boundaries: top, bottom, left, right",
+            "Traverse right, down, left, up in order",
+            "Update boundaries after each direction",
+            "Stop when boundaries cross"
+        ],
+        "inputVariables": [
+            {
+                "name": "matrix",
+                "type": "number[][]",
+                "description": "m x n matrix"
+            }
+        ],
+        "outputVariable": {
+            "type": "number[]",
+            "description": "Elements in spiral order"
+        },
+        "companyTags": [
+            "Amazon",
+            "Microsoft",
+            "Facebook",
+            "Apple"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "3x3 matrix",
+                "input": "[[1,2,3],[4,5,6],[7,8,9]]",
+                "output": "[1,2,3,6,9,8,7,4,5]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "3x4 matrix",
+                "input": "[[1,2,3,4],[5,6,7,8],[9,10,11,12]]",
+                "output": "[1,2,3,4,8,12,11,10,9,5,6,7]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Single row",
+                "input": "[[1,2,3,4]]",
+                "output": "[1,2,3,4]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Single column",
+                "input": "[[1],[2],[3],[4]]",
+                "output": "[1,2,3,4]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Single element",
+                "input": "[[1]]",
+                "output": "[1]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "2x2 matrix",
+                "input": "[[1,2],[3,4]]",
+                "output": "[1,2,4,3]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Jump Game",
+        "description": "You are given an integer array nums. You are initially positioned at the array's first index, and each element in the array represents your maximum jump length at that position.\n\nReturn true if you can reach the last index, or false otherwise.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "dynamic-programming",
+            "greedy"
+        ],
+        "starterCode": "function canJump(nums) {\n  // Your code here\n  return false;\n}",
+        "functionName": "canJump",
+        "hints": [
+            "Use greedy approach - track the farthest position reachable",
+            "For each position, update the farthest you can reach",
+            "If current position is beyond farthest reachable, return false"
+        ],
+        "inputVariables": [
+            {
+                "name": "nums",
+                "type": "number[]",
+                "description": "Array of jump lengths"
+            }
+        ],
+        "outputVariable": {
+            "type": "boolean",
+            "description": "True if last index is reachable, false otherwise"
+        },
+        "companyTags": [
+            "Amazon",
+            "Microsoft",
+            "Goldman Sachs",
+            "Adobe"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Can reach end",
+                "input": "[2,3,1,1,4]",
+                "output": "true",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Cannot reach end",
+                "input": "[3,2,1,0,4]",
+                "output": "false",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Single element",
+                "input": "[0]",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Two elements",
+                "input": "[1,0]",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Large jump at start",
+                "input": "[5,1,1,1,1]",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Multiple zeros",
+                "input": "[2,0,0]",
+                "output": "true",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 5",
+                "description": "Blocked by zero",
+                "input": "[1,0,1,0]",
+                "output": "false",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Merge Intervals",
+        "description": "Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "sorting"
+        ],
+        "starterCode": "function merge(intervals) {\n  // Your code here\n  return [];\n}",
+        "functionName": "merge",
+        "hints": [
+            "Sort intervals by start time",
+            "Iterate through sorted intervals",
+            "If current interval overlaps with the last merged interval, merge them"
+        ],
+        "inputVariables": [
+            {
+                "name": "intervals",
+                "type": "number[][]",
+                "description": "Array of intervals [start, end]"
+            }
+        ],
+        "outputVariable": {
+            "type": "number[][]",
+            "description": "Array of merged intervals"
+        },
+        "companyTags": [
+            "Facebook",
+            "Google",
+            "Amazon",
+            "Bloomberg"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Multiple overlaps",
+                "input": "[[1,3],[2,6],[8,10],[15,18]]",
+                "output": "[[1,6],[8,10],[15,18]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Complete overlap",
+                "input": "[[1,4],[4,5]]",
+                "output": "[[1,5]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Single interval",
+                "input": "[[1,4]]",
+                "output": "[[1,4]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "No overlaps",
+                "input": "[[1,2],[3,4],[5,6]]",
+                "output": "[[1,2],[3,4],[5,6]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "All merge into one",
+                "input": "[[1,4],[2,5],[3,6]]",
+                "output": "[[1,6]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Unsorted input",
+                "input": "[[2,3],[4,5],[6,7],[8,9],[1,10]]",
+                "output": "[[1,10]]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Reverse Integer",
+        "description": "Given a signed 32-bit integer x, return x with its digits reversed. If reversing x causes the value to go outside the signed 32-bit integer range [-2^31, 2^31 - 1], then return 0.\n\nAssume the environment does not allow you to store 64-bit integers (signed or unsigned).",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "math"
+        ],
+        "starterCode": "function reverse(x) {\n  // Your code here\n  return 0;\n}",
+        "functionName": "reverse",
+        "hints": [
+            "Extract digits one by one using modulo and division",
+            "Build the reversed number incrementally",
+            "Check for overflow before adding each digit"
+        ],
+        "inputVariables": [
+            {
+                "name": "x",
+                "type": "number",
+                "description": "32-bit signed integer"
+            }
+        ],
+        "outputVariable": {
+            "type": "number",
+            "description": "Reversed integer or 0 if overflow"
+        },
+        "companyTags": [
+            "Apple",
+            "Amazon",
+            "Bloomberg",
+            "Adobe"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Positive number",
+                "input": "123",
+                "output": "321",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Negative number",
+                "input": "-123",
+                "output": "-321",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Trailing zeros",
+                "input": "120",
+                "output": "21",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Zero",
+                "input": "0",
+                "output": "0",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Single digit",
+                "input": "5",
+                "output": "5",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "Overflow case",
+                "input": "1534236469",
+                "output": "0",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 4",
+                "description": "Negative overflow",
+                "input": "-2147483648",
+                "output": "0",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Subsets",
+        "description": "Given an integer array nums of unique elements, return all possible subsets (the power set).\n\nThe solution set must not contain duplicate subsets. Return the solution in any order.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "backtracking",
+            "bit-manipulation"
+        ],
+        "starterCode": "function subsets(nums) {\n  // Your code here\n  return [];\n}",
+        "functionName": "subsets",
+        "hints": [
+            "Use backtracking to generate all combinations",
+            "For each element, you have two choices: include it or exclude it",
+            "Can also use iterative approach with bit manipulation"
+        ],
+        "inputVariables": [
+            {
+                "name": "nums",
+                "type": "number[]",
+                "description": "Array of unique integers"
+            }
+        ],
+        "outputVariable": {
+            "type": "number[][]",
+            "description": "All possible subsets"
+        },
+        "companyTags": [
+            "Facebook",
+            "Amazon",
+            "Bloomberg",
+            "Adobe"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Three elements",
+                "input": "[1,2,3]",
+                "output": "[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Single element",
+                "input": "[0]",
+                "output": "[[],[0]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Test Case 1",
+                "description": "Two elements",
+                "input": "[1,2]",
+                "output": "[[],[1],[2],[1,2]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 2",
+                "description": "Four elements",
+                "input": "[1,2,3,4]",
+                "output": "[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3],[4],[1,4],[2,4],[1,2,4],[3,4],[1,3,4],[2,3,4],[1,2,3,4]]",
+                "isExample": false,
+                "isHidden": true
+            },
+            {
+                "name": "Test Case 3",
+                "description": "With negative numbers",
+                "input": "[-1,0,1]",
+                "output": "[[],[-1],[0],[-1,0],[1],[-1,1],[0,1],[-1,0,1]]",
+                "isExample": false,
+                "isHidden": true
+            }
+        ]
+    },
+    {
+        "title": "Permutations",
+        "description": "Given an array nums of distinct integers, return all the possible permutations. You can return the answer in any order.",
+        "difficulty": "MEDIUM",
+        "tags": [
+            "array",
+            "backtracking"
+        ],
+        "starterCode": "function permute(nums) {\n  // Your code here\n  return [];\n}",
+        "functionName": "permute",
+        "hints": [
+            "Use backtracking to generate permutations",
+            "Swap elements to create different arrangements",
+            "Track which elements have been used in current permutation"
+        ],
+        "inputVariables": [
+            {
+                "name": "nums",
+                "type": "number[]",
+                "description": "Array of distinct integers"
+            }
+        ],
+        "outputVariable": {
+            "type": "number[][]",
+            "description": "All possible permutations"
+        },
+        "companyTags": [
+            "Microsoft",
+            "Amazon",
+            "LinkedIn",
+            "Apple"
+        ],
+        "testCases": [
+            {
+                "name": "Example 1",
+                "description": "Three elements",
+                "input": "[1,2,3]",
+                "output": "[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 2",
+                "description": "Two elements",
+                "input": "[0,1]",
+                "output": "[[0,1],[1,0]]",
+                "isExample": true,
+                "isHidden": false
+            },
+            {
+                "name": "Example 3",
+                "description": "Single element",
+                "input": "[1]",
+                "output": "[[1]]",
+                "isExample": true,
+                "isHidden": false
+            }
+        ]
+    }
+]

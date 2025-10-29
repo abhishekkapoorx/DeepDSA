@@ -73,22 +73,55 @@ ${inputReadingCode}
     const mappedInputs = mapInputVariables(this.inputVariables, 'java');
     const mappedOutputType = mapDataType(this.outputVariable.type as JavaStyleType, 'java');
     
-    const inputReadingCode = mappedInputs.map(input => {
+    const inputReadingCode = mappedInputs.map((input, index) => {
+      const isLastInput = index === mappedInputs.length - 1;
+      
       if (input.type.includes('[]')) {
         return `        // Read ${input.name} (${input.originalType})
-        int ${input.name}_size = scanner.nextInt();
-        ${input.type} ${input.name} = new ${input.type.replace('[]', '[').replace('[', '[')}${input.name}_size];
-        for (int i = 0; i < ${input.name}_size; i++) {
-            ${input.name}[i] = scanner.next${input.type.replace('[]', '').charAt(0).toUpperCase() + input.type.replace('[]', '').slice(1)}();
+        String ${input.name}_line = scanner.nextLine().trim();
+        // Remove brackets and split by comma
+        ${input.name}_line = ${input.name}_line.substring(1, ${input.name}_line.length() - 1);
+        String[] ${input.name}_parts = ${input.name}_line.split(",");
+        ${input.type} ${input.name} = new ${input.type.replace('[]', '[').replace('[', '[')}${input.name}_parts.length];
+        for (int i = 0; i < ${input.name}_parts.length; i++) {
+            ${input.name}[i] = Integer.parseInt(${input.name}_parts[i].trim());
         }`;
       } else if (input.type === 'String') {
         return `        String ${input.name} = scanner.nextLine();`;
       } else if (input.type === 'char') {
         return `        char ${input.name} = scanner.next().charAt(0);`;
+      } else if (input.type === 'boolean') {
+        return `        boolean ${input.name} = scanner.nextBoolean();`;
+      } else if (input.type === 'int') {
+        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
+        return `        int ${input.name} = scanner.nextInt();${consumeNewline}`;
+      } else if (input.type === 'long') {
+        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
+        return `        long ${input.name} = scanner.nextLong();${consumeNewline}`;
+      } else if (input.type === 'double') {
+        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
+        return `        double ${input.name} = scanner.nextDouble();${consumeNewline}`;
       } else {
-        return `        ${input.type} ${input.name} = scanner.next${input.type.charAt(0).toUpperCase() + input.type.slice(1)}();`;
+        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
+        return `        ${input.type} ${input.name} = scanner.nextInt();${consumeNewline}`;
       }
     }).join('\n\n');
+
+    // Helper method for formatting List<List<Integer>> output
+    const outputFormatter = this.outputVariable.type.includes('[][]') || this.outputVariable.type.includes('List') ? `
+    // Helper method to format List<List<Integer>> output without spaces
+    private static String formatListList(List<List<Integer>> list) {
+        StringBuilder sb = new StringBuilder();
+        sb.append('[');
+        for (int i = 0; i < list.size(); i++) {
+            if (i > 0) sb.append(',');
+            sb.append(list.get(i));
+        }
+        sb.append(']');
+        String result = sb.toString();
+        // Remove spaces
+        return result.replaceAll(" ", "");
+    }` : '';
 
     return `import java.util.*;
 
@@ -102,10 +135,10 @@ ${inputReadingCode}
         
         Solution solution = new Solution();
         ${mappedOutputType} result = solution.${this.functionName}(${mappedInputs.map(input => input.name).join(', ')});
-        System.out.println(result);
+        ${this.outputVariable.type.includes('List<List<Integer>>') ? 'System.out.println(formatListList(result));' : 'System.out.println(result);'}
         
         scanner.close();
-    }
+    }${outputFormatter}
 }`;
   }
 

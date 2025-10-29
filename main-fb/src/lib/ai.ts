@@ -23,7 +23,7 @@ export interface AIScoringResult {
   summary: string;
 }
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 // const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini"; // Example
 
 function buildSystemPrompt(problemTitle?: string, problemStatement?: string) {
@@ -44,7 +44,37 @@ function buildSystemPrompt(problemTitle?: string, problemStatement?: string) {
 }
 
 export function buildScoringPrompt(userTranscript: string) {
-  return `You are grading a technical interview answer. Analyze the user's transcript and produce a JSON object with fields: score (0-10), breakdown {correctness, approach, clarity, efficiency, communication each 0-10}, suggestions (3 short items), improvements (3 short items), mistakes (up to 5 concise items), summary (<=80 words). Be strict.
+  return `You are grading a technical interview answer. Analyze the user's transcript and produce ONLY a valid JSON object (no markdown code blocks, no extra text). 
+
+Expected JSON format:
+{
+  "score": 7,
+  "breakdown": {
+    "correctness": 8,
+    "approach": 7,
+    "clarity": 6,
+    "efficiency": 8,
+    "communication": 7
+  },
+  "suggestions": [
+    "Consider explaining the approach before coding",
+    "Think about edge cases first",
+    "Clarify assumptions made"
+  ],
+  "improvements": [
+    "Improve time complexity analysis",
+    "Add more examples of the solution",
+    "Discuss trade-offs between approaches"
+  ],
+  "mistakes": [
+    "Forgot to handle the base case",
+    "Incorrect time complexity stated",
+    "Missed an edge case"
+  ],
+  "summary": "Candidate demonstrated good problem-solving skills with a clear approach. However, missed some edge cases and could improve verbal communication of the thought process."
+}
+
+Return ONLY the JSON object with these exact fields. Be strict in grading.
 TRANSCRIPT:\n${userTranscript}`;
 }
 
@@ -77,7 +107,16 @@ export async function aiChat(
         }
       }
       
-      const content = finalMessages.map((m) => ({ role: m.role, parts: [{ text: m.content }] }));
+      // Convert roles to Gemini-compatible format: "assistant" -> "model", "system" -> "user"
+      const content = finalMessages.map((m) => {
+        let geminiRole: 'user' | 'model' = 'user';
+        if (m.role === 'assistant') geminiRole = 'model';
+        if (m.role === 'user') geminiRole = 'user';
+        if (m.role === 'system') geminiRole = 'user';
+        
+        return { role: geminiRole, parts: [{ text: m.content }] };
+      });
+      
       const res = await model.generateContent({ contents: content as any });
       const text = res.response.text();
       return text;
@@ -108,13 +147,32 @@ export async function aiScore(provider: Provider, prompt: string): Promise<AISco
       
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-      const res = await model.generateContent(prompt);
-      const text = res.response.text();
+      const res = await model.generateContent(
+        prompt,
+        {
+          temperature: 0.1,
+          topP: 0.95,
+          maxOutputTokens: 2000,
+        }
+      );
+      let text = res.response.text();
+      
+      // Extract JSON from markdown code blocks if present
+      text = text.trim();
+      if (text.startsWith('```json')) {
+        text = text.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      } else if (text.startsWith('```')) {
+        text = text.replace(/```\n?/, '').replace(/\n?```$/, '');
+      }
+      
       // Attempt to parse JSON; fallback to minimal defaults
       try {
         const json = JSON.parse(text);
+        console.log('Parsed AI score result:', json);
         return json as AIScoringResult;
-      } catch {
+      } catch (e) {
+        console.error('Failed to parse AI response as JSON:', e);
+        console.error('Response text:', text);
         return {
           score: 5,
           breakdown: { correctness: 5, approach: 5, clarity: 5, efficiency: 5, communication: 5 },
