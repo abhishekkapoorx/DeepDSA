@@ -8,6 +8,7 @@ export { default as TopicFilters } from './TopicFilters';
 // Problem Detail Components
 export { ProblemDescription, type Problem, type TestCase } from './ProblemDescription';
 export { CodeEditor } from './CodeEditor';
+export { ContestCodeEditor } from './ContestCodeEditor';
 export { TestcasePanel } from './TestcasePanel';
 export { ProblemNavbar } from './ProblemNavbar';
 export { CodeVisualization } from './CodeVisualization';

@@ -3,6 +3,8 @@ import dbConnect from '@/lib/mongoose';
 import { Problem, TestCase } from '@/models';
 import { FullBoilerplateGenerator, mergeBoilerplateCode } from '@/utils/CodeGenerator/generate-full-boilerplate';
 
+console.log('[ProblemRun] Route file loaded at:', new Date().toISOString());
+
 // Judge0 configuration (self-hosted default: http://localhost:2358)
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
 const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY; // RapidAPI key (optional)
@@ -16,9 +18,12 @@ export async function POST(
     await dbConnect();
 
     const { slug } = await params;
+    console.log('[ProblemRun] Received request for slug:', slug);
+    
     const { code, language } = await req.json();
 
     if (!code || !language) {
+      console.log('[ProblemRun] Missing code or language');
       return NextResponse.json(
         { error: 'Code and language are required' },
         { status: 400 }
@@ -27,6 +32,8 @@ export async function POST(
 
     // Find problem by slug
     const problem = await Problem.findOne({ slug }).lean();
+    console.log('[ProblemRun] Problem found:', problem ? `Yes (${problem.title})` : 'No');
+    
     if (!problem) {
       return NextResponse.json(
         { error: 'Problem not found' },
@@ -36,6 +43,8 @@ export async function POST(
 
     // Get test cases for this problem
     const testCases = await TestCase.find({ problemId: problem._id }).lean();
+    console.log('[ProblemRun] Test cases found:', testCases?.length || 0);
+    
     if (!testCases || testCases.length === 0) {
       return NextResponse.json(
         { error: 'No test cases found for this problem' },

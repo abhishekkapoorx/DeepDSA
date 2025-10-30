@@ -38,7 +38,10 @@ export async function GET(
     // Get submissions for this problem by this user during contest time
     const submissions = await Submission.find({
       problemId: contestProblem.problemId,
-      userId: userId,
+      $or: [
+        { clerkId: userId }, // Prefer clerkId for new submissions
+        { userId: userId }   // Fallback to userId for legacy submissions
+      ],
       createdAt: {
         $gte: contest.startTime,
         $lte: contest.endTime

@@ -12,7 +12,8 @@ export enum SubmissionStatus {
 }
 
 export interface ISubmission extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId | string; // Can be ObjectId (legacy) or clerkId string
+  clerkId?: string; // Clerk user ID for easier lookups
   problemId: mongoose.Types.ObjectId;
   code: string;
   language: string;
@@ -32,9 +33,12 @@ export interface ISubmission extends Document {
 const SubmissionSchema = new Schema<ISubmission>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+      type: Schema.Types.Mixed, // Can be ObjectId or String (clerkId)
       required: true,
+    },
+    clerkId: {
+      type: String,
+      required: false,
     },
     problemId: {
       type: Schema.Types.ObjectId,
@@ -91,6 +95,7 @@ const SubmissionSchema = new Schema<ISubmission>(
 
 // Indexes for better query performance
 SubmissionSchema.index({ userId: 1, createdAt: -1 });
+SubmissionSchema.index({ clerkId: 1, createdAt: -1 });
 SubmissionSchema.index({ problemId: 1, status: 1 });
 SubmissionSchema.index({ status: 1, createdAt: -1 });
 
