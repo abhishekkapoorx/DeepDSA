@@ -18,12 +18,43 @@ export async function POST(req: NextRequest) {
 
     const { problemSlug, provider } = await req.json();
 
-    // Count user interviews today
-    const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
-    const endOfDay = new Date(); endOfDay.setHours(23,59,59,999);
-    const todayCount = await Interview.countDocuments({ clerkId: userId, startedAt: { $gte: startOfDay, $lte: endOfDay } });
-    if (todayCount >= 10) { // ✅ Changed from 10 to 3 to match the requirement
-      return NextResponse.json({ error: 'Daily interview limit reached (3 interviews per day)' }, { status: 429 });
+    // Check for active (non-finalized) interview
+    const activeInterview = await Interview.findOne({ 
+      clerkId: userId, 
+      endedAt: null 
+    });
+    
+    if (activeInterview) {
+      return NextResponse.json({ 
+        error: 'You already have an active interview. Please finish it first.',
+        interviewId: String(activeInterview._id)
+      }, { status: 409 });
+    }
+
+    // Count user interviews today (using UTC to prevent timezone exploitation)
+    const now = new Date();
+    const startOfDayUTC = new Date(Date.UTC(
+      now.getUTCFullYear(), 
+      now.getUTCMonth(), 
+      now.getUTCDate(), 
+      0, 0, 0
+    ));
+    const endOfDayUTC = new Date(Date.UTC(
+      now.getUTCFullYear(), 
+      now.getUTCMonth(), 
+      now.getUTCDate(), 
+      23, 59, 59, 999
+    ));
+    
+    const todayCount = await Interview.countDocuments({ 
+      clerkId: userId, 
+      startedAt: { $gte: startOfDayUTC, $lte: endOfDayUTC } 
+    });
+    
+    if (todayCount >= 3) {
+      return NextResponse.json({ 
+        error: 'Daily interview limit reached (3 interviews per day)' 
+      }, { status: 429 });
     }
 
     let problem = null as any;
@@ -71,7 +102,7 @@ export async function GET(req: NextRequest) {
 
     const [items, total] = await Promise.all([
       Interview.find({ clerkId: userId })
-        .select('startedAt endedAt problemSlug score dailySequence createdAt scoreBreakdown suggestions improvements mistakes summary')
+        .select('startedAt endedAt problemSlug score dailySequence createdAt scoreBreakdown suggestions improvements mistakes summary messages')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -79,8 +110,23 @@ export async function GET(req: NextRequest) {
       Interview.countDocuments({ clerkId: userId })
     ]);
 
+    // Mark abandoned interviews (started but not ended within 1 hour)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const processedItems = items.map((interview: any) => {
+      const isAbandoned = !interview.endedAt && new Date(interview.startedAt) < oneHourAgo;
+      const isActive = !interview.endedAt && new Date(interview.startedAt) >= oneHourAgo;
+      
+      return {
+        ...interview,
+        isAbandoned,
+        isActive,
+        status: isAbandoned ? 'abandoned' : isActive ? 'active' : 'completed',
+        messageCount: interview.messages?.length || 0
+      };
+    });
+
     return NextResponse.json({
-      interviews: items,
+      interviews: processedItems,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) }
     });
   } catch (e) {

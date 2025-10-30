@@ -43,8 +43,12 @@ function buildSystemPrompt(problemTitle?: string, problemStatement?: string) {
   return `${compactGuidelines} ${context} Keep responses under 80-120 words.`;
 }
 
-export function buildScoringPrompt(userTranscript: string) {
-  return `You are grading a technical interview answer. Analyze the user's transcript and produce ONLY a valid JSON object (no markdown code blocks, no extra text). 
+export function buildScoringPrompt(userTranscript: string, timeLimitExceeded?: boolean, durationMinutes?: number) {
+  const timeWarning = timeLimitExceeded 
+    ? `\n\n⚠️ IMPORTANT: This interview EXCEEDED the 10-minute time limit. Actual duration: ${durationMinutes} minutes. This MUST significantly impact the efficiency score and overall score. Time management is critical in technical interviews.` 
+    : '';
+
+  return `You are grading a technical interview answer. Analyze the user's transcript and produce ONLY a valid JSON object (no markdown code blocks, no extra text).${timeWarning}
 
 Expected JSON format:
 {

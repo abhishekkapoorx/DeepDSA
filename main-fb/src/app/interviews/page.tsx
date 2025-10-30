@@ -28,6 +28,10 @@ interface Interview {
   mistakes?: string[];
   summary?: string;
   problemSlug?: string;
+  isAbandoned?: boolean;
+  isActive?: boolean;
+  status?: 'abandoned' | 'active' | 'completed';
+  messageCount?: number;
 }
 
 interface InterviewStats {
@@ -319,6 +323,16 @@ const InterviewCard: React.FC<{ interview: Interview; index: number }> = ({ inte
                   #{index + 1}
                 </Badge>
                 <span className="font-semibold text-base">{interview.problemSlug || 'General Interview'}</span>
+                {interview.isAbandoned && (
+                  <Badge variant="destructive" className="text-xs">
+                    Abandoned
+                  </Badge>
+                )}
+                {interview.isActive && (
+                  <Badge variant="default" className="text-xs bg-green-500">
+                    Active
+                  </Badge>
+                )}
               </div>
               <div className="text-xs text-muted-foreground">
                 {new Date(interview.startedAt).toLocaleDateString('en-US', { 
@@ -329,6 +343,11 @@ const InterviewCard: React.FC<{ interview: Interview; index: number }> = ({ inte
                 {interview.endedAt && (
                   <span className="ml-2">
                     • {Math.round((new Date(interview.endedAt).getTime() - new Date(interview.startedAt).getTime()) / 60000)} min
+                  </span>
+                )}
+                {interview.messageCount !== undefined && (
+                  <span className="ml-2">
+                    • {interview.messageCount} messages
                   </span>
                 )}
               </div>
