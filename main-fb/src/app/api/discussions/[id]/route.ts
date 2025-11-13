@@ -5,12 +5,9 @@ import { Discussion, Comment, Vote, User } from '@/models';
 import mongoose from 'mongoose';
 
 /**
- * 
- * this route is used to fetch a specific discussion
- * it requires the id of the discussion
- * it returns the discussion
- * it returns the following format:
- * @returns 
+ * GET /api/discussions/[id] - Fetch a specific discussion by ID
+ * Returns discussion details with populated author and problem information.
+ * No authentication required for viewing.
  */
 export async function GET(
   request: NextRequest,
@@ -46,13 +43,9 @@ export async function GET(
 }
 
 /**
- * 
- * this route is used to update a specific discussion
- * it requires the id of the discussion
- * it requires the title, content, tags
- * it returns the updated discussion
- * it returns the following format:
- * @returns 
+ * PUT /api/discussions/[id] - Update a discussion
+ * Updates discussion title, content, or tags. Only the author can update their discussion.
+ * Validates content length and requires authentication.
  */
 export async function PUT(
   request: NextRequest,
@@ -131,6 +124,11 @@ export async function PUT(
   }
 }
 
+/**
+ * DELETE /api/discussions/[id] - Delete a discussion
+ * Permanently deletes discussion and all associated comments and votes.
+ * Only author or admin can delete. Requires authentication.
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

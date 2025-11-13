@@ -4,6 +4,11 @@ import { connectToDB } from '@/lib/mongoose';
 import Interview from '@/models/interview.model';
 import { aiChat, type AIMessage } from '@/lib/ai';
 
+/**
+ * POST /api/interviews/[id]/message - Send a message in an interview
+ * Sends user message to AI and receives assistant response. Fetches problem context
+ * if available. Updates interview with conversation history. Requires authentication.
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

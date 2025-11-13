@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// PUT /api/admin/contests/[slug]/problems/reorder - Reorder contest problems
+/**
+ * PUT /api/admin/contests/[slug]/problems/reorder - Reorder contest problems (admin only)
+ * Updates the order of problems in a contest. Accepts array of problems and assigns
+ * sequential order numbers. Requires authentication.
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

@@ -5,6 +5,11 @@ import Submission from '@/models/submission.model';
 import Interview from '@/models/interview.model';
 import Problem from '@/models/problem.model';
 
+/**
+ * GET /api/users/[username]/profile - Fetch public user profile by username
+ * Returns public profile data including recent submissions, interviews, and statistics.
+ * Calculates solved problems by difficulty. No authentication required for viewing.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ username: string }> }

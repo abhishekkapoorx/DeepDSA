@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Problem } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// GET /api/admin/problems/search - Search problems for contest addition
+/**
+ * GET /api/admin/problems/search - Search problems for contest addition
+ * Searches problems by title, slug, or tags. Returns paginated results
+ * with basic problem info for selecting problems to add to contests.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();

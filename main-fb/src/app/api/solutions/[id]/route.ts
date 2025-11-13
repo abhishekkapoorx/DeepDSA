@@ -4,6 +4,11 @@ import dbConnect from '@/lib/mongoose';
 import { Solution, User, Vote, VoteType } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * GET /api/solutions/[id] - Fetch a specific solution by ID
+ * Returns solution details with populated author and problem data. Increments view count.
+ * Only returns published solutions. No authentication required for viewing.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -44,6 +49,11 @@ export async function GET(
   }
 }
 
+/**
+ * PUT /api/solutions/[id] - Update a solution
+ * Updates solution content, code, tags, complexity analysis, and metadata.
+ * Only the author can update their solution. Requires authentication.
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -129,6 +139,11 @@ export async function PUT(
   }
 }
 
+/**
+ * DELETE /api/solutions/[id] - Delete a solution
+ * Permanently deletes a solution. Only the author can delete their solution.
+ * Requires authentication.
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

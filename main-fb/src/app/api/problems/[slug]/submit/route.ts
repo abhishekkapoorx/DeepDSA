@@ -20,6 +20,11 @@ const LANGUAGE_IDS = {
   javascript: 63 // JavaScript (Node.js 12.14.0)
 };
 
+/**
+ * POST /api/problems/[slug]/submit - Submit solution for evaluation
+ * Executes code against all test cases, creates submission record, and saves test results.
+ * Updates user progress. Requires authentication and returns detailed submission results.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

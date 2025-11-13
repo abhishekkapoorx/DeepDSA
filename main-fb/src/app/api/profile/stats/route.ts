@@ -5,6 +5,11 @@ import User from '@/models/user.model';
 import Submission from '@/models/submission.model';
 import Problem from '@/models/problem.model';
 
+/**
+ * GET /api/profile/stats - Fetch user's statistics
+ * Returns user's problem-solving statistics including solved problems by difficulty,
+ * total submissions, acceptance rate, and problem counts. Requires authentication.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();

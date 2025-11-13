@@ -3,6 +3,11 @@ import { auth } from '@clerk/nextjs/server';
 import dbConnect from '@/lib/mongoose';
 import { Discussion, Comment, Vote, VoteType, User, Problem } from '@/models';
 
+/**
+ * POST /api/test-seed-discussions - Seed database with sample discussions
+ * Creates sample users, discussions, comments, and votes for testing/development.
+ * Requires admin authentication. Used for populating test data.
+ */
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();

@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { Interview } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * GET /api/interviews/[id] - Fetch a specific interview by ID
+ * Returns interview details including all messages, scores, and feedback.
+ * Only returns interviews belonging to the authenticated user. Requires authentication.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// GET /api/contests - Get all published contests
+/**
+ * GET /api/contests - Get all published contests
+ * Returns paginated list of contests filtered by status (upcoming, running, ended).
+ * Supports optional inclusion of unpublished/deleted contests. Returns contests with registration counts.
+ */
 export async function GET(request: NextRequest) {
   try {
     await connectToDB();
@@ -64,7 +68,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/contests - Create a new contest (admin only)
+/**
+ * POST /api/contests - Create a new contest (admin only)
+ * Creates a new contest with problems, rules, prizes, and scheduling.
+ * Contest starts as unpublished. Requires admin authentication.
+ */
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();

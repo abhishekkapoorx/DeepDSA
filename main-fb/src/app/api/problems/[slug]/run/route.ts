@@ -10,6 +10,11 @@ const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
 const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY; // RapidAPI key (optional)
 const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN; // Self-hosted Judge0 auth token (optional)
 
+/**
+ * POST /api/problems/[slug]/run - Run code against test cases
+ * Executes user code against all test cases using Judge0 batch submissions.
+ * Returns test results without saving submission. No authentication required.
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

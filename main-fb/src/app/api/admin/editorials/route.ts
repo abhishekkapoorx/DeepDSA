@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { Editorial, Problem } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * POST /api/admin/editorials - Create a new editorial for a problem (admin only)
+ * Creates editorial with multiple approaches, follow-up questions, and related problems.
+ * Validates problem exists and ensures one editorial per problem. Requires admin authentication.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth()
@@ -60,6 +65,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * GET /api/admin/editorials - Fetch paginated list of editorials (admin only)
+ * Supports filtering by problemId. Returns editorials with populated problem data
+ * and pagination information. Requires admin authentication.
+ */
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth()

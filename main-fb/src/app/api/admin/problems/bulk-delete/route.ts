@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { Problem, TestCase, User, Submission, TestResult } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * POST /api/admin/problems/bulk-delete - Delete multiple problems at once (admin only)
+ * Accepts array of problem slugs and performs cascading deletion of all
+ * associated data (test cases, submissions, test results). Requires admin authentication.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth()

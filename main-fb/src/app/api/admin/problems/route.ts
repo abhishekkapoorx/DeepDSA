@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { Problem, TestCase, User, generateSlug } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * POST /api/admin/problems - Create a new problem (admin only)
+ * Validates input, generates unique slug, auto-assigns question number,
+ * and creates problem with associated test cases. Requires admin authentication.
+ */
 export async function POST(req: NextRequest) {
   console.log("==============================================")
   console.log("==============================================")
@@ -168,6 +173,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * GET /api/admin/problems - Fetch paginated list of problems for admin
+ * Supports filtering by difficulty and search query. Returns problems
+ * with test case metadata and pagination information.
+ */
 export async function GET(req: NextRequest) {
   try {
     await dbConnect()

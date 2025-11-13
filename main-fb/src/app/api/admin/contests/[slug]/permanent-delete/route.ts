@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// DELETE /api/admin/contests/[slug]/permanent-delete - Permanently delete contest
+/**
+ * DELETE /api/admin/contests/[slug]/permanent-delete - Permanently delete contest (admin only)
+ * Permanently deletes contest from database (not soft delete). Only allowed if contest
+ * has no active registrations. Requires authentication.
+ */
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// POST /api/admin/contests/[slug]/clone - Clone contest
+/**
+ * POST /api/admin/contests/[slug]/clone - Clone an existing contest (admin only)
+ * Creates a new contest with same problems, rules, and settings but new title and timing.
+ * Cloned contest starts unpublished with no registrations. Requires authentication.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -49,7 +53,7 @@ export async function POST(
       endTime: new Date(endTime),
       duration: originalContest.duration,
       maxParticipants: maxParticipants || originalContest.maxParticipants,
-      problems: originalContest.problems.map(problem => ({
+      problems: originalContest.problems.map((problem: any) => ({
         problemId: null, // Will be populated when problems are added
         problemSlug: problem.problemSlug,
         points: problem.points,

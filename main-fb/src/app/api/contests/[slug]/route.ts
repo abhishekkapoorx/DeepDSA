@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// GET /api/contests/[slug] - Get a specific contest by slug
+/**
+ * GET /api/contests/[slug] - Get a specific contest by slug
+ * Returns contest details with populated problems and registration information.
+ * Includes registration count and whether the authenticated user is registered.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -47,7 +51,11 @@ export async function GET(
   }
 }
 
-// PUT /api/contests/[slug] - Update a contest (admin only)
+/**
+ * PUT /api/contests/[slug] - Update a contest (admin only)
+ * Updates contest details including title, description, timing, and problems.
+ * Requires admin authentication.
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -97,7 +105,11 @@ export async function PUT(
   }
 }
 
-// DELETE /api/contests/[slug] - Delete a contest (admin only)
+/**
+ * DELETE /api/contests/[slug] - Soft delete a contest (admin only)
+ * Marks contest as deleted (soft delete) rather than permanent deletion.
+ * Requires admin authentication.
+ */
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// GET /api/admin/contests/[slug]/participants - Get contest participants
+/**
+ * GET /api/admin/contests/[slug]/participants - Get contest participants (admin only)
+ * Returns list of all registered participants for a contest with populated user data.
+ * Requires authentication.
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -35,7 +39,11 @@ export async function GET(
   }
 }
 
-// DELETE /api/admin/contests/[slug]/participants - Remove participant from contest
+/**
+ * DELETE /api/admin/contests/[slug]/participants - Remove participant from contest (admin only)
+ * Removes a single participant from contest by clerkId. Updates registration count.
+ * Requires authentication.
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -78,7 +86,11 @@ export async function DELETE(
   }
 }
 
-// PUT /api/admin/contests/[slug]/participants - Update participant data
+/**
+ * PUT /api/admin/contests/[slug]/participants - Update participant data (admin only)
+ * Updates participant's score, problemsSolved, or totalTime in contest registration.
+ * Used for manual score adjustments. Requires authentication.
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

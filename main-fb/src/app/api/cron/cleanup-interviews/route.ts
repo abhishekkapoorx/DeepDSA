@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongoose';
 import { Interview } from '@/models';
 
-// Cron job to cleanup abandoned interviews
-// Run this every hour via Vercel Cron or external scheduler
-// Example vercel.json cron: "0 * * * *" (every hour)
-
+/**
+ * GET /api/cron/cleanup-interviews - Cleanup abandoned interview sessions
+ * Finds interviews started >1 hour ago without end time and auto-finalizes them with score 0.
+ * Designed to run as cron job (hourly). Requires CRON_SECRET authentication.
+ */
 export async function GET(req: NextRequest) {
   try {
     // Verify cron secret to prevent unauthorized access

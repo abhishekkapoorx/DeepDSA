@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose'
 import { Contest } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
-// POST /api/contests/[slug]/restore - restore soft-deleted contest
+/**
+ * POST /api/contests/[slug]/restore - Restore soft-deleted contest
+ * Restores a previously soft-deleted contest by setting isDeleted to false.
+ * Requires authentication (admin check should be added).
+ */
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

@@ -4,6 +4,11 @@ import { Language } from '@/utils/CodeGenerator/dtype-mapper';
 import Problem from '@/models/problem.model';
 import connectToDB from '@/lib/mongoose';
 
+/**
+ * GET /api/problems/[slug]/boilerplate - Get code boilerplate for a problem
+ * Generates language-specific starter code based on problem's input/output variables
+ * and function name. Supports cpp, java, python, and javascript.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

@@ -4,6 +4,11 @@ import dbConnect from '@/lib/mongoose';
 import { Discussion, Comment, Vote, User } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * GET /api/discussions/[id]/comments - Fetch comments for a discussion
+ * Returns paginated, nested comment tree structure. Supports sorting by newest,
+ * oldest, or mostUpvoted. Builds parent-child relationships for threaded comments.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -119,6 +124,11 @@ export async function GET(
   }
 }
 
+/**
+ * POST /api/discussions/[id]/comments - Create a new comment
+ * Creates a comment or reply to a discussion. Supports nested replies up to 5 levels deep.
+ * Prevents duplicate comments within 30 seconds. Updates comment counts on discussion and parent.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

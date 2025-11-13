@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HalfBoilerplateGenerator } from '@/utils/CodeGenerator/generate-half-boilerplate';
 import { IInputVariable, IOutputVariable } from '@/models/problem.model';
 
+/**
+ * GET /api/test-boilerplate - Test boilerplate code generation
+ * Generates sample boilerplate code for testing purposes using hardcoded test data.
+ * Supports all languages (cpp, java, python, javascript). No authentication required.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

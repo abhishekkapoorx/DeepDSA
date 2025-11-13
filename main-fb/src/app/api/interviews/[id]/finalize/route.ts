@@ -4,6 +4,11 @@ import { Interview } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 import { aiScore, buildScoringPrompt } from '@/lib/ai'
 
+/**
+ * POST /api/interviews/[id]/finalize - Finalize and score an interview
+ * Ends interview session and generates AI-powered score with feedback. Validates minimum
+ * interaction, checks time limits, and provides detailed scoring breakdown. Requires authentication.
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

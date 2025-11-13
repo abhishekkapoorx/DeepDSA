@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongoose'
 import { Editorial, Problem } from '@/models'
 
+/**
+ * GET /api/editorials/[problemSlug] - Fetch published editorial for a problem
+ * Returns editorial content with multiple approaches, follow-up questions, and related problems.
+ * Only returns published editorials. No authentication required for viewing.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ problemSlug: string }> }

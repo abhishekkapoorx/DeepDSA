@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { ContestTemplate, Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// POST /api/admin/contests/templates/[templateId]/apply - Apply template to create contest
+/**
+ * POST /api/admin/contests/templates/[templateId]/apply - Apply template to create contest
+ * Creates a new contest from a template with custom title, description, and timing.
+ * Increments template usage count. Validates template access permissions. Requires authentication.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ templateId: string }> }

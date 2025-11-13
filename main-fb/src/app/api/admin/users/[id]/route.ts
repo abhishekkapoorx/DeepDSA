@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { User } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * PUT /api/admin/users/[id] - Update user role (admin only)
+ * Updates a user's role (USER, ADMIN, SUPER_ADMIN). Prevents self-role changes
+ * and restricts SUPER_ADMIN assignment to existing super admins. Requires admin authentication.
+ */
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -59,6 +64,11 @@ export async function PUT(
   }
 }
 
+/**
+ * DELETE /api/admin/users/[id] - Delete a user account (admin only)
+ * Permanently deletes user account. Prevents self-deletion and restricts
+ * deletion of admin accounts to super admins only. Requires admin authentication.
+ */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

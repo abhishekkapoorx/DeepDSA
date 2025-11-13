@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { Problem, User, TestCase } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * GET /api/admin/analytics - Fetch platform analytics for admin dashboard
+ * Returns overview stats (total problems, users, test cases), difficulty breakdown,
+ * recent activity, trends, and popular tags. Requires admin authentication.
+ */
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth()

@@ -4,6 +4,11 @@ import dbConnect from '@/lib/mongoose';
 import { Solution, User, Problem } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * GET /api/solutions - Fetch paginated list of published solutions
+ * Supports filtering by problemSlug, language, and search query. Can be sorted by
+ * newest, oldest, mostUpvoted, mostViewed, or mostEfficient. Returns solutions with pagination.
+ */
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
@@ -88,6 +93,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * POST /api/solutions - Create a new solution
+ * Creates a user-submitted solution with code, explanation, complexity analysis, and tags.
+ * Prevents duplicate solutions from same user for same problem/language. Requires authentication.
+ */
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();

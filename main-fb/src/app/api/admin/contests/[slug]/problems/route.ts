@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest, Problem } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// GET /api/admin/contests/[slug]/problems - Get contest problems
+/**
+ * GET /api/admin/contests/[slug]/problems - Get contest problems (admin only)
+ * Returns list of all problems in a contest with populated problem details.
+ * Requires authentication.
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -19,7 +23,7 @@ export async function GET(
 
     const contest = await Contest.findOne({ slug, isDeleted: { $ne: true } })
       .populate('problems.problemId', 'title slug difficulty description')
-      .lean();
+      .lean() as any;
 
     if (!contest) {
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
@@ -35,7 +39,11 @@ export async function GET(
   }
 }
 
-// POST /api/admin/contests/[slug]/problems - Add problem to contest
+/**
+ * POST /api/admin/contests/[slug]/problems - Add problem to contest (admin only)
+ * Adds a problem to contest with specified points and order. Validates problem exists
+ * and not already added. Requires authentication.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -63,7 +71,7 @@ export async function POST(
     }
 
     // Check if problem is already added
-    const existingProblem = contest.problems.find(p => p.problemSlug === problemSlug);
+    const existingProblem = contest.problems.find((p: any) => p.problemSlug === problemSlug);
     if (existingProblem) {
       return NextResponse.json({ error: 'Problem already added to contest' }, { status: 400 });
     }
@@ -99,7 +107,11 @@ export async function POST(
   }
 }
 
-// DELETE /api/admin/contests/[slug]/problems - Remove problem from contest
+/**
+ * DELETE /api/admin/contests/[slug]/problems - Remove problem from contest (admin only)
+ * Removes a problem from contest and reorders remaining problems sequentially.
+ * Requires authentication.
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -121,14 +133,14 @@ export async function DELETE(
 
     // Remove problem from contest
     const initialLength = contest.problems.length;
-    contest.problems = contest.problems.filter(p => p.problemSlug !== problemSlug);
+    contest.problems = contest.problems.filter((p: any) => p.problemSlug !== problemSlug);
 
     if (contest.problems.length === initialLength) {
       return NextResponse.json({ error: 'Problem not found in contest' }, { status: 404 });
     }
 
     // Reorder remaining problems
-    contest.problems.forEach((problem, index) => {
+    contest.problems.forEach((problem: any, index: number) => {
       problem.order = index + 1;
     });
 
@@ -144,7 +156,11 @@ export async function DELETE(
   }
 }
 
-// PUT /api/admin/contests/[slug]/problems - Update problem settings
+/**
+ * PUT /api/admin/contests/[slug]/problems - Update problem settings (admin only)
+ * Updates problem's points or order within a contest. Does not modify the problem itself.
+ * Requires authentication.
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -164,7 +180,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
     }
 
-    const problem = contest.problems.find(p => p.problemSlug === problemSlug);
+    const problem = contest.problems.find((p: any) => p.problemSlug === problemSlug);
     if (!problem) {
       return NextResponse.json({ error: 'Problem not found in contest' }, { status: 404 });
     }

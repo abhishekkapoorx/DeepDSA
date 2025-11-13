@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// DELETE /api/admin/contests/[slug]/participants/bulk - Bulk remove participants
+/**
+ * DELETE /api/admin/contests/[slug]/participants/bulk - Bulk remove participants (admin only)
+ * Removes multiple participants from a contest at once. Accepts array of clerkIds.
+ * Returns count of removed participants. Requires authentication.
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -29,7 +33,7 @@ export async function DELETE(
 
     // Remove participants
     const initialLength = contest.registrations.length;
-    contest.registrations = contest.registrations.filter(reg => !clerkIds.includes(reg.clerkId));
+    contest.registrations = contest.registrations.filter((reg: any) => !clerkIds.includes(reg.clerkId));
     
     const removedCount = initialLength - contest.registrations.length;
 

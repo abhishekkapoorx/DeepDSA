@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongoose';
 import { Problem, TestCase } from '@/models';
 
+/**
+ * POST /api/test-seed - Seed database with sample problems
+ * Creates sample problems (Two Sum, Add Two Numbers, Longest Substring) with test cases.
+ * Clears existing problems before seeding. Used for development/testing.
+ */
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();

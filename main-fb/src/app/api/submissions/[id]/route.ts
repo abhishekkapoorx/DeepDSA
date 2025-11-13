@@ -3,6 +3,11 @@ import connectToDB from '@/lib/mongoose';
 import { Submission, TestResult } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * GET /api/submissions/[id] - Fetch a specific submission by ID
+ * Returns submission details with all test results. Normalizes test result data
+ * for UI consumption. No authentication required for viewing.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -4,6 +4,11 @@ import Problem, { Difficulty, generateSlug } from '@/models/problem.model';
 import TestCase from '@/models/testCase.model';
 import { connectToDB } from '@/lib/mongoose';
 
+/**
+ * POST /api/admin/import-problems - Bulk import problems from JSON file
+ * Accepts a JSON file with array of problems, validates each problem,
+ * and creates them with test cases. Returns import results with status per problem.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();

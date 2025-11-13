@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { ContestTemplate, Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// POST /api/admin/contests/[slug]/save-as-template - Save contest as template
+/**
+ * POST /api/admin/contests/[slug]/save-as-template - Save contest as template (admin only)
+ * Creates a reusable contest template from an existing contest. Saves problems, rules,
+ * prizes, and settings for future use. Requires authentication.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

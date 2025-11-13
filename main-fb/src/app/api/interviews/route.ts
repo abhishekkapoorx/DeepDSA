@@ -5,7 +5,11 @@ import Problem from '@/models/problem.model';
 import User from '@/models/user.model';
 import { auth } from '@clerk/nextjs/server';
 
-// POST /api/interviews -> start new interview (enforce 3/day)
+/**
+ * POST /api/interviews - Start a new AI interview session
+ * Creates a new interview with AI provider (Gemini/OpenAI) and optional problem context.
+ * Enforces limit of 3 interviews per day per user. Requires authentication.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -87,7 +91,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET /api/interviews -> list user interviews (paginated)
+/**
+ * GET /api/interviews - Fetch user's interview history
+ * Returns paginated list of user's interviews with status (active, completed, abandoned).
+ * Includes interview metadata, scores, and message counts. Requires authentication.
+ */
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth();

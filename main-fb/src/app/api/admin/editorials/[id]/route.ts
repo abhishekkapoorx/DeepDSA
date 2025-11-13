@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { Editorial } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * GET /api/admin/editorials/[id] - Fetch a specific editorial by ID (admin only)
+ * Returns editorial details with populated problem information.
+ * Requires admin authentication.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -39,6 +44,11 @@ export async function GET(
   }
 }
 
+/**
+ * PUT /api/admin/editorials/[id] - Update an existing editorial (admin only)
+ * Updates editorial content including approaches, follow-up questions, and publish status.
+ * Validates required fields and requires admin authentication.
+ */
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -92,6 +102,11 @@ export async function PUT(
   }
 }
 
+/**
+ * DELETE /api/admin/editorials/[id] - Delete an editorial (admin only)
+ * Permanently deletes the editorial from the database.
+ * Requires admin authentication.
+ */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

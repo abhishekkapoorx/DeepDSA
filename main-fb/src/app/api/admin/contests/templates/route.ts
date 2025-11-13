@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { ContestTemplate, Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// GET /api/admin/contests/templates - Get contest templates
+/**
+ * GET /api/admin/contests/templates - Get contest templates
+ * Returns paginated list of contest templates with filtering by category, difficulty,
+ * public/private status, and search query. Sorted by usage count. Requires authentication.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -79,7 +83,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/admin/contests/templates - Create contest template
+/**
+ * POST /api/admin/contests/templates - Create contest template
+ * Creates a new reusable contest template with problems, rules, prizes, and settings.
+ * Templates can be public or private. Requires authentication.
+ */
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();

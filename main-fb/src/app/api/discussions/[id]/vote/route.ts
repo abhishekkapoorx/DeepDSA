@@ -4,6 +4,11 @@ import dbConnect from '@/lib/mongoose';
 import { Discussion, Vote, VoteType, User } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * POST /api/discussions/[id]/vote - Vote on a discussion
+ * Adds, updates, or removes upvote/downvote on a discussion. Toggling same vote removes it.
+ * Updates discussion vote counts. Requires authentication.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -125,6 +130,11 @@ export async function POST(
   }
 }
 
+/**
+ * GET /api/discussions/[id]/vote - Get user's vote on a discussion
+ * Returns the current user's vote type (upvote/downvote) or null if not voted.
+ * Requires authentication.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

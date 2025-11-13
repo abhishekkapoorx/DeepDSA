@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose'
 import { Contest } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
-// POST /api/contests/[slug]/publish - toggle publish state
+/**
+ * POST /api/contests/[slug]/publish - Toggle contest publish state
+ * Publishes or unpublishes a contest. Unpublished contests are not visible
+ * to regular users. Requires authentication (admin check should be added).
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

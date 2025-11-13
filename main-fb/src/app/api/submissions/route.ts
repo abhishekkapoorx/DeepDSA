@@ -4,6 +4,11 @@ import { connectToDB } from '@/lib/mongoose';
 import User from '@/models/user.model';
 import Submission, { SubmissionStatus } from '@/models/submission.model';
 
+/**
+ * GET /api/submissions - Fetch user's submission history
+ * Returns paginated list of user's submissions with problem details, status, and metrics.
+ * Supports limit parameter (default 100, max 200). Requires authentication.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -59,6 +64,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * POST /api/submissions - Create a new submission record
+ * Creates a submission with PENDING status. Typically used for manual submission creation.
+ * Requires authentication. Note: Use /api/problems/[slug]/submit for actual code execution.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();

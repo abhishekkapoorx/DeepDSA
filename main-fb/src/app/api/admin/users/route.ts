@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { User, Role } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * GET /api/admin/users - Fetch paginated list of users (admin only)
+ * Supports filtering by role and search query. Returns user list with
+ * pagination information. Requires admin authentication.
+ */
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth()

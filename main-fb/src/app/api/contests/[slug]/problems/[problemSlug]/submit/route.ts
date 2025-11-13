@@ -9,6 +9,11 @@ const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358'
 const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY
 const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN
 
+/**
+ * POST /api/contests/[slug]/problems/[problemSlug]/submit - Submit solution for contest problem
+ * Executes code against test cases, creates submission record, and updates contest score.
+ * Calculates points based on test cases passed and updates participant registration.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; problemSlug: string }> }

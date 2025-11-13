@@ -3,6 +3,11 @@ import { auth } from '@clerk/nextjs/server';
 import { connectToDB } from '@/lib/mongoose';
 import User from '@/models/user.model';
 
+/**
+ * GET /api/profile - Fetch current user's profile
+ * Returns user profile data including name, username, email, image, role, and join date.
+ * Requires authentication.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();

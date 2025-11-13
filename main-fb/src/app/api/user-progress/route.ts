@@ -4,6 +4,11 @@ import dbConnect from '@/lib/mongoose';
 import { UserProgress, User, Submission, Problem } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * GET /api/user-progress - Fetch user's progress statistics
+ * Returns or creates user progress record with real-time calculated stats including
+ * solved problems by difficulty, streaks, acceptance rate, and rankings. Requires authentication.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -59,6 +64,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * PUT /api/user-progress - Update user's progress manually
+ * Updates user progress fields including solved counts, streaks, and rankings.
+ * Typically used for manual adjustments. Requires authentication.
+ */
 export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();

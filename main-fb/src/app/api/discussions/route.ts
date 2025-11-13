@@ -4,14 +4,10 @@ import dbConnect from '@/lib/mongoose';
 import { Discussion, Comment, Vote, User } from '@/models';
 import { validateTags } from '@/lib/discussionTags';
 
-
 /**
-  this route is used to fetch discussions
-  it can be filtered by problemId, tag, search
-  it can be sorted by newest, oldest, mostUpvoted, mostCommented, trending
-  it can be paginated
-  it returns the discussions and the pagination information
-  it returns the discussions in the following format:
+ * GET /api/discussions - Fetch paginated list of discussions
+ * Supports filtering by problemId, tag, and search query. Can be sorted by
+ * newest, oldest, mostUpvoted, mostCommented, or trending. Returns discussions with pagination.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -101,14 +97,10 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * 
- * this route is used to create a new discussion
- * it requires the title, content, tags, problemId, problemSlug
- * it returns the created discussion
- * it returns the following format:
- * @returns 
+ * POST /api/discussions - Create a new discussion
+ * Creates a discussion thread with title, content, tags, and optional problem link.
+ * Validates tags and content length. Returns created discussion with populated author data.
  */
-
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();

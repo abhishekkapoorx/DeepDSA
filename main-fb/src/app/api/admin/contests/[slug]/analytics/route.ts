@@ -3,7 +3,11 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// GET /api/admin/contests/[slug]/analytics - Get contest analytics
+/**
+ * GET /api/admin/contests/[slug]/analytics - Get contest analytics (admin only)
+ * Returns comprehensive contest analytics including registration timeline, score distribution,
+ * problem statistics, top performers, and participation metrics. Requires authentication.
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -19,30 +23,30 @@ export async function GET(
 
     const contest = await Contest.findOne({ slug, isDeleted: { $ne: true } })
       .populate('problems.problemId', 'title difficulty')
-      .lean();
+      .lean() as any;
 
     if (!contest) {
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
     }
 
     // Calculate registration timeline
-    const registrationTimeline = contest.registrations.map(reg => ({
+    const registrationTimeline = contest.registrations.map((reg: any) => ({
       date: new Date(reg.registeredAt).toISOString().split('T')[0],
       time: new Date(reg.registeredAt).toISOString().split('T')[1].split('.')[0],
       clerkId: reg.clerkId,
       score: reg.score || 0,
       problemsSolved: reg.problemsSolved || 0
-    })).sort((a, b) => new Date(a.date + 'T' + a.time).getTime() - new Date(b.date + 'T' + b.time).getTime());
+    })).sort((a: any, b: any) => new Date(a.date + 'T' + a.time).getTime() - new Date(b.date + 'T' + b.time).getTime());
 
     // Group registrations by hour
-    const hourlyRegistrations = registrationTimeline.reduce((acc: any, reg) => {
+    const hourlyRegistrations = registrationTimeline.reduce((acc: any, reg: any) => {
       const hour = new Date(reg.date + 'T' + reg.time).getHours();
       acc[hour] = (acc[hour] || 0) + 1;
       return acc;
     }, {});
 
     // Calculate daily registrations
-    const dailyRegistrations = registrationTimeline.reduce((acc: any, reg) => {
+    const dailyRegistrations = registrationTimeline.reduce((acc: any, reg: any) => {
       acc[reg.date] = (acc[reg.date] || 0) + 1;
       return acc;
     }, {});
@@ -50,10 +54,10 @@ export async function GET(
     // Calculate participation metrics
     const totalRegistrations = contest.registrations.length;
     const avgScore = totalRegistrations > 0 
-      ? contest.registrations.reduce((sum, reg) => sum + (reg.score || 0), 0) / totalRegistrations 
+      ? contest.registrations.reduce((sum: number, reg: any) => sum + (reg.score || 0), 0) / totalRegistrations 
       : 0;
     const avgProblemsSolved = totalRegistrations > 0
-      ? contest.registrations.reduce((sum, reg) => sum + (reg.problemsSolved || 0), 0) / totalRegistrations
+      ? contest.registrations.reduce((sum: number, reg: any) => sum + (reg.problemsSolved || 0), 0) / totalRegistrations
       : 0;
 
     // Score distribution
@@ -65,7 +69,7 @@ export async function GET(
       { range: '81-100', count: 0 }
     ];
 
-    contest.registrations.forEach(reg => {
+    contest.registrations.forEach((reg: any) => {
       const score = reg.score || 0;
       if (score <= 20) scoreRanges[0].count++;
       else if (score <= 40) scoreRanges[1].count++;
@@ -75,7 +79,7 @@ export async function GET(
     });
 
     // Problem difficulty analysis
-    const problemStats = contest.problems.map(problem => ({
+    const problemStats = contest.problems.map((problem: any) => ({
       title: problem.problemId?.title || 'Unknown',
       slug: problem.problemSlug,
       difficulty: problem.problemId?.difficulty || 'Mixed',
@@ -85,9 +89,9 @@ export async function GET(
 
     // Top performers
     const topPerformers = contest.registrations
-      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .sort((a: any, b: any) => (b.score || 0) - (a.score || 0))
       .slice(0, 10)
-      .map(reg => ({
+      .map((reg: any) => ({
         clerkId: reg.clerkId,
         score: reg.score || 0,
         problemsSolved: reg.problemsSolved || 0,

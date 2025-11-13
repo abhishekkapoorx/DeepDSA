@@ -3,6 +3,11 @@ import dbConnect from '@/lib/mongoose'
 import { Problem, Difficulty } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * GET /api/problems - Fetch paginated list of problems
+ * Supports filtering by difficulty and tags, and search by title/description.
+ * Returns problems with basic metadata and pagination information.
+ */
 export async function GET(req: NextRequest) {
   try {
     await dbConnect()
@@ -60,6 +65,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * POST /api/problems - Create a new problem (admin only)
+ * Creates a problem with all required fields. Validates input and requires admin authentication.
+ * Note: This is a simplified endpoint; use /api/admin/problems for full functionality.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth()

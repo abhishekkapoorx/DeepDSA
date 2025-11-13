@@ -4,7 +4,11 @@ import { Contest } from '@/models';
 import type { IContestRegistration } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
-// POST /api/contests/[slug]/register - Register for a contest
+/**
+ * POST /api/contests/[slug]/register - Register for a contest
+ * Registers authenticated user for a contest. Validates registration is open,
+ * user not already registered, and contest not full. Requires authentication.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -76,7 +80,11 @@ export async function POST(
   }
 }
 
-// DELETE /api/contests/[slug]/register - Unregister from a contest
+/**
+ * DELETE /api/contests/[slug]/register - Unregister from a contest
+ * Removes user's registration from a contest. Only allowed before contest starts.
+ * Requires authentication and user must be registered.
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

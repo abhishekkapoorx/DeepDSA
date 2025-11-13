@@ -3,6 +3,11 @@ import { connectToDB } from '@/lib/mongoose'
 import { Contest, Submission } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * GET /api/contests/[slug]/problems/[problemSlug]/submissions - Get user's submissions for contest problem
+ * Returns user's submission history for a specific problem within a contest.
+ * Only returns submissions made during contest time window. Requires authentication and registration.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; problemSlug: string }> }

@@ -3,6 +3,10 @@ import dbConnect from '@/lib/mongoose'
 import { Problem, TestCase, User, generateSlug, Submission, TestResult } from '@/models'
 import { auth } from '@clerk/nextjs/server'
 
+/**
+ * GET /api/admin/problems/[slug] - Fetch a specific problem by slug
+ * Returns problem details with all associated test cases for admin editing.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -29,6 +33,11 @@ export async function GET(
   }
 }
 
+/**
+ * PUT /api/admin/problems/[slug] - Update an existing problem (admin only)
+ * Updates problem fields, regenerates slug if title changed, and replaces
+ * all test cases. Requires admin authentication.
+ */
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -136,6 +145,11 @@ export async function PUT(
   }
 }
 
+/**
+ * DELETE /api/admin/problems/[slug] - Permanently delete a problem (admin only)
+ * Deletes problem and all associated data (test cases, submissions, test results).
+ * Requires admin authentication and performs cascading deletion.
+ */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

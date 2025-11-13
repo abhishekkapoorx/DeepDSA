@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongoose'
 import { Problem, TestCase } from '@/models'
 
+/**
+ * GET /api/problems/[slug] - Fetch a specific problem by slug
+ * Returns problem details with all associated test cases formatted for frontend.
+ * No authentication required for viewing problems.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }

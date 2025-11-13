@@ -4,6 +4,11 @@ import dbConnect from '@/lib/mongoose';
 import { Comment, Vote, VoteType, User } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * POST /api/comments/[id]/vote - Vote on a comment
+ * Adds, updates, or removes upvote/downvote on a comment. Toggling same vote removes it.
+ * Updates comment vote counts. Requires authentication.
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -125,6 +130,11 @@ export async function POST(
   }
 }
 
+/**
+ * GET /api/comments/[id]/vote - Get user's vote on a comment
+ * Returns the current user's vote type (upvote/downvote) or null if not voted.
+ * Requires authentication.
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

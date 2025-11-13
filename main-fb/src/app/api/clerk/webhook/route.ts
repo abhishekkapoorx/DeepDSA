@@ -6,6 +6,11 @@ import { User, Role } from "@/models";
 
 export const runtime = "nodejs";
 
+/**
+ * POST /api/clerk/webhook - Handle Clerk authentication webhooks
+ * Processes user.created and user.updated events from Clerk. Creates or updates
+ * user records in database with auto-generated unique username. Verifies webhook signature.
+ */
 export async function POST(req: NextRequest) {
   console.log("🔔 Clerk webhook received");
   let evt;
