@@ -4,6 +4,14 @@ import dbConnect from '@/lib/mongoose';
 import { Discussion, Comment, Vote, User } from '@/models';
 import mongoose from 'mongoose';
 
+/**
+ * 
+ * this route is used to fetch a specific discussion
+ * it requires the id of the discussion
+ * it returns the discussion
+ * it returns the following format:
+ * @returns 
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -37,6 +45,15 @@ export async function GET(
   }
 }
 
+/**
+ * 
+ * this route is used to update a specific discussion
+ * it requires the id of the discussion
+ * it requires the title, content, tags
+ * it returns the updated discussion
+ * it returns the following format:
+ * @returns 
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

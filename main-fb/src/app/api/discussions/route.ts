@@ -4,6 +4,15 @@ import dbConnect from '@/lib/mongoose';
 import { Discussion, Comment, Vote, User } from '@/models';
 import { validateTags } from '@/lib/discussionTags';
 
+
+/**
+  this route is used to fetch discussions
+  it can be filtered by problemId, tag, search
+  it can be sorted by newest, oldest, mostUpvoted, mostCommented, trending
+  it can be paginated
+  it returns the discussions and the pagination information
+  it returns the discussions in the following format:
+ */
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
@@ -90,6 +99,15 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+/**
+ * 
+ * this route is used to create a new discussion
+ * it requires the title, content, tags, problemId, problemSlug
+ * it returns the created discussion
+ * it returns the following format:
+ * @returns 
+ */
 
 export async function POST(request: NextRequest) {
   try {
