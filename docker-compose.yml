@@ -1,26 +1,4 @@
 services:
-  # Backend API service
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: deepdsa-backend
-    ports:
-      - "5373:5373"
-    environment:
-      - NODE_ENV=production
-      - PORT=5373
-      - MONGO_URI=mongodb://mongo:27017/deepdsa
-      - FRONTEND_URL=http://localhost:3000
-    depends_on:
-      - mongo
-      - redis
-    networks:
-      - deepdsa-network
-    restart: unless-stopped
-    volumes:
-      - ./backend/logs:/app/logs
-
   # Frontend Next.js service
   frontend:
     build:
