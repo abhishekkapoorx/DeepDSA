@@ -1,40 +1,5 @@
 
 services:
-  # Backend API service (development)
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile.dev
-  #   container_name: deepdsa-backend-dev
-  #   ports:
-  #     - "5373:5373"
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=5373
-  #     - MONGO_URI=mongodb://mongo:27017/deepdsa
-  #     - FRONTEND_URL=http://localhost:3000
-  #   depends_on:
-  #     - mongo
-  #     # - redis
-  #   networks:
-  #     - deepdsa-network
-  #   restart: unless-stopped
-  #   develop:
-  #     watch:
-  #       - action: sync
-  #         path: ./backend/src
-  #         target: /app/src
-  #         ignore:
-  #           - node_modules/
-  #           - dist/
-  #           - logs/
-  #       - action: rebuild
-  #         path: ./backend/package.json
-  #       - action: sync
-  #         path: ./backend/package-lock.json
-  #         target: /app/package-lock.json
-  #   command: npm run dev
-
   # Frontend Next.js service (development)
   frontend:
     build:
@@ -162,7 +127,6 @@ services:
       - SYS_PTRACE
       - SYS_RESOURCE
       - SYS_CHROOT
-      - SYS_PTRACE
     networks:
       - deepdsa-network
     restart: unless-stopped
@@ -211,7 +175,6 @@ services:
       - SYS_PTRACE
       - SYS_RESOURCE
       - SYS_CHROOT
-      - SYS_PTRACE
     networks:
       - deepdsa-network
     restart: unless-stopped
