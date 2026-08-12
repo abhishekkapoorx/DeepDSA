@@ -3,6 +3,35 @@ import { connectToDB } from '@/lib/mongoose';
 import { Contest } from '@/models';
 import { auth } from '@clerk/nextjs/server';
 
+type ContestAnalyticsRegistration = {
+  clerkId: string;
+  registeredAt: Date | string;
+  score?: number;
+  problemsSolved?: number;
+};
+
+type ContestAnalyticsProblem = {
+  problemId?: {
+    title?: string;
+    difficulty?: string;
+  };
+  problemSlug: string;
+  points: number;
+  order: number;
+};
+
+type ContestAnalyticsContest = {
+  title: string;
+  slug: string;
+  duration: number;
+  maxParticipants?: number | null;
+  startTime: Date | string;
+  endTime: Date | string;
+  difficulty: string;
+  problems: ContestAnalyticsProblem[];
+  registrations: ContestAnalyticsRegistration[];
+};
+
 // GET /api/admin/contests/[slug]/analytics - Get contest analytics
 export async function GET(
   _request: NextRequest,
@@ -17,9 +46,9 @@ export async function GET(
     await connectToDB();
     const { slug } = await params;
 
-    const contest = await Contest.findOne({ slug, isDeleted: { $ne: true } })
+    const contest = (await Contest.findOne({ slug, isDeleted: { $ne: true } })
       .populate('problems.problemId', 'title difficulty')
-      .lean();
+      .lean()) as ContestAnalyticsContest | null;
 
     if (!contest) {
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });

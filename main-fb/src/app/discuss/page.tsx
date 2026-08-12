@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -37,6 +37,14 @@ interface Pagination {
 }
 
 export default function DiscussPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8 max-w-4xl"><div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div></div>}>
+      <DiscussPageContent />
+    </Suspense>
+  );
+}
+
+function DiscussPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   

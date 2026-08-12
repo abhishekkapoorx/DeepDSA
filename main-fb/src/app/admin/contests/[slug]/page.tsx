@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import type { IContest } from '@/models'
 import { ArrowLeft, Edit, Save, X, Plus, Trash2, Users, Trophy, Calendar, Settings, BarChart3, Download, BookOpen, Copy, AlertTriangle } from 'lucide-react'
@@ -46,7 +47,7 @@ const ContestDetailManagement = () => {
     if (!contest) return
     
     try {
-      const response = await fetch(`/api/contests/${contest.slug}`, {
+      const response = await fetch(`/api/contests/${contest?.slug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData)
@@ -71,7 +72,7 @@ const ContestDetailManagement = () => {
 
   const handleAddProblem = async (problemSlug: string, points: number) => {
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/problems`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/problems`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problemSlug, points })
@@ -91,7 +92,7 @@ const ContestDetailManagement = () => {
 
   const handleReorderProblems = async (reorderedProblems: any[]) => {
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/problems/reorder`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/problems/reorder`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problems: reorderedProblems })
@@ -111,7 +112,7 @@ const ContestDetailManagement = () => {
 
   const handleEditProblemPoints = async (problemSlug: string, points: number) => {
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/problems`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/problems`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problemSlug, points })
@@ -133,7 +134,7 @@ const ContestDetailManagement = () => {
     if (!confirm('Are you sure you want to remove this problem?')) return
     
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/problems`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/problems`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problemSlug })
@@ -155,7 +156,7 @@ const ContestDetailManagement = () => {
     if (!confirm('Are you sure you want to remove this participant?')) return
     
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/participants`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/participants`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clerkId })
@@ -177,7 +178,7 @@ const ContestDetailManagement = () => {
     if (!confirm(`Are you sure you want to remove ${clerkIds.length} participant(s)?`)) return
     
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/participants/bulk`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/participants/bulk`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clerkIds })
@@ -200,8 +201,8 @@ const ContestDetailManagement = () => {
     if (!contest) return
     
     const participantsToExport = clerkIds 
-      ? contest.registrations.filter(reg => clerkIds.includes(reg.clerkId))
-      : contest.registrations
+      ? contest?.registrations.filter(reg => clerkIds.includes(reg.clerkId))
+      : contest?.registrations
     
     const csvContent = [
       ['User ID', 'Registration Date', 'Score', 'Problems Solved', 'Total Time'],
@@ -218,7 +219,7 @@ const ContestDetailManagement = () => {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${contest.slug}-participants${clerkIds ? '-selected' : ''}.csv`
+    a.download = `${contest?.slug}-participants${clerkIds ? '-selected' : ''}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
     
@@ -226,10 +227,10 @@ const ContestDetailManagement = () => {
   }
 
   const handleSaveAsTemplate = async () => {
-    const name = prompt('Template name:', `${contest.title} Template`)
+    const name = prompt('Template name:', `${contest?.title} Template`)
     if (!name) return
 
-    const description = prompt('Template description:', contest.description)
+    const description = prompt('Template description:', contest?.description)
     if (!description) return
 
     const category = prompt('Category (beginner/intermediate/advanced/custom):', 'custom')
@@ -238,16 +239,16 @@ const ContestDetailManagement = () => {
     const isPublic = confirm('Make this template public?')
 
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/save-as-template`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/save-as-template`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           description,
           category,
-          difficulty: contest.difficulty,
+          difficulty: contest?.difficulty,
           isPublic,
-          tags: contest.tags
+          tags: contest?.tags
         })
       })
 
@@ -263,22 +264,22 @@ const ContestDetailManagement = () => {
   }
 
   const handleCloneContest = async () => {
-    const title = prompt('Enter new contest title:', `${contest.title} (Copy)`)
+    const title = prompt('Enter new contest title:', `${contest?.title} (Copy)`)
     if (!title) return
 
-    const description = prompt('Enter contest description:', contest.description)
+    const description = prompt('Enter contest description:', contest?.description)
     if (!description) return
 
     const startTime = prompt('Enter start time (YYYY-MM-DDTHH:MM):', new Date().toISOString().slice(0, 16))
     if (!startTime) return
 
-    const endTime = prompt('Enter end time (YYYY-MM-DDTHH:MM):', new Date(Date.now() + contest.duration * 60000).toISOString().slice(0, 16))
+    const endTime = prompt('Enter end time (YYYY-MM-DDTHH:MM):', new Date(Date.now() + (contest?.duration ? contest?.duration * 60000 : 0)).toISOString().slice(0, 16))
     if (!endTime) return
 
-    const maxParticipants = prompt('Max participants (leave empty for no limit):', contest.maxParticipants?.toString() || '')
+    const maxParticipants = prompt('Max participants (leave empty for no limit):', contest?.maxParticipants?.toString() || '')
 
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/clone`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -300,7 +301,7 @@ const ContestDetailManagement = () => {
       
       // Redirect to the new contest after a short delay
       setTimeout(() => {
-        window.location.href = `/admin/contests/${data.contest.slug}`
+        window.location.href = `/admin/contests/${data.contest?.slug}`
       }, 2000)
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Failed to clone contest')
@@ -308,7 +309,7 @@ const ContestDetailManagement = () => {
   }
 
   const handlePermanentDelete = async () => {
-    const confirmMessage = `Are you sure you want to PERMANENTLY DELETE "${contest.title}"?\n\nThis action cannot be undone and will:\n- Delete all contest data\n- Remove all problems and settings\n- Cannot be recovered\n\nType "DELETE" to confirm:`
+    const confirmMessage = `Are you sure you want to PERMANENTLY DELETE "${contest?.title}"?\n\nThis action cannot be undone and will:\n- Delete all contest data\n- Remove all problems and settings\n- Cannot be recovered\n\nType "DELETE" to confirm:`
     
     const confirmation = prompt(confirmMessage)
     if (confirmation !== 'DELETE') {
@@ -317,7 +318,7 @@ const ContestDetailManagement = () => {
     }
 
     try {
-      const response = await fetch(`/api/admin/contests/${contest.slug}/permanent-delete`, {
+      const response = await fetch(`/api/admin/contests/${contest?.slug}/permanent-delete`, {
         method: 'DELETE'
       })
 
@@ -353,17 +354,17 @@ const ContestDetailManagement = () => {
       <div className="min-h-screen bg-background pt-16 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-500 mb-4">{error || 'Contest not found'}</p>
-          <a href="/admin/contests" className="text-primary hover:underline">
+          <Link href="/admin/contests" className="text-primary hover:underline">
             ← Back to Contests
-          </a>
+          </Link>
         </div>
       </div>
     )
   }
 
   const now = new Date()
-  const start = new Date(contest.startTime)
-  const end = new Date(contest.endTime)
+  const start = new Date(contest?.startTime)
+  const end = new Date(contest?.endTime)
   const status = now < start ? 'upcoming' : (now > end ? 'ended' : 'running')
 
   return (
@@ -372,12 +373,12 @@ const ContestDetailManagement = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <a href="/admin/contests" className="text-muted-foreground hover:text-foreground">
+            <Link href="/admin/contests" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-5 h-5" />
-            </a>
+            </Link>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{contest.title}</h1>
-              <p className="text-muted-foreground">{contest.slug}</p>
+              <h1 className="text-3xl font-bold text-foreground">{contest?.title}</h1>
+              <p className="text-muted-foreground">{contest?.slug}</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -510,12 +511,12 @@ const ContestDetailManagement = () => {
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   ) : (
-                    <p className="text-muted-foreground">{contest.title}</p>
+                    <p className="text-muted-foreground">{contest?.title}</p>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Slug</label>
-                  <p className="text-muted-foreground">{contest.slug}</p>
+                  <p className="text-muted-foreground">{contest?.slug}</p>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-foreground mb-2">Description</label>
@@ -527,7 +528,7 @@ const ContestDetailManagement = () => {
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   ) : (
-                    <p className="text-muted-foreground">{contest.description}</p>
+                    <p className="text-muted-foreground">{contest?.description}</p>
                   )}
                 </div>
               </div>
@@ -548,7 +549,7 @@ const ContestDetailManagement = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Problems</p>
-                    <p className="text-2xl font-bold text-foreground">{contest.problems.length}</p>
+                    <p className="text-2xl font-bold text-foreground">{contest?.problems.length}</p>
                   </div>
                   <Trophy className="w-8 h-8 text-primary" />
                 </div>
@@ -557,7 +558,7 @@ const ContestDetailManagement = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Duration</p>
-                    <p className="text-2xl font-bold text-foreground">{contest.duration}m</p>
+                    <p className="text-2xl font-bold text-foreground">{contest?.duration}m</p>
                   </div>
                   <Calendar className="w-8 h-8 text-primary" />
                 </div>
@@ -566,7 +567,7 @@ const ContestDetailManagement = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Difficulty</p>
-                    <p className="text-2xl font-bold text-foreground capitalize">{contest.difficulty}</p>
+                    <p className="text-2xl font-bold text-foreground capitalize">{contest?.difficulty}</p>
                   </div>
                   <BarChart3 className="w-8 h-8 text-primary" />
                 </div>
@@ -577,9 +578,9 @@ const ContestDetailManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card border border-border rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Rules</h3>
-                {contest.rules.length > 0 ? (
+                {contest?.rules.length > 0 ? (
                   <ul className="space-y-2">
-                    {contest.rules.map((rule, i) => (
+                    {contest?.rules.map((rule, i) => (
                       <li key={i} className="text-muted-foreground">• {rule}</li>
                     ))}
                   </ul>
@@ -589,9 +590,9 @@ const ContestDetailManagement = () => {
               </div>
               <div className="bg-card border border-border rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Prizes</h3>
-                {contest.prizes && contest.prizes.length > 0 ? (
+                {contest?.prizes && contest?.prizes.length > 0 ? (
                   <ul className="space-y-2">
-                    {contest.prizes.map((prize, i) => (
+                    {contest?.prizes.map((prize, i) => (
                       <li key={i} className="text-muted-foreground">• {prize}</li>
                     ))}
                   </ul>
@@ -618,7 +619,7 @@ const ContestDetailManagement = () => {
             </div>
             
             <div className="bg-card border border-border rounded-lg p-6">
-              {contest.problems.length === 0 ? (
+              {contest?.problems.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <p>No problems added to this contest yet.</p>
@@ -626,7 +627,7 @@ const ContestDetailManagement = () => {
                 </div>
               ) : (
                 <DragDropProblemList
-                  problems={contest.problems}
+                  problems={contest?.problems}
                   onReorder={handleReorderProblems}
                   onEdit={(problemSlug, points) => {
                     const newPoints = prompt(`Enter new points for this problem (current: ${points}):`, points.toString())
@@ -644,7 +645,7 @@ const ContestDetailManagement = () => {
               isOpen={showProblemModal}
               onClose={() => setShowProblemModal(false)}
               onAddProblem={handleAddProblem}
-              existingProblems={contest.problems.map(p => p.problemSlug)}
+              existingProblems={contest?.problems.map(p => p.problemSlug)}
             />
           </div>
         )}
@@ -664,7 +665,7 @@ const ContestDetailManagement = () => {
             </div>
             
             <BulkParticipantManager
-              participants={contest.registrations}
+              participants={contest?.registrations}
               onRemoveParticipants={handleBulkRemoveParticipants}
               onExportParticipants={handleExportParticipants}
             />
@@ -685,7 +686,7 @@ const ContestDetailManagement = () => {
               </button>
             </div>
             
-            <ContestAnalytics contestSlug={contest.slug} />
+            <ContestAnalytics contestSlug={contest?.slug} />
           </div>
         )}
 
@@ -732,7 +733,7 @@ const ContestDetailManagement = () => {
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   ) : (
-                    <p className="text-muted-foreground">{contest.duration}</p>
+                    <p className="text-muted-foreground">{contest?.duration}</p>
                   )}
                 </div>
                 <div>
@@ -745,7 +746,7 @@ const ContestDetailManagement = () => {
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   ) : (
-                    <p className="text-muted-foreground">{contest.maxParticipants || 'No limit'}</p>
+                    <p className="text-muted-foreground">{contest?.maxParticipants || 'No limit'}</p>
                   )}
                 </div>
                 <div>
@@ -762,12 +763,12 @@ const ContestDetailManagement = () => {
                       <option value="mixed">Mixed</option>
                     </select>
                   ) : (
-                    <p className="text-muted-foreground capitalize">{contest.difficulty}</p>
+                    <p className="text-muted-foreground capitalize">{contest?.difficulty}</p>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Published</label>
-                  <p className="text-muted-foreground">{contest.isPublished ? 'Yes' : 'No'}</p>
+                  <p className="text-muted-foreground">{contest?.isPublished ? 'Yes' : 'No'}</p>
                 </div>
               </div>
             </div>
@@ -789,15 +790,15 @@ const ContestDetailManagement = () => {
                     <p className="text-sm text-red-600">
                       This will permanently delete the contest and all its data. This action cannot be undone.
                     </p>
-                    {contest.registrations.length > 0 && (
+                    {contest?.registrations.length > 0 && (
                       <p className="text-sm text-red-600 mt-1">
-                        ⚠️ Contest has {contest.registrations.length} participants. Remove all participants first.
+                        ⚠️ Contest has {contest?.registrations.length} participants. Remove all participants first.
                       </p>
                     )}
                   </div>
                   <button
                     onClick={handlePermanentDelete}
-                    disabled={contest.registrations.length > 0}
+                    disabled={contest?.registrations.length > 0}
                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />

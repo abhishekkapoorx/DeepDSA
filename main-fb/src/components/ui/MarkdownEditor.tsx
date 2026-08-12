@@ -74,7 +74,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       return '<p class="text-muted-foreground italic">Start typing to see the preview...</p>'
     }
 
-    let html = markdown
+    const html = markdown
       // Escape HTML first
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')

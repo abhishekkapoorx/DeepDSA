@@ -49,7 +49,7 @@ export async function POST(
       endTime: new Date(endTime),
       duration: originalContest.duration,
       maxParticipants: maxParticipants || originalContest.maxParticipants,
-      problems: originalContest.problems.map(problem => ({
+      problems: originalContest.problems.map((problem: { problemSlug: string; points: number; order: number }) => ({
         problemId: null, // Will be populated when problems are added
         problemSlug: problem.problemSlug,
         points: problem.points,

@@ -76,7 +76,7 @@ export async function PUT(
       
       // Check if new slug already exists (excluding current problem)
       let counter = 1
-      let originalSlug = newSlug
+      const originalSlug = newSlug
       while (await Problem.findOne({ slug: newSlug, _id: { $ne: existingProblem._id } })) {
         newSlug = `${originalSlug}-${counter}`
         counter++

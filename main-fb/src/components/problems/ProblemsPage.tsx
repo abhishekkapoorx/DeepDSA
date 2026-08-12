@@ -1,11 +1,19 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Sidebar, ProblemList, RightSidebar, FeaturedCourses, TopicFilters } from './index';
 import { Button } from '../ui/button';
 import { useSearchParams } from 'next/navigation';
 
 export default function ProblemsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex pt-16"><div className="flex-1 flex items-center justify-center text-muted-foreground">Loading problems...</div></div>}>
+      <ProblemsPageContent />
+    </Suspense>
+  );
+}
+
+function ProblemsPageContent() {
   const searchParams = useSearchParams();
   const [selectedTopic, setSelectedTopic] = useState('All Topics');
   const [searchQuery, setSearchQuery] = useState('');

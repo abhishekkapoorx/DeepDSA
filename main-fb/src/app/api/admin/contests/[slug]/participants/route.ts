@@ -17,11 +17,23 @@ export async function GET(
     await connectToDB();
     const { slug } = await params;
 
+    type ContestParticipant = {
+      clerkId: string;
+      registeredAt?: Date | string;
+      score?: number;
+      problemsSolved?: number;
+      totalTime?: number;
+      userId?: {
+        username?: string;
+        email?: string;
+      } | null;
+    };
+
     const contest = await Contest.findOne({ slug, isDeleted: { $ne: true } })
       .populate('registrations.userId', 'username email')
-      .lean();
+      .lean<{ registrations?: ContestParticipant[] } | null>();
 
-    if (!contest) {
+    if (!contest || !contest.registrations) {
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
     }
 
@@ -57,7 +69,7 @@ export async function DELETE(
 
     // Remove participant from contest
     const initialLength = contest.registrations.length;
-    contest.registrations = contest.registrations.filter(r => r.clerkId !== clerkId);
+    contest.registrations = contest.registrations.filter((r: { clerkId: string }) => r.clerkId !== clerkId);
 
     if (contest.registrations.length === initialLength) {
       return NextResponse.json({ error: 'Participant not found in contest' }, { status: 404 });
@@ -98,7 +110,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
     }
 
-    const participant = contest.registrations.find(r => r.clerkId === clerkId);
+    const participant = contest.registrations.find((r: { clerkId: string }) => r.clerkId === clerkId);
     if (!participant) {
       return NextResponse.json({ error: 'Participant not found in contest' }, { status: 404 });
     }

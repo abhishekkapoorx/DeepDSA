@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     
     // Check if slug already exists and append number if needed
     let counter = 1
-    let originalSlug = slug
+    const originalSlug = slug
     while (await Problem.findOne({ slug })) {
       slug = `${originalSlug}-${counter}`
       counter++

@@ -71,10 +71,11 @@ export const testAPIEndpoints = async () => {
   console.log('=== Testing API Endpoints ===');
   
   // Test boilerplate API (mock)
+  const halfBoilerplate = new HalfBoilerplateGenerator(testInputVariables, testOutputVariable, testFunctionName).generateAll();
   const mockBoilerplateResponse = {
     success: true,
     data: {
-      boilerplate: halfGenerator.generateAll().cpp,
+      boilerplate: halfBoilerplate.cpp,
       language: 'cpp',
       problemSlug: 'two-sum',
       functionName: testFunctionName

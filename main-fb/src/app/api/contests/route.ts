@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     
     const now = new Date();
-    let filter: any = { isDeleted: includeDeleted ? { $in: [true, false] } : { $ne: true } };
+    const filter: any = { isDeleted: includeDeleted ? { $in: [true, false] } : { $ne: true } };
     if (!includeUnpublished) {
       filter.isPublished = true
     }

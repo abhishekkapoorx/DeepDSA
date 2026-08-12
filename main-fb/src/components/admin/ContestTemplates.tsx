@@ -177,7 +177,7 @@ const ContestTemplates = ({ onApplyTemplate }: ContestTemplatesProps) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
-            <div key={template._id} className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow">
+            <div key={String(template._id)} className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-foreground mb-2">{template.name}</h3>

@@ -17,11 +17,23 @@ export async function GET(
     await connectToDB();
     const { slug } = await params;
 
+    type ContestProblemDoc = {
+      problemSlug: string;
+      points: number;
+      order: number;
+      problemId?: {
+        title?: string;
+        slug?: string;
+        difficulty?: string;
+        description?: string;
+      } | null;
+    };
+
     const contest = await Contest.findOne({ slug, isDeleted: { $ne: true } })
       .populate('problems.problemId', 'title slug difficulty description')
-      .lean();
+      .lean<{ problems?: ContestProblemDoc[] } | null>();
 
-    if (!contest) {
+    if (!contest || !contest.problems) {
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
     }
 
@@ -63,7 +75,7 @@ export async function POST(
     }
 
     // Check if problem is already added
-    const existingProblem = contest.problems.find(p => p.problemSlug === problemSlug);
+    const existingProblem = contest.problems.find((p: { problemSlug: string }) => p.problemSlug === problemSlug);
     if (existingProblem) {
       return NextResponse.json({ error: 'Problem already added to contest' }, { status: 400 });
     }
@@ -121,14 +133,14 @@ export async function DELETE(
 
     // Remove problem from contest
     const initialLength = contest.problems.length;
-    contest.problems = contest.problems.filter(p => p.problemSlug !== problemSlug);
+    contest.problems = contest.problems.filter((p: { problemSlug: string }) => p.problemSlug !== problemSlug);
 
     if (contest.problems.length === initialLength) {
       return NextResponse.json({ error: 'Problem not found in contest' }, { status: 404 });
     }
 
     // Reorder remaining problems
-    contest.problems.forEach((problem, index) => {
+    contest.problems.forEach((problem: { order: number }, index: number) => {
       problem.order = index + 1;
     });
 
@@ -164,7 +176,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Contest not found' }, { status: 404 });
     }
 
-    const problem = contest.problems.find(p => p.problemSlug === problemSlug);
+    const problem = contest.problems.find((p: { problemSlug: string }) => p.problemSlug === problemSlug);
     if (!problem) {
       return NextResponse.json({ error: 'Problem not found in contest' }, { status: 404 });
     }

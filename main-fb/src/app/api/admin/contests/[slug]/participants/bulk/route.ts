@@ -29,7 +29,7 @@ export async function DELETE(
 
     // Remove participants
     const initialLength = contest.registrations.length;
-    contest.registrations = contest.registrations.filter(reg => !clerkIds.includes(reg.clerkId));
+    contest.registrations = contest.registrations.filter((reg: { clerkId: string }) => !clerkIds.includes(reg.clerkId));
     
     const removedCount = initialLength - contest.registrations.length;
 

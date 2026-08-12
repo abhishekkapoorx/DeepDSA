@@ -72,7 +72,7 @@ export default function ProblemList({ selectedTopic, searchQuery, problemsFromPa
       const response = await fetch('/api/submissions?status=accepted&limit=1000');
       if (response.ok) {
         const data = await response.json();
-        const solvedSet = new Set(data.submissions.map((submission: any) => submission.problemId));
+        const solvedSet = new Set<string>(data.submissions.map((submission: { problemId: string }) => submission.problemId));
         setSolvedProblems(solvedSet);
       }
     } catch (err) {

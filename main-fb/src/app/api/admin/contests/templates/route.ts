@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const page = parseInt(searchParams.get('page') || '1');
 
-    let filter: any = {};
+    const filter: any = {};
 
     // Filter by category
     if (category && category !== 'all') {

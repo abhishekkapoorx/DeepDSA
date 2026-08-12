@@ -40,7 +40,7 @@ export async function POST(
       difficulty: difficulty || contest.difficulty,
       duration: contest.duration,
       maxParticipants: contest.maxParticipants,
-      problems: contest.problems.map(problem => ({
+      problems: contest.problems.map((problem: { problemSlug: string; points: number; order: number }) => ({
         problemSlug: problem.problemSlug,
         points: problem.points,
         order: problem.order

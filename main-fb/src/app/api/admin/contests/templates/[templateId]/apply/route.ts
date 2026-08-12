@@ -48,7 +48,7 @@ export async function POST(
       endTime: new Date(endTime),
       duration: template.duration,
       maxParticipants: maxParticipants || template.maxParticipants,
-      problems: template.problems.map(problem => ({
+      problems: template.problems.map((problem: { problemSlug: string; points: number; order: number }) => ({
         problemId: null, // Will be populated when problems are added
         problemSlug: problem.problemSlug,
         points: problem.points,

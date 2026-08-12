@@ -136,15 +136,17 @@ async function calculateUserStats(userId: mongoose.Types.ObjectId) {
     const allSubmissions = await Submission.find({ userId });
     
     // Calculate difficulty-wise solved counts
-    const difficultyCounts = { easy: 0, medium: 0, hard: 0 };
-    const solvedProblems = new Set();
+    const difficultyCounts: Record<'easy' | 'medium' | 'hard', number> = { easy: 0, medium: 0, hard: 0 };
+    const solvedProblems = new Set<string>();
 
     acceptedSubmissions.forEach(submission => {
-      if (submission.problemId && !solvedProblems.has(submission.problemId._id.toString())) {
-        solvedProblems.add(submission.problemId._id.toString());
-        const difficulty = submission.problemId.difficulty?.toLowerCase();
-        if (difficultyCounts.hasOwnProperty(difficulty)) {
-          difficultyCounts[difficulty]++;
+      const problem = submission.problemId as { _id?: { toString: () => string }; difficulty?: string } | null;
+      if (problem && problem._id && !solvedProblems.has(problem._id.toString())) {
+        solvedProblems.add(problem._id.toString());
+        const difficulty = problem.difficulty?.toLowerCase();
+        const difficultyKey = difficulty as keyof typeof difficultyCounts | undefined;
+        if (difficultyKey && difficultyKey in difficultyCounts) {
+          difficultyCounts[difficultyKey]++;
         }
       }
     });
