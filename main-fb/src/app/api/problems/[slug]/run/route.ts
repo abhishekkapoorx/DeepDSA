@@ -6,6 +6,7 @@ import { FullBoilerplateGenerator, mergeBoilerplateCode } from '@/utils/CodeGene
 // Judge0 configuration (self-hosted default: http://localhost:2358)
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
 const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY; // RapidAPI key (optional)
+const JUDGE0_API_HOST = process.env.JUDGE0_API_HOST; // RapidAPI host (optional)
 const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN; // Self-hosted Judge0 auth token (optional)
 
 export async function POST(
@@ -95,8 +96,8 @@ export async function POST(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
-        ...(JUDGE0_AUTH_TOKEN && { 'X-Auth-Token': JUDGE0_AUTH_TOKEN }),
+        ...(JUDGE0_API_KEY && { 'x-rapidapi-key': JUDGE0_API_KEY }),
+        ...(JUDGE0_API_HOST && { 'x-rapidapi-host': JUDGE0_API_HOST }),
       },
       body: JSON.stringify({
         submissions: batchSubmissions
@@ -128,8 +129,8 @@ export async function POST(
       // Get batch results with base64_encoded=false to get readable output
       const resultsResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?tokens=${tokens.join(',')}&base64_encoded=false&fields=token,stdout,stderr,status_id,status,time,memory,compile_output,message`, {
         headers: {
-          ...(JUDGE0_API_KEY && { 'X-RapidAPI-Key': JUDGE0_API_KEY }),
-          ...(JUDGE0_AUTH_TOKEN && { 'X-Auth-Token': JUDGE0_AUTH_TOKEN }),
+          ...(JUDGE0_API_KEY && { 'x-rapidapi-key': JUDGE0_API_KEY }),
+          ...(JUDGE0_API_HOST && { 'x-rapidapi-host': JUDGE0_API_HOST }),
         }
       });
       
