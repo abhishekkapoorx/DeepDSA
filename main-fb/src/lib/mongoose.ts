@@ -9,6 +9,8 @@ export async function connectToDB() {
     return;
   }
 
+  console.log(MONGO_URI.slice(0, 5) + "..." + MONGO_URI.slice(-15)); // Log first and last 20 characters of the URI for debugging
+
   if (isConnected) {
     console.log("ℹ️ MongoDB is already connected, skipping reconnection");
     return;
