@@ -93,17 +93,13 @@ ${inputReadingCode}
       } else if (input.type === 'boolean') {
         return `        boolean ${input.name} = scanner.nextBoolean();`;
       } else if (input.type === 'int') {
-        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
-        return `        int ${input.name} = scanner.nextInt();${consumeNewline}`;
+        return `        int ${input.name} = scanner.nextInt();`;
       } else if (input.type === 'long') {
-        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
-        return `        long ${input.name} = scanner.nextLong();${consumeNewline}`;
+        return `        long ${input.name} = scanner.nextLong();`;
       } else if (input.type === 'double') {
-        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
-        return `        double ${input.name} = scanner.nextDouble();${consumeNewline}`;
+        return `        double ${input.name} = scanner.nextDouble();`;
       } else {
-        const consumeNewline = isLastInput ? '' : '\n        scanner.nextLine(); // consume newline';
-        return `        ${input.type} ${input.name} = scanner.nextInt();${consumeNewline}`;
+        return `        ${input.type} ${input.name} = scanner.nextInt();`;
       }
     }).join('\n\n');
 

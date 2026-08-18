@@ -69,6 +69,7 @@ export async function POST(
     );
     const fullBoilerplate = fullGenerator.generateAll()[language];
     const completeCode = mergeBoilerplateCode(fullBoilerplate, code);
+    console.log('Merged Code: ', completeCode);
 
     // Encode merged code as base64 to avoid syntax and space issues
     const encodedCode = Buffer.from(completeCode, 'utf-8').toString('base64');
@@ -92,7 +93,9 @@ export async function POST(
     console.log(`Submitting batch of ${batchSubmissions.length} test cases to Judge0`);
 
     // Submit batch to Judge0 with base64_encoded=true since we're sending base64 code
-    const batchResponse = await fetch(`${JUDGE0_API_URL}/submissions/batch?base64_encoded=true&wait=false`, {
+    const BATCH_SUBMISSION_URL = `${JUDGE0_API_URL}/submissions/batch?base64_encoded=true&wait=false`;
+    console.log('Batch submission URL:', BATCH_SUBMISSION_URL);
+    const batchResponse = await fetch(BATCH_SUBMISSION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
