@@ -125,7 +125,6 @@ const EditorialSchema = new Schema<IEditorial>(
 
 // Index for better query performance (guard for environments that may not support emitWarning)
 try {
-  EditorialSchema.index({ problemId: 1 });
   EditorialSchema.index({ isPublished: 1 });
 } catch (_) {
   // no-op in non-server environments

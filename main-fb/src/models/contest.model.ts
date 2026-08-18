@@ -83,7 +83,6 @@ const ContestSchema = new Schema<IContest>({
 // Index for efficient queries
 ContestSchema.index({ startTime: 1 });
 ContestSchema.index({ isPublished: 1, isActive: 1 });
-ContestSchema.index({ slug: 1 });
 ContestSchema.index({ isDeleted: 1 });
 
 // Pre-save middleware to update updatedAt

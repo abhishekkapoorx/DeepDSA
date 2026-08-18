@@ -64,7 +64,6 @@ const UserProgressSchema = new Schema<IUserProgress>(
 );
 
 // Indexes for better query performance
-UserProgressSchema.index({ userId: 1 });
 UserProgressSchema.index({ totalSolved: -1, ranking: 1 });
 
 const UserProgress: Model<IUserProgress> =
