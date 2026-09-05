@@ -1,254 +1,164 @@
-# DeepDSA - Docker Setup
+# DeepDSA
 
-A full-stack application with Node.js/Express backend and Next.js frontend, containerized with Docker.
+DeepDSA is a Next.js platform for practicing data structures and algorithms. It combines problem solving, code execution, contests, discussions, editorials, AI interview practice, and code visualization in one application.
 
-## 🚀 Quick Start
+## Features
 
-### Production
-```bash
-# Build and start all services
-docker-compose up --build
+- LeetCode-style problem workspace with a Monaco editor, language switching, test cases, submissions, editorials, solutions, and discussion tabs.
+- Code execution and judging through Judge0 for C, C++, Java, JavaScript, and Python.
+- Problem, testcase, editorial, solution, contest, discussion, submission, interview, and user-progress management.
+- Clerk authentication with user and admin areas.
+- AI interview practice and code-aware coaching.
+- Python Tutor-style code visualization for supported code paths.
+- Responsive dark/light UI built with Tailwind CSS, Radix UI, Lucide, and FlexLayout.
 
-# Run in background
-docker-compose up -d --build
-```
+## Architecture
 
-### Development
-```bash
-# Start development environment with hot reloading
-docker-compose -f docker-compose.dev.yml up --build
+The application is a single Next.js service in `main-fb/`. Its App Router API routes handle application data and integrate with MongoDB, Clerk, Cloudinary, Gemini/OpenAI-compatible AI providers, and Judge0.
 
-# Run in background
-docker-compose -f docker-compose.dev.yml up -d --build
-```
+Development Docker Compose also provides:
 
-### With Ngrok Tunneling
-```bash
-# Start development with ngrok tunnels
-docker-compose -f docker-compose.dev.cloud.yml --profile tunnel up --build
+| Service | Port | Purpose |
+| --- | ---: | --- |
+| Next.js | 3000 | Web application and API routes |
+| MongoDB | 27017 | Application data |
+| Mongo Express | 8081 | Optional database browser |
+| Judge0 | 2358 | Code execution API |
+| Judge0 PostgreSQL | internal | Judge0 persistence |
+| Judge0 Redis | 6379 | Judge0 queue/cache |
+| Ngrok | 4040 | Optional tunnel dashboard |
 
-# Development server with cloud services
-docker-compose -f docker-compose.dev.cloud.yml --profile tunnel up --build
+## Project Structure
 
-# Start production with ngrok tunnels
-docker-compose --profile tunnel up --build
-```
-
-## 📁 Project Structure
-
-```
+```text
 DeepDSA/
-├── backend/                 # Node.js/Express API
-│   ├── Dockerfile          # Production backend image
-│   ├── Dockerfile.dev      # Development backend image
-│   └── src/               # TypeScript source code
-├── main-fb/               # Next.js frontend
-│   ├── Dockerfile          # Production frontend image
-│   ├── Dockerfile.dev      # Development frontend image
-│   └── src/               # React/Next.js source code
-├── docker-compose.yml      # Production orchestration
-├── docker-compose.dev.yml  # Development orchestration
-└── README.md              # This file
+├── main-fb/
+│   ├── src/app/             # Pages and App Router API routes
+│   ├── src/components/      # Reusable UI and feature components
+│   ├── src/models/          # Mongoose models
+│   ├── src/lib/             # Integrations and shared server utilities
+│   ├── src/utils/           # Code generation and other helpers
+│   ├── prisma/              # Prisma schema and generated database types
+│   └── script/              # Data-import scripts and sample data
+├── docker-compose.dev.yml   # Development stack with local services
+├── docker-compose.yml       # Production-oriented stack
+├── docker-compose.dev.cloud.yml # Development stack with Ngrok
+├── judge0.conf              # Judge0 database and queue configuration
+├── ngrok.yml                # Tunnel configuration
+└── README.md
 ```
 
-## 🌐 Services
+## Quick Start
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Frontend | 3000 | Next.js application |
-| Backend | 5373 | Express.js API |
-| MongoDB | 27017 | Database |
-| Redis | 6379 | Cache & sessions |
-| Mongo Express | 8081 | Database management UI |
-| Ngrok | 4040 | All tunnels web interface |
+### Local development
 
-## 🔧 Environment Variables
+```bash
+cd main-fb
+npm install
+cp .env.sample .env
+npm run dev
+```
 
-### Backend (.env.local)
+Open <http://localhost:3000>. Configure MongoDB, Clerk, and Judge0 values in `main-fb/.env` before using the corresponding features.
+
+### Docker development
+
+From the repository root:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Run in the background:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+Stop containers:
+
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
+To remove persisted development data as well:
+
+```bash
+docker compose -f docker-compose.dev.yml down -v
+```
+
+### Ngrok
+
+Set `NGROK_AUTHTOKEN` in the root `.env`, then run:
+
+```bash
+docker compose -f docker-compose.dev.cloud.yml --profile tunnel up --build
+```
+
+The Ngrok dashboard is available at <http://localhost:4040>.
+
+## Configuration
+
+Copy `main-fb/.env.sample` to `main-fb/.env` and set the values needed for your environment. Important variables include:
+
 ```env
-MONGO_URI=mongodb://mongo:27017/deepdsa
-PORT=5373
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+CLERK_WEBHOOK_SECRET=
+MONGO_URI=mongodb://localhost:27017/deepdsa
+DATABASE_URL=mongodb://localhost:27017/deepdsa
+JUDGE0_API_URL=http://localhost:2358
+JUDGE0_API_KEY=
+GEMINI_API_KEY=
 ```
 
-### Frontend (.env.local)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5373
-```
+For Docker, the development Compose file supplies the container hostnames for MongoDB and Judge0. Keep credentials and API keys out of version control.
 
-### Ngrok Configuration
-```env
-# Get your auth token from https://dashboard.ngrok.com/get-started/your-authtoken
-NGROK_AUTHTOKEN=your_ngrok_auth_token_here
-```
+## Useful Commands
 
-## 🛠️ Development
-
-### Hot Reloading with Watch
-The development setup uses Docker Compose's watch functionality for optimal development experience:
-
-#### Backend Watch Configuration:
-- **Source Code**: `./backend/src` → `/app/src` (sync)
-- **Package Files**: `./backend/package.json` → rebuild container
-- **Dependencies**: `./backend/package-lock.json` → sync
-- **Ignored**: `node_modules/`, `dist/`, `logs/`
-
-#### Frontend Watch Configuration:
-- **Source Code**: `./main-fb/src` → `/app/src` (sync)
-- **Public Assets**: `./main-fb/public` → `/app/public` (sync)
-- **Config Files**: `next.config.ts`, `tsconfig.json`, `postcss.config.mjs` → sync
-- **Package Files**: `./main-fb/package.json` → rebuild container
-- **Ignored**: `node_modules/`, `.next/`
-
-### Watch Actions:
-- **`sync`**: File changes are immediately synced to the container
-- **`rebuild`**: Container is rebuilt when package.json changes
-
-### Database Management
-Access MongoDB Express at `http://localhost:8081`:
-- Username: `admin`
-- Password: `admin123`
-
-### Useful Commands
+Run these from `main-fb/`:
 
 ```bash
-# Start development with watch functionality
-docker-compose -f docker-compose.dev.yml up --build
-
-# View logs
-docker-compose logs -f [service-name]
-
-# Execute commands in containers
-docker-compose exec backend npm run build
-docker-compose exec frontend npm run lint
-
-# Stop all services
-docker-compose down
-
-# Remove volumes (⚠️ deletes data)
-docker-compose down -v
-
-# Rebuild specific service
-docker-compose build backend
-
-# Scale services
-docker-compose up --scale backend=2
-
-# Watch specific files/directories
-# The watch functionality automatically monitors:
-# - Source code changes (immediate sync)
-# - Package.json changes (container rebuild)
-# - Configuration file changes (sync)
+npm run dev       # Start Next.js with Turbopack
+npm run build     # Create a production build
+npm run start     # Serve the production build
+npm run lint      # Run ESLint
 ```
 
-## 🔍 Troubleshooting
+View Docker logs or open a shell in a running service:
 
-### Common Issues
-
-1. **Port conflicts**: Ensure ports 3000, 5000, 27017, 6379, 8081 are available
-2. **Permission errors**: Run `sudo chown -R $USER:$USER .` in project directory
-3. **Build failures**: Clear Docker cache with `docker system prune -a`
-
-### Health Checks
-- Backend: `http://localhost:5373/`
-- Frontend: `http://localhost:3000/`
-- MongoDB: `docker-compose exec mongo mongosh`
-- Redis: `docker-compose exec redis redis-cli ping`
-
-## 🚀 Deployment
-
-### Production Build
 ```bash
-# Build optimized images
-docker-compose build
-
-# Start production services
-docker-compose up -d
+docker compose -f docker-compose.dev.yml logs -f frontend
+docker compose -f docker-compose.dev.yml exec frontend sh
 ```
 
-### Environment Setup
-1. Create `.env.local` files in both `backend/` and `main-fb/`
-2. Set production environment variables
-3. Update `FRONTEND_URL` and `NEXT_PUBLIC_API_URL` for your domain
+## Importing Problems
 
-## 📊 Monitoring
+`main-fb/script/addQuestion.js` imports problems and test cases from JSON. The input format and sample are documented by `main-fb/script/newQues.json` and `main-fb/script/sample-questions.json`.
 
-### Logs
 ```bash
-# All services
-docker-compose logs
-
-# Specific service
-docker-compose logs backend
-
-# Follow logs
-docker-compose logs -f frontend
+cd main-fb
+node script/addQuestion.js script/sample-questions.json
 ```
 
-### Resource Usage
-```bash
-# Container stats
-docker stats
+Each problem needs a title, description, difficulty, tags, starter code, function name, input/output definitions, and test cases. Slugs are generated automatically, duplicates are skipped, and question numbers fill available gaps before continuing sequentially.
 
-# Disk usage
-docker system df
-```
+## Application Areas
 
-## 🔒 Security
+The main routes include:
 
-- Non-root users in containers
-- Isolated network (`deepdsa-network`)
-- Persistent volumes for data
-- Health checks for all services
+- `/problems` — browse and solve problems.
+- `/contests` — participate in contests.
+- `/discuss` — community discussions and replies.
+- `/interview` and `/interviews` — interview practice.
+- `/profile` — user progress and activity.
+- `/admin` — administration for problems, contests, users, editorials, interviews, and analytics.
 
-## 🌐 Ngrok Tunneling
+Application API routes live under `main-fb/src/app/api/`. MongoDB models are in `main-fb/src/models/`, and code-generation helpers are in `main-fb/src/utils/CodeGenerator/`.
 
-### Setup
-1. **Get Ngrok Auth Token**:
-   - Sign up at [ngrok.com](https://ngrok.com)
-   - Get your auth token from [dashboard.ngrok.com](https://dashboard.ngrok.com/get-started/your-authtoken)
+## Troubleshooting
 
-2. **Set Environment Variable**:
-   ```bash
-   export NGROK_AUTHTOKEN=your_ngrok_auth_token_here
-   ```
-
-3. **Start with Tunnels**:
-   ```bash
-   # Development with tunnels
-   docker-compose -f docker-compose.dev.yml --profile tunnel up --build
-   
-   # Production with tunnels
-   docker-compose --profile tunnel up --build
-   ```
-
-### Accessing Tunnels
-- **All Tunnels**: Visit `http://localhost:4040` for all tunnel status
-- **Public URLs**: The ngrok web interface will show all your public URLs
-
-### Tunnel URLs
-Once running, you'll get public URLs like:
-- Backend: `https://abc123.ngrok.io` → Your API
-- Frontend: `https://xyz789.ngrok.io` → Your Next.js app
-- MongoDB: `tcp://def456.ngrok.io:12345` → Your database (TCP tunnel)
-
-### Features
-- **Automatic HTTPS**: All tunnels are HTTPS by default
-- **Custom Domains**: Available with paid ngrok plans
-- **Request Inspection**: View all requests in the ngrok web interface
-- **Webhook Testing**: Perfect for testing webhooks and integrations
-
-### Security Notes
-- **Public Access**: Anyone with the ngrok URL can access your app
-- **Development Only**: Use tunnels only for development/testing
-- **Auth Token**: Keep your ngrok auth token secure
-- **Rate Limits**: Free ngrok accounts have rate limits
-
-## 📝 Notes
-
-- Development volumes preserve `node_modules` for faster builds
-- MongoDB data persists in `mongo_data` volume
-- Redis data persists in `redis_data` volume
-- Frontend uses Next.js standalone output for production
-- Ngrok tunnels provide public HTTPS URLs for local development 
+- If port `3000`, `27017`, `2358`, `6379`, `8081`, or `4040` is already in use, stop the conflicting process or change the Compose port mapping.
+- If code execution fails, verify `JUDGE0_API_URL`, `JUDGE0_API_KEY`, and the Judge0 containers/logs.
+- If database requests fail locally, verify MongoDB is running and that `MONGO_URI` points to the correct host.
+- If the frontend appears stale in Docker, rebuild the frontend image with `docker compose -f docker-compose.dev.yml build --no-cache frontend`.
