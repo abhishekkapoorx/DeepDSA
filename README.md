@@ -25,7 +25,10 @@ docker-compose -f docker-compose.dev.yml up -d --build
 ### With Ngrok Tunneling
 ```bash
 # Start development with ngrok tunnels
-docker-compose -f docker-compose.dev.yml --profile tunnel up --build
+docker-compose -f docker-compose.dev.cloud.yml --profile tunnel up --build
+
+# Development server with cloud services
+docker-compose -f docker-compose.dev.cloud.yml --profile tunnel up --build
 
 # Start production with ngrok tunnels
 docker-compose --profile tunnel up --build
