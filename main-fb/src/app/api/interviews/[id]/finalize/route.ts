@@ -30,7 +30,7 @@ export async function POST(
       .slice(0, 6000)
 
     const prompt = buildScoringPrompt(transcript)
-    const result = await aiScore(interview.provider, prompt)
+    const result = await aiScore(prompt)
 
     interview.score = Math.max(0, Math.min(10, Math.round(result.score)))
     interview.scoreBreakdown = result.breakdown as any

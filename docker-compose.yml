@@ -11,6 +11,11 @@ services:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:5000
       - DATABASE_URL=mongodb://mongo:27017/deepdsa
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - AI_PROVIDER=${AI_PROVIDER:-openai}
     env_file:
       - ./main-fb/.env
     depends_on:

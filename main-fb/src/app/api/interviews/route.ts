@@ -4,6 +4,7 @@ import Interview from '@/models/interview.model';
 import Problem from '@/models/problem.model';
 import User from '@/models/user.model';
 import { auth } from '@clerk/nextjs/server';
+import { getAIProvider } from '@/lib/ai';
 
 // POST /api/interviews -> start new interview (enforce 3/day)
 export async function POST(req: NextRequest) {
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
     const user = await User.findOne({ clerkId: userId });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    const { problemSlug, provider } = await req.json();
+    const { problemSlug } = await req.json();
 
     // Count user interviews today
     const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
       clerkId: userId,
       problemId: problem?._id,
       problemSlug: problem?.slug,
-      provider: provider === 'openai' ? 'openai' : 'gemini',
+      provider: getAIProvider(),
       dailySequence: todayCount + 1,
       startedAt: new Date(),
       messages: [

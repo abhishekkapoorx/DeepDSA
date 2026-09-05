@@ -45,7 +45,6 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
   const [interviewId, setInterviewId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
-  const [provider] = useState<'gemini' | 'openai'>('gemini');
   const recognitionRef = useRef<null | any>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
@@ -136,7 +135,6 @@ export const AIInterview: React.FC<AIInterviewProps> = ({ problem, codeContext }
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            provider,
             problemSlug: problem?.title ? problem.title.toLowerCase().replace(/\s+/g, '-') : undefined
           }),
         });
