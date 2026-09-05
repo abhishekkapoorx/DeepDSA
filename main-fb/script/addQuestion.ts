@@ -38,6 +38,9 @@ async function addQuestionsFromFile(filePath: string): Promise<void> {
     await connectToDB();
     connected = true;
 
+    console.log(`🔎 Problem collection: ${Problem.collection.name}`);
+    console.log(`🔎 Existing problem count: ${await Problem.countDocuments()}`);
+
     const problems = JSON.parse(fs.readFileSync(filePath, "utf8")) as QuestionData[];
     if (!Array.isArray(problems)) {
       throw new Error("JSON file must contain an array of problems");
@@ -54,8 +57,10 @@ async function addQuestionsFromFile(filePath: string): Promise<void> {
         }
 
         const slug = generateSlug(problemData.title);
-        if (await Problem.findOne({ slug })) {
+        const existingProblem = await Problem.findOne({ slug }).select("_id title questionNumber").lean();
+        if (existingProblem) {
           console.log(`⚠️ Problem "${slug}" already exists. Skipping...`);
+          console.log(`   Existing document: ${existingProblem._id} (${existingProblem.title})`);
           continue;
         }
 
