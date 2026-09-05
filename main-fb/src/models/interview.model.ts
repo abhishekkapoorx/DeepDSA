@@ -46,7 +46,7 @@ const InterviewSchema = new Schema<IInterview>(
     problemSlug: { type: String, index: true },
     startedAt: { type: Date, default: Date.now },
     endedAt: { type: Date },
-    provider: { type: String, enum: ["gemini", "openai"], default: "gemini" },
+    provider: { type: String, enum: ["gemini", "openai"], default: "openai" },
     messages: { type: [InterviewMessageSchema], default: [] },
     dailySequence: { type: Number, required: true },
     score: { type: Number, min: 0, max: 10 },
@@ -75,5 +75,4 @@ const Interview: Model<IInterview> =
   mongoose.model<IInterview>("Interview", InterviewSchema);
 
 export default Interview;
-
 

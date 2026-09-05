@@ -1,11 +1,3 @@
-declare module "@google/generative-ai" {
-  export class GoogleGenerativeAI {
-    constructor(apiKey: string)
-    getGenerativeModel(opts: { model: string }): any
-  }
-}
-
-
 declare module "@uiw/react-heat-map" {
   import * as React from "react";
 
@@ -31,4 +23,3 @@ declare module "@uiw/react-heat-map" {
   const HeatMap: React.FC<HeatMapProps>;
   export default HeatMap;
 }
-

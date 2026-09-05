@@ -52,7 +52,10 @@ export async function POST(
       }
     }
     
-    const assistantReply = await aiChat(interview.provider, history, problemContext)
+    const assistantReply = await aiChat(history, problemContext)
+    if (!assistantReply.trim()) {
+      return NextResponse.json({ error: 'AI provider returned an empty response' }, { status: 502 })
+    }
     interview.messages.push({ role: 'assistant', content: assistantReply, timestamp: new Date() })
     await interview.save()
 

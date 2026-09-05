@@ -12,6 +12,11 @@ services:
       - DATABASE_URL=mongodb://mongo:27017/deepdsa
       - MONGO_URI=mongodb://mongo:27017/deepdsa
       - JUDGE0_API_URL=http://judge0-server:2358
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - AI_PROVIDER=${AI_PROVIDER:-openai}
     env_file:
       - ./main-fb/.env
     depends_on:

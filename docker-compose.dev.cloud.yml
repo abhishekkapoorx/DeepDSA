@@ -14,6 +14,11 @@ services:
       - JUDGE0_API_URL=${JUDGE0_API_URL:-}
       - JUDGE0_API_KEY=${JUDGE0_API_KEY:-}
       - JUDGE0_API_HOST=${JUDGE0_API_HOST:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - AI_PROVIDER=${AI_PROVIDER:-openai}
     env_file:
       - ./main-fb/.env
     networks:
