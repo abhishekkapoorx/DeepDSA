@@ -123,6 +123,7 @@ npm run dev       # Start Next.js with Turbopack
 npm run build     # Create a production build
 npm run start     # Serve the production build
 npm run lint      # Run ESLint
+npm run add-question -- script/sample-questions.json  # Import problems from JSON
 ```
 
 View Docker logs or open a shell in a running service:
@@ -134,11 +135,11 @@ docker compose -f docker-compose.dev.yml exec frontend sh
 
 ## Importing Problems
 
-`main-fb/script/addQuestion.js` imports problems and test cases from JSON. The input format and sample are documented by `main-fb/script/newQues.json` and `main-fb/script/sample-questions.json`.
+`main-fb/script/addQuestion.ts` imports problems and test cases from JSON using the existing TypeScript MongoDB models. The input format and sample are documented by `main-fb/script/newQues.json` and `main-fb/script/sample-questions.json`.
 
 ```bash
 cd main-fb
-node script/addQuestion.js script/sample-questions.json
+npm run add-question -- script/sample-questions.json
 ```
 
 Each problem needs a title, description, difficulty, tags, starter code, function name, input/output definitions, and test cases. Slugs are generated automatically, duplicates are skipped, and question numbers fill available gaps before continuing sequentially.
